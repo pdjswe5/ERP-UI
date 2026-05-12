@@ -19,6 +19,9 @@ Prototype sistem ERP berbasis web untuk PT. Pacific Data Jaya. Dibangun dengan R
 
 Project ini adalah aplikasi HTML statis — cukup serve file-nya dengan web server lokal.
 
+### Github Pages
+[ERP Pada Jaya](https://pdjswe5.github.io/ERP-UI/erp.html)
+
 ### Menggunakan VS Code Live Preview (Recommended)
 
 1. Install ekstensi [Live Preview](https://marketplace.visualstudio.com/items?itemName=ms-vscode.live-server) di VS Code
