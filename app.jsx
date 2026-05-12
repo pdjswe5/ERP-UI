@@ -148,14 +148,14 @@ function App() {
 
   const renderContent = () => {
     if (g === 'home')      return <HomeDashboard onNavigate={navigateTo} />;
-    if (g === 'purchase')  return <PurchasePage  activeSub={sub} onSubChange={id => onSubChange('purchase', id)} />;
-    if (g === 'inventory') return <InventoryPage activeSub={sub} onSubChange={id => onSubChange('inventory', id)} />;
-    if (g === 'sales')     return <PelangganPage activeSub={sub} onSubChange={id => onSubChange('sales', id)} />;
-    if (g === 'finance')   return <AkuntanPage   activeSub={sub} onSubChange={id => onSubChange('finance', id)} />;
-    if (g === 'cashbank')  return <KeuanganPage  activeSub={sub} onSubChange={id => onSubChange('cashbank', id)} />;
-    if (g === 'master')    return <MasterPage    activeSub={sub} onSubChange={id => onSubChange('master', id)} />;
-    if (g === 'reports')   return <ReportsPage   activeSub={sub} onSubChange={id => onSubChange('reports', id)} />;
-    if (g === 'admin')     return <AdminPage     activeSub={sub} onSubChange={id => onSubChange('admin', id)} />;
+    if (g === 'purchase')  return <PurchasePage  activeSub={sub} onSubChange={id => onSubChange('purchase', id)} onNavigate={navigateTo} />;
+    if (g === 'inventory') return <InventoryPage activeSub={sub} onSubChange={id => onSubChange('inventory', id)} onNavigate={navigateTo} />;
+    if (g === 'sales')     return <PelangganPage activeSub={sub} onSubChange={id => onSubChange('sales', id)} onNavigate={navigateTo} />;
+    if (g === 'finance')   return <AkuntanPage   activeSub={sub} onSubChange={id => onSubChange('finance', id)} onNavigate={navigateTo} />;
+    if (g === 'cashbank')  return <KeuanganPage  activeSub={sub} onSubChange={id => onSubChange('cashbank', id)} onNavigate={navigateTo} />;
+    if (g === 'master')    return <MasterPage    activeSub={sub} onSubChange={id => onSubChange('master', id)} onNavigate={navigateTo} />;
+    if (g === 'reports')   return <ReportsPage   activeSub={sub} onSubChange={id => onSubChange('reports', id)} onNavigate={navigateTo} />;
+    if (g === 'admin')     return <AdminPage     activeSub={sub} onSubChange={id => onSubChange('admin', id)} onNavigate={navigateTo} theme={t} setTheme={setTweak} />;
     return null;
   };
 

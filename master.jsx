@@ -450,7 +450,7 @@ function MasterDashboard({ onOpenSub }) {
 
 // ─── MasterPage (controlled) ─────────────────────────────────────────────────
 
-function MasterPage({ activeSub, onSubChange }) {
+function MasterPage({ activeSub, onSubChange, onNavigate }) {
   if (!activeSub) return <MasterDashboard onOpenSub={onSubChange} />;
 
   const subLabel = MST_SUBS.find(s => s.id === activeSub)?.label ?? activeSub;
@@ -468,7 +468,7 @@ function MasterPage({ activeSub, onSubChange }) {
   return (
     <div className="page" data-screen-label={`Master Data — ${activeSub}`}>
       <div className="crumbs">
-        <a>Home</a><span className="sep">/</span>
+        <a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
         <a onClick={()=>onSubChange(null)} style={{cursor:'pointer'}}>Master Data</a><span className="sep">/</span>
         <span className="current">{subLabel}</span>
       </div>

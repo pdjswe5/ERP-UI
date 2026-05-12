@@ -192,7 +192,7 @@ function ReportsDashboard({ onOpenSub }) {
 
 // ─── ReportsPage (controlled) ────────────────────────────────────────────────
 
-function ReportsPage({ activeSub, onSubChange }) {
+function ReportsPage({ activeSub, onSubChange, onNavigate }) {
   if (!activeSub) return <ReportsDashboard onOpenSub={onSubChange} />;
 
   const subLabel = RPT_SUBS.find(s => s.id === activeSub)?.label ?? activeSub;
@@ -208,7 +208,7 @@ function ReportsPage({ activeSub, onSubChange }) {
   return (
     <div className="page" data-screen-label={`Reports — ${activeSub}`}>
       <div className="crumbs">
-        <a>Home</a><span className="sep">/</span>
+        <a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
         <a onClick={()=>onSubChange(null)} style={{cursor:'pointer'}}>Laporan</a><span className="sep">/</span>
         <span className="current">{subLabel}</span>
       </div>

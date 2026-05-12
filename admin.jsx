@@ -60,11 +60,12 @@ const ADMIN_SESI = [
 ];
 
 const ADM_SUBS = [
-  { id:'profil',  label:'Profil Perusahaan',   desc:'Nama, alamat, NPWP, rekening bank',    icon:I.invoice(22) },
-  { id:'default', label:'Nilai Default',        desc:'Gudang, tempo, PPN, salesman default', icon:I.settings(22) },
-  { id:'cetakan', label:'Keterangan Cetakan',   desc:'Catatan faktur & retur, tampilan cetak',icon:I.print(22) },
-  { id:'fitur',   label:'Fitur Administrator',  desc:`${ADMIN_FITUR.length} menu, 6 hak akses`,icon:I.shield(22) },
-  { id:'sesi',    label:'Login Pengguna',       desc:'Sesi aktif & koneksi pengguna',        icon:I.users(22) },
+  { id:'profil',    label:'Profil Perusahaan',   desc:'Nama, alamat, NPWP, rekening bank',    icon:I.invoice(22) },
+  { id:'default',   label:'Nilai Default',        desc:'Gudang, tempo, PPN, salesman default', icon:I.settings(22) },
+  { id:'cetakan',   label:'Keterangan Cetakan',   desc:'Catatan faktur & retur, tampilan cetak',icon:I.print(22) },
+  { id:'fitur',     label:'Fitur Administrator',  desc:`${ADMIN_FITUR.length} menu, 6 hak akses`,icon:I.shield(22) },
+  { id:'sesi',      label:'Login Pengguna',       desc:'Sesi aktif & koneksi pengguna',        icon:I.users(22) },
+  { id:'tampilan',  label:'Tampilan & Tema',      desc:'Warna, preset, dan densitas tampilan', icon:I.settings(22) },
 ];
 
 // ─── Shared form helpers ─────────────────────────────────────────────────────
@@ -581,6 +582,85 @@ function AdminSesi() {
   );
 }
 
+// ─── Tampilan & Tema ─────────────────────────────────────────────────────────
+
+const THEME_PRESETS = [
+  { key:'default',  label:'Navy',     primary:'#003366', accent:'#3399cc' },
+  { key:'teal',     label:'Teal',     primary:'#0f766e', accent:'#14b8a6' },
+  { key:'graphite', label:'Graphite', primary:'#1f2937', accent:'#6366f1' },
+  { key:'rust',     label:'Rust',     primary:'#9a3412', accent:'#f59e0b' },
+];
+
+function AdminTampilan({ theme, setTheme }) {
+  if (!theme) return <div className="muted" style={{padding:24}}>Tema tidak tersedia.</div>;
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:16}}>
+      <div className="panel">
+        <h3>Warna Tema</h3>
+        <div className="field">
+          <label>Preset Warna</label>
+          <div style={{display:'flex', gap:10, flexWrap:'wrap', marginTop:6}}>
+            {THEME_PRESETS.map(p => (
+              <button key={p.key} onClick={() => setTheme({primaryColor:p.primary, accentColor:p.accent, primaryAlt:p.key})}
+                style={{display:'flex', alignItems:'center', gap:8, padding:'7px 14px',
+                  border:`2px solid ${theme.primaryAlt===p.key ? p.primary : 'var(--border)'}`,
+                  borderRadius:8, background:'var(--bg-elev)', cursor:'pointer',
+                  fontFamily:'inherit', fontSize:12.5, fontWeight:500,
+                  color: theme.primaryAlt===p.key ? p.primary : 'var(--text-2)'}}>
+                <span style={{display:'flex', gap:3}}>
+                  <span style={{width:12, height:12, borderRadius:'50%', background:p.primary, display:'inline-block'}} />
+                  <span style={{width:12, height:12, borderRadius:'50%', background:p.accent, display:'inline-block'}} />
+                </span>
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{display:'flex', gap:20, marginTop:14}}>
+          <div className="field" style={{flex:1}}>
+            <label>Warna Utama</label>
+            <div style={{display:'flex', alignItems:'center', gap:8, marginTop:4}}>
+              <input type="color" value={theme.primaryColor}
+                onChange={e => setTheme({primaryColor:e.target.value, primaryAlt:'custom'})}
+                style={{width:36, height:32, border:'1px solid var(--border)', borderRadius:6, padding:2, cursor:'pointer', background:'var(--bg-elev)'}} />
+              <span className="mono" style={{fontSize:12.5, color:'var(--text-3)'}}>{theme.primaryColor}</span>
+            </div>
+          </div>
+          <div className="field" style={{flex:1}}>
+            <label>Warna Aksen</label>
+            <div style={{display:'flex', alignItems:'center', gap:8, marginTop:4}}>
+              <input type="color" value={theme.accentColor}
+                onChange={e => setTheme({accentColor:e.target.value, primaryAlt:'custom'})}
+                style={{width:36, height:32, border:'1px solid var(--border)', borderRadius:6, padding:2, cursor:'pointer', background:'var(--bg-elev)'}} />
+              <span className="mono" style={{fontSize:12.5, color:'var(--text-3)'}}>{theme.accentColor}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="panel">
+        <h3>Layout</h3>
+        <div className="field">
+          <label>Densitas Tampilan</label>
+          <div style={{display:'flex', gap:8, marginTop:6}}>
+            {['compact','regular','comfy'].map(d => (
+              <button key={d} onClick={() => setTheme({density:d})}
+                style={{padding:'7px 20px',
+                  border:`2px solid ${theme.density===d ? 'var(--primary)' : 'var(--border)'}`,
+                  borderRadius:8,
+                  background: theme.density===d ? 'var(--primary)' : 'var(--bg-elev)',
+                  color: theme.density===d ? '#fff' : 'var(--text-2)',
+                  cursor:'pointer', fontFamily:'inherit', fontSize:12.5, fontWeight:500}}>
+                {d.charAt(0).toUpperCase()+d.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
 function AdminDashboard({ onOpenSub }) {
@@ -613,24 +693,25 @@ function AdminDashboard({ onOpenSub }) {
 
 // ─── AdminPage (controlled) ──────────────────────────────────────────────────
 
-function AdminPage({ activeSub, onSubChange }) {
+function AdminPage({ activeSub, onSubChange, onNavigate, theme, setTheme }) {
   if (!activeSub) return <AdminDashboard onOpenSub={onSubChange} />;
 
   const subLabel = ADM_SUBS.find(s => s.id === activeSub)?.label ?? activeSub;
 
   const content = () => {
-    if (activeSub === 'profil')  return <AdminProfil />;
-    if (activeSub === 'default') return <AdminDefault />;
-    if (activeSub === 'cetakan') return <AdminCetakan />;
-    if (activeSub === 'fitur')   return <AdminFitur />;
-    if (activeSub === 'sesi')    return <AdminSesi />;
+    if (activeSub === 'profil')    return <AdminProfil />;
+    if (activeSub === 'default')   return <AdminDefault />;
+    if (activeSub === 'cetakan')   return <AdminCetakan />;
+    if (activeSub === 'fitur')     return <AdminFitur />;
+    if (activeSub === 'sesi')      return <AdminSesi />;
+    if (activeSub === 'tampilan')  return <AdminTampilan theme={theme} setTheme={setTheme} />;
     return null;
   };
 
   return (
     <div className="page" data-screen-label={`System Admin — ${activeSub}`}>
       <div className="crumbs">
-        <a>Home</a><span className="sep">/</span>
+        <a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
         <a onClick={()=>onSubChange(null)} style={{cursor:'pointer'}}>System Admin</a><span className="sep">/</span>
         <span className="current">{subLabel}</span>
       </div>

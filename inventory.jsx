@@ -173,9 +173,9 @@ function KatalogBarang({ onEdit, onAdd }) {
                   <td><span className="cell-link">{b.name}</span></td>
                   <td className="mono muted">{b.code}</td>
                   <td>{b.kategori}</td>
-                  <td className="center">{b.active ? <span style={{color:'var(--realisasi)'}}>{I.check(14)}</span> : <span className="muted">—</span>}</td>
+                  <td className="center">{b.active ? <span>{I.check(14)}</span> : <span className="muted">—</span>}</td>
                   <td className="num mono">{fmtNum(b.minQty)}</td>
-                  <td className="num mono" style={{color: b.stock < b.minQty ? 'var(--danger)' : 'var(--text)', fontWeight: b.stock < b.minQty ? 600 : 400}}>{fmtNum(b.stock)}</td>
+                  <td className="num mono">{fmtNum(b.stock)}{b.stock < b.minQty && <span className="pill pending" style={{marginLeft:6, fontSize:10, padding:'1px 5px'}}>Rendah</span>}</td>
                   <td className="num mono">{fmtNum(b.hargaBeli)}</td>
                   <td className="num mono">{fmtNum(b.hpp)}</td>
                   <td className="muted" style={{maxWidth:160, overflow:'hidden', textOverflow:'ellipsis'}}>{b.note || '—'}</td>
@@ -245,7 +245,7 @@ function KatalogKategori({ onEdit, onAdd }) {
                     <td onClick={e=>e.stopPropagation()}><input type="checkbox" className="cb"/></td>
                     <td><span className="cell-link">{k.name}</span></td>
                     <td className="mono muted">{k.code}</td>
-                    <td className="center">{k.active ? <span style={{color:'var(--realisasi)'}}>{I.check(14)}</span> : <span className="muted">—</span>}</td>
+                    <td className="center">{k.active ? <span>{I.check(14)}</span> : <span className="muted">—</span>}</td>
                     <td className="num mono">{cnt}</td>
                     <td className="muted">{k.note || '—'}</td>
                     <td onClick={e=>e.stopPropagation()}>
@@ -303,7 +303,7 @@ function MutasiBarang({ onEdit, onAdd }) {
             </thead>
             <tbody>
               {MUTASI.map(m => (
-                <tr key={m.no} className={m.status==='Approved' ? 'realisasi' : ''} onClick={()=>onEdit(m)}>
+                <tr key={m.no} onClick={()=>onEdit(m)}>
                   <td onClick={e=>e.stopPropagation()}><input type="checkbox" className="cb"/></td>
                   <td className="mono">{m.tgl}</td>
                   <td className="no"><span className="cell-link mono">{m.no}</span></td>
@@ -374,12 +374,11 @@ function PenyesuaianBarang({ onEdit, onAdd }) {
                   <td>{p.item}</td>
                   <td className="center">
                     <span style={{display:'inline-flex', alignItems:'center', justifyContent:'center', width:24, height:24, borderRadius:6,
-                      background: p.tipe==='Plus' ? 'var(--realisasi-soft)' : 'var(--danger-soft)',
-                      color: p.tipe==='Plus' ? 'var(--realisasi)' : 'var(--danger)', fontWeight:700, fontSize:14}}>
+                      background: 'var(--bg-sub)', color: 'var(--text-2)', fontWeight:700, fontSize:14}}>
                       {p.tipe==='Plus' ? '+' : '−'}
                     </span>
                   </td>
-                  <td className="num mono" style={{color: p.tipe==='Plus' ? 'var(--realisasi)' : 'var(--danger)', fontWeight:600}}>
+                  <td className="num mono" style={{fontWeight:600}}>
                     {p.tipe==='Plus' ? '+' : '−'}{fmtNum(p.qty)}
                   </td>
                   <td className="muted">{p.alasan}</td>
@@ -453,7 +452,7 @@ function StockOpname({ onEdit, onAdd }) {
                   <td>{o.periode}</td>
                   <td>{o.pic}</td>
                   <td className="num mono">{fmtNum(o.items)}</td>
-                  <td className="num mono" style={{color:o.selisih>5?'var(--danger)':'var(--warn)', fontWeight:500}}>{o.selisih}</td>
+                  <td className="num mono">{o.selisih}{o.selisih > 5 && <span className="pill pending" style={{marginLeft:6, fontSize:10, padding:'1px 5px'}}>Selisih</span>}</td>
                   <td><span className={`pill ${o.status==='Completed'?'realisasi':'pending'}`}>{o.status}</span></td>
                   <td onClick={e=>e.stopPropagation()}>
                     <div className="row-actions">
@@ -804,7 +803,7 @@ function InvSpark({ data, color = 'var(--accent)' }) {
   );
 }
 
-function InventoryDashboard({ onOpenSub }) {
+function InventoryDashboard({ onOpenSub, onNavigate }) {
   const lowStock  = BARANG.filter(b => b.stock < b.minQty).length;
   const totalSku  = BARANG.length;
   const activeSku = BARANG.filter(b => b.active).length;
@@ -824,7 +823,7 @@ function InventoryDashboard({ onOpenSub }) {
   return (
     <div className="page" data-screen-label="03 Inventory — Dashboard">
       <div className="crumbs">
-        <a>Home</a><span className="sep">/</span>
+        <a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
         <span className="current">Inventory</span>
       </div>
 
@@ -931,25 +930,20 @@ function InventoryDashboard({ onOpenSub }) {
   );
 }
 
-function InventoryPage({ activeSub, onSubChange }) {
+function InventoryPage({ activeSub, onSubChange, onNavigate }) {
   const [modal, setModal] = React.useState(null);
 
   const close = () => setModal(null);
   const onSave = () => { setModal(null); window.__erpToast && window.__erpToast('Data berhasil disimpan.'); };
 
-  if (!activeSub) return <InventoryDashboard onOpenSub={onSubChange} />;
+  if (!activeSub) return <InventoryDashboard onOpenSub={onSubChange} onNavigate={onNavigate} />;
 
   return (
     <div className="page" data-screen-label={`03 Inventory — ${activeSub}`}>
       <div className="crumbs">
-        <a>Home</a><span className="sep">/</span>
+        <a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
         <a onClick={()=>onSubChange(null)} style={{cursor:'pointer'}}>Inventory</a><span className="sep">/</span>
         <span className="current">{INV_SUBS.find(s=>s.id===activeSub)?.label}</span>
-      </div>
-
-      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:4}}>
-        <button className="btn btn-icon btn-sm" onClick={()=>onSubChange(null)} title="Kembali ke Inventory Workspace">{I.arrowL(14)}</button>
-        <span className="muted" style={{fontSize:12.5}}>Kembali ke Inventory Workspace</span>
       </div>
 
       {activeSub === 'barang'      && <KatalogBarang onAdd={()=>setModal({kind:'barang'})} onEdit={(d)=>setModal({kind:'barang', data:d})} />}

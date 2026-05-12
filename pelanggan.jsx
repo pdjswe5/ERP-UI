@@ -79,7 +79,7 @@ function PjSubNav({ active, onChange }) {
 
 // ─── Dashboard ──────────────────────────────────────────────────────────────
 
-function PelangganDashboard({ onOpenSub }) {
+function PelangganDashboard({ onOpenSub, onNavigate }) {
   const totalPel = PELANGGAN.length;
   const aktifPel = PELANGGAN.filter(p => p.email).length;
   const pendingOrd = ORDER_PENJUALAN.filter(o => o.status === 'Pending' || o.status === 'Draft').length;
@@ -97,7 +97,7 @@ function PelangganDashboard({ onOpenSub }) {
   return (
     <div className="page" data-screen-label="04 Pelanggan — Dashboard">
       <div className="crumbs">
-        <a>Home</a><span className="sep">/</span>
+        <a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
         <span className="current">Pelanggan</span>
       </div>
 
@@ -353,7 +353,7 @@ function OrderPenjualan({ onAdd, onEdit }) {
             </thead>
             <tbody>
               {ORDER_PENJUALAN.map(o => (
-                <tr key={o.no} className={o.status==='Realisasi'?'realisasi':''} onClick={()=>onEdit(o)}>
+                <tr key={o.no} onClick={()=>onEdit(o)}>
                   <td onClick={e=>e.stopPropagation()}><input type="checkbox" className="cb"/></td>
                   <td className="mono">{o.tgl}</td>
                   <td><span className="cell-link mono">{o.no}</span></td>
@@ -417,7 +417,7 @@ function NotaPenjualan({ onAdd, onEdit }) {
             </thead>
             <tbody>
               {NOTA_PENJUALAN.map(n => (
-                <tr key={n.no} className={n.status==='Lunas'?'realisasi':''} onClick={()=>onEdit(n)}>
+                <tr key={n.no} onClick={()=>onEdit(n)}>
                   <td onClick={e=>e.stopPropagation()}><input type="checkbox" className="cb"/></td>
                   <td className="mono">{n.tgl}</td>
                   <td><span className="cell-link mono">{n.no}</span></td>
@@ -927,24 +927,20 @@ function ReturModal({ data, onClose, onSave }) {
 
 // ─── Page wrapper ───────────────────────────────────────────────────────────
 
-function PelangganPage({ activeSub, onSubChange }) {
+function PelangganPage({ activeSub, onSubChange, onNavigate }) {
   const [modal, setModal] = React.useState(null);
 
   const close = () => setModal(null);
   const onSave = () => { setModal(null); window.__erpToast && window.__erpToast('Data berhasil disimpan.'); };
 
-  if (!activeSub) return <PelangganDashboard onOpenSub={onSubChange} />;
+  if (!activeSub) return <PelangganDashboard onOpenSub={onSubChange} onNavigate={onNavigate} />;
 
   return (
     <div className="page" data-screen-label={`04 Pelanggan — ${activeSub}`}>
       <div className="crumbs">
-        <a>Home</a><span className="sep">/</span>
+        <a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
         <a onClick={()=>onSubChange(null)} style={{cursor:'pointer'}}>Pelanggan</a><span className="sep">/</span>
         <span className="current">{PJ_SUBS.find(s=>s.id===activeSub)?.label}</span>
-      </div>
-      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:4}}>
-        <button className="btn btn-icon btn-sm" onClick={()=>onSubChange(null)} title="Kembali">{I.arrowL(14)}</button>
-        <span className="muted" style={{fontSize:12.5}}>Kembali ke Pelanggan Workspace</span>
       </div>
       {activeSub === 'katalog' && <KatalogPelanggan onAdd={()=>setModal({kind:'pel'})} onEdit={(d)=>setModal({kind:'pel', data:d})}/>}
       {activeSub === 'order'   && <OrderPenjualan   onAdd={()=>setModal({kind:'order'})} onEdit={(d)=>setModal({kind:'order', data:d})}/>}

@@ -76,7 +76,7 @@ function AkSubNav({ active, onChange }) {
   );
 }
 
-function AkuntanDashboard({ onOpenSub }) {
+function AkuntanDashboard({ onOpenSub, onNavigate }) {
   const totalAkun = AKUN_BB.length;
   const aktivaAktif = AKTIVA.filter(a=>a.aktif).length;
   const totalAktiva = AKTIVA.reduce((s,a)=>s+a.nilai, 0);
@@ -90,7 +90,7 @@ function AkuntanDashboard({ onOpenSub }) {
 
   return (
     <div className="page" data-screen-label="05 Akuntan — Dashboard">
-      <div className="crumbs"><a>Home</a><span className="sep">/</span><span className="current">Akuntan</span></div>
+      <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><span className="current">Akuntan</span></div>
       <div className="page-head">
         <div><h1>Akuntan Workspace</h1><div className="sub">Kelola akun buku besar, aktiva tetap, dan jurnal memorial dalam satu workspace.</div></div>
         <div style={{display:'flex', gap:8}}>
@@ -221,7 +221,7 @@ function KatalogAkunBB({ onAdd, onEdit }) {
                   <td className="mono">{a.grup}</td>
                   <td className="mono cell-link">{a.subgrup}</td>
                   <td>{a.ket ? <span className="cell-link">{a.ket}</span> : <span className="muted">—</span>}</td>
-                  <td className="center">{a.aktif ? <span style={{color:'var(--realisasi)'}}>{I.check(14)}</span> : <span className="muted">—</span>}</td>
+                  <td className="center">{a.aktif ? <span>{I.check(14)}</span> : <span className="muted">—</span>}</td>
                   <td onClick={e=>e.stopPropagation()}>
                     <div className="row-actions">
                       <button className="btn btn-icon btn-sm" onClick={()=>onEdit(a)} title="Edit">{I.edit()}</button>
@@ -281,7 +281,7 @@ function KatalogAktiva({ onAdd, onEdit }) {
                 <tr key={a.kode} onClick={()=>onEdit(a)}>
                   <td className="mono cell-link">{a.kode}</td>
                   <td>{a.nama}</td>
-                  <td className="center">{a.aktif ? <span style={{color:'var(--realisasi)'}}>{I.check(14)}</span> : <span className="muted">—</span>}</td>
+                  <td className="center">{a.aktif ? <span>{I.check(14)}</span> : <span className="muted">—</span>}</td>
                   <td className="mono">{a.tglJual || <span className="muted">—</span>}</td>
                   <td className="mono">{a.tglBeli}</td>
                   <td className="mono cell-link">{a.noBukti}</td>
@@ -568,21 +568,17 @@ function JurnalModal({ data, onClose, onSave }) {
   );
 }
 
-function AkuntanPage({ activeSub, onSubChange }) {
+function AkuntanPage({ activeSub, onSubChange, onNavigate }) {
   const [modal, setModal] = React.useState(null);
   const close = () => setModal(null);
   const onSave = () => { setModal(null); window.__erpToast && window.__erpToast('Data berhasil disimpan.'); };
-  if (!activeSub) return <AkuntanDashboard onOpenSub={onSubChange} />;
+  if (!activeSub) return <AkuntanDashboard onOpenSub={onSubChange} onNavigate={onNavigate} />;
   return (
     <div className="page" data-screen-label={`05 Akuntan — ${activeSub}`}>
       <div className="crumbs">
-        <a>Home</a><span className="sep">/</span>
+        <a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
         <a onClick={()=>onSubChange(null)} style={{cursor:'pointer'}}>Akuntan</a><span className="sep">/</span>
         <span className="current">{AK_SUBS.find(s=>s.id===activeSub)?.label}</span>
-      </div>
-      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:4}}>
-        <button className="btn btn-icon btn-sm" onClick={()=>onSubChange(null)}>{I.arrowL(14)}</button>
-        <span className="muted" style={{fontSize:12.5}}>Kembali ke Akuntan Workspace</span>
       </div>
       {activeSub==='akun'   && <KatalogAkunBB  onAdd={()=>setModal({kind:'akun'})}   onEdit={(d)=>setModal({kind:'akun', data:d})}/>}
       {activeSub==='aktiva' && <KatalogAktiva  onAdd={()=>setModal({kind:'aktiva'})} onEdit={(d)=>setModal({kind:'aktiva', data:d})}/>}

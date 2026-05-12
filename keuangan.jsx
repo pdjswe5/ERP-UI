@@ -114,7 +114,7 @@ function KuSubNav({ active, onChange }) {
   );
 }
 
-function KeuanganDashboard({ onOpenSub }) {
+function KeuanganDashboard({ onOpenSub, onNavigate }) {
   const totalKas = KAS_BANK_GIRO.filter(a=>a.tipe==='KAS').reduce((s,a)=>s+a.saldo,0);
   const totalBank = KAS_BANK_GIRO.filter(a=>a.tipe==='BANK').reduce((s,a)=>s+a.saldo,0);
   const totalGiro = KAS_BANK_GIRO.filter(a=>a.tipe==='GIRO').reduce((s,a)=>s+a.saldo,0);
@@ -137,7 +137,7 @@ function KeuanganDashboard({ onOpenSub }) {
 
   return (
     <div className="page" data-screen-label="06 Keuangan — Dashboard">
-      <div className="crumbs"><a>Home</a><span className="sep">/</span><span className="current">Keuangan</span></div>
+      <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><span className="current">Keuangan</span></div>
       <div className="page-head">
         <div><h1>Keuangan Workspace</h1><div className="sub">Kelola arus kas, bank, giro, dan pelunasan piutang/hutang.</div></div>
         <div style={{display:'flex', gap:8}}>
@@ -191,7 +191,7 @@ function KeuanganDashboard({ onOpenSub }) {
                   <div style={{fontWeight:500}}>{g.dari || g.untuk}</div>
                   <div className="muted mono" style={{fontSize:11.5}}>{g.noGiro} · {g.bank} · jth.tempo {g.jthTempo}</div>
                 </div>
-                <div className="num mono" style={{fontWeight:600, color: g.dari ? 'var(--realisasi)' : 'var(--danger)'}}>{g.dari ? '+' : '−'}{fmtRp(g.nominal)}</div>
+                <div className="num mono" style={{fontWeight:600}}>{g.dari ? '+' : '−'}{fmtRp(g.nominal)}</div>
               </div>
             ))}
           </div>
@@ -352,8 +352,8 @@ const pelunasanCols = (kind) => [
   { key:'partner', label: kind==='piutang'?'Pelanggan':'Supplier', render: r => kind==='piutang' ? r.pelanggan : r.supplier },
   { key:'noRef', label: kind==='piutang'?'No. Invoice':'No. Bill', render: r => <span className="mono cell-link">{r.noInvoice || r.noBill}</span> },
   { key:'nominalRef', label:'Nominal Tagihan', cls:'num mono', render: r => fmtRp(r.nominalInv || r.nominalBill) },
-  { key:'terbayar', label:'Terbayar', cls:'num mono', render: r => <span style={{color:'var(--realisasi)', fontWeight:500}}>{fmtRp(r.terbayar)}</span> },
-  { key:'sisa', label:'Sisa', cls:'num mono', render: r => r.sisa>0 ? <span style={{color:'var(--danger)'}}>{fmtRp(r.sisa)}</span> : <span className="muted">—</span> },
+  { key:'terbayar', label:'Terbayar', cls:'num mono', render: r => <span style={{fontWeight:500}}>{fmtRp(r.terbayar)}</span> },
+  { key:'sisa', label:'Sisa', cls:'num mono', render: r => r.sisa>0 ? <span>{fmtRp(r.sisa)}</span> : <span className="muted">—</span> },
   { key:'metode', label:'Metode' },
   { key:'status', label:'Status', render: r => stPill(r.status) },
 ];
@@ -599,11 +599,11 @@ function KbgModal({ data, onClose, onSave }) {
   );
 }
 
-function KeuanganPage({ activeSub, onSubChange }) {
+function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
   const [modal, setModal] = React.useState(null);
   const close = () => setModal(null);
   const onSave = () => { setModal(null); window.__erpToast && window.__erpToast('Transaksi berhasil disimpan.'); };
-  if (!activeSub) return <KeuanganDashboard onOpenSub={onSubChange} />;
+  if (!activeSub) return <KeuanganDashboard onOpenSub={onSubChange} onNavigate={onNavigate} />;
 
   const subLabel = KU_SUBS.find(s=>s.id===activeSub)?.label;
   const totalForKind = (kind) => {
@@ -631,13 +631,9 @@ function KeuanganPage({ activeSub, onSubChange }) {
   return (
     <div className="page" data-screen-label={`06 Keuangan — ${subLabel}`}>
       <div className="crumbs">
-        <a>Home</a><span className="sep">/</span>
+        <a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
         <a onClick={()=>onSubChange(null)} style={{cursor:'pointer'}}>Keuangan</a><span className="sep">/</span>
         <span className="current">{subLabel}</span>
-      </div>
-      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:8}}>
-        <button className="btn btn-icon btn-sm" onClick={()=>onSubChange(null)}>{I.arrowL(14)}</button>
-        <span className="muted" style={{fontSize:12.5}}>Kembali ke Keuangan Workspace</span>
       </div>
 
       {activeSub === 'kbg' && <KasBankGiro onAdd={()=>setModal({kind:'kbg'})} onEdit={(d)=>setModal({kind:'kbg', data:d})} />}

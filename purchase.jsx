@@ -165,7 +165,7 @@ function PurchItemTable({ lines, setLines, hasRealisasi = false }) {
 
 // ─── Sub-screen 1: Katalog Pemasok ───────────────────────────────────────────
 
-function KatalogPemasok() {
+function KatalogPemasok({ onNavigate, onBack }) {
   const [kriteria, setKriteria] = React.useState('Semua');
   const [search,   setSearch]   = React.useState('');
   const [showAdd,  setShowAdd]  = React.useState(false);
@@ -188,7 +188,7 @@ function KatalogPemasok() {
 
   return (
     <div className="page" data-screen-label="Purchase — Katalog Pemasok">
-      <div className="crumbs"><a>Home</a><span className="sep">/</span><a>Purchase</a><span className="sep">/</span><span className="current">Katalog Pemasok</span></div>
+      <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><a onClick={onBack} style={{cursor:'pointer'}}>Purchase</a><span className="sep">/</span><span className="current">Katalog Pemasok</span></div>
       <div className="page-head">
         <div><h1>Katalog Pemasok</h1><div className="sub">Master data pemasok dan syarat pembayaran</div></div>
         <div style={{display:'flex', gap:8}}>
@@ -285,7 +285,7 @@ function KatalogPemasok() {
 
 // ─── Sub-screen 2: Order Pembelian ────────────────────────────────────────────
 
-function OrderPembelian() {
+function OrderPembelian({ onNavigate, onBack }) {
   const [search,       setSearch]       = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [showAdd,      setShowAdd]      = React.useState(false);
@@ -312,7 +312,7 @@ function OrderPembelian() {
 
   return (
     <div className="page" data-screen-label="Purchase — Order Pembelian">
-      <div className="crumbs"><a>Home</a><span className="sep">/</span><a>Purchase</a><span className="sep">/</span><span className="current">Order Pembelian</span></div>
+      <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><a onClick={onBack} style={{cursor:'pointer'}}>Purchase</a><span className="sep">/</span><span className="current">Order Pembelian</span></div>
       <div className="page-head">
         <div><h1>Order Pembelian</h1><div className="sub">{PO_LIST.length} order terdaftar</div></div>
         <button className="btn btn-primary" onClick={() => setShowAdd(true)}>{I.plus()} Tambah Order</button>
@@ -342,7 +342,7 @@ function OrderPembelian() {
           </thead>
           <tbody>
             {filtered.map(p => (
-              <tr key={p.no} className={p.status === 'Realisasi' ? 'realisasi' : ''}>
+              <tr key={p.no}>
                 <td><a className="cell-link">{p.no}</a></td>
                 <td>{p.date}</td>
                 <td>{p.supplier}</td>
@@ -414,7 +414,7 @@ function OrderPembelian() {
 
 // ─── Sub-screen 3: Nota Pembelian ─────────────────────────────────────────────
 
-function NotaPembelian() {
+function NotaPembelian({ onNavigate, onBack }) {
   const [search,  setSearch]  = React.useState('');
   const [showAdd, setShowAdd] = React.useState(false);
 
@@ -441,7 +441,7 @@ function NotaPembelian() {
 
   return (
     <div className="page" data-screen-label="Purchase — Nota Pembelian">
-      <div className="crumbs"><a>Home</a><span className="sep">/</span><a>Purchase</a><span className="sep">/</span><span className="current">Nota Pembelian</span></div>
+      <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><a onClick={onBack} style={{cursor:'pointer'}}>Purchase</a><span className="sep">/</span><span className="current">Nota Pembelian</span></div>
       <div className="page-head">
         <div><h1>Nota Pembelian</h1><div className="sub">{NOTA_LIST.length} nota terdaftar</div></div>
         <button className="btn btn-primary" onClick={() => setShowAdd(true)}>{I.plus()} Tambah Nota</button>
@@ -568,7 +568,7 @@ function NotaPembelian() {
 
 // ─── Sub-screen 4: Retur Pembelian ────────────────────────────────────────────
 
-function ReturPembelian() {
+function ReturPembelian({ onNavigate, onBack }) {
   const [search,  setSearch]  = React.useState('');
   const [showAdd, setShowAdd] = React.useState(false);
 
@@ -594,7 +594,7 @@ function ReturPembelian() {
 
   return (
     <div className="page" data-screen-label="Purchase — Retur Pembelian">
-      <div className="crumbs"><a>Home</a><span className="sep">/</span><a>Purchase</a><span className="sep">/</span><span className="current">Retur Pembelian</span></div>
+      <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><a onClick={onBack} style={{cursor:'pointer'}}>Purchase</a><span className="sep">/</span><span className="current">Retur Pembelian</span></div>
       <div className="page-head">
         <div><h1>Retur Pembelian</h1><div className="sub">{RETUR_LIST.length} retur terdaftar</div></div>
         <button className="btn btn-primary" onClick={() => setShowAdd(true)}>{I.plus()} Tambah Retur</button>
@@ -714,10 +714,10 @@ function ReturPembelian() {
 
 // ─── Purchase Dashboard ────────────────────────────────────────────────────────
 
-function PurchaseDashboard({ onSubChange }) {
+function PurchaseDashboard({ onSubChange, onNavigate }) {
   return (
     <div className="page" data-screen-label="Purchase — Dashboard">
-      <div className="crumbs"><a>Home</a><span className="sep">/</span><span className="current">Purchase</span></div>
+      <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><span className="current">Purchase</span></div>
       <div className="page-head">
         <div>
           <h1>Purchasing Workspace</h1>
@@ -796,12 +796,13 @@ function PurchaseDashboard({ onSubChange }) {
 
 // ─── Main page router ─────────────────────────────────────────────────────────
 
-function PurchasePage({ activeSub, onSubChange }) {
-  if (!activeSub)                return <PurchaseDashboard onSubChange={onSubChange} />;
-  if (activeSub === 'pemasok')   return <KatalogPemasok />;
-  if (activeSub === 'order')     return <OrderPembelian />;
-  if (activeSub === 'nota')      return <NotaPembelian />;
-  if (activeSub === 'retur')     return <ReturPembelian />;
+function PurchasePage({ activeSub, onSubChange, onNavigate }) {
+  const onBack = () => onSubChange(null);
+  if (!activeSub)                return <PurchaseDashboard onSubChange={onSubChange} onNavigate={onNavigate} />;
+  if (activeSub === 'pemasok')   return <KatalogPemasok onNavigate={onNavigate} onBack={onBack} />;
+  if (activeSub === 'order')     return <OrderPembelian  onNavigate={onNavigate} onBack={onBack} />;
+  if (activeSub === 'nota')      return <NotaPembelian   onNavigate={onNavigate} onBack={onBack} />;
+  if (activeSub === 'retur')     return <ReturPembelian  onNavigate={onNavigate} onBack={onBack} />;
   return null;
 }
 

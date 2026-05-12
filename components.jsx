@@ -362,11 +362,12 @@ const MODULE_SUBS = {
     { id:'menu',     label:'Katalog Menu' },
   ],
   admin: [
-    { id:'profil',  label:'Profil Perusahaan' },
-    { id:'default', label:'Nilai Default' },
-    { id:'cetakan', label:'Keterangan Cetakan' },
-    { id:'fitur',   label:'Fitur Administrator' },
-    { id:'sesi',    label:'Login Pengguna' },
+    { id:'profil',    label:'Profil Perusahaan' },
+    { id:'default',   label:'Nilai Default' },
+    { id:'cetakan',   label:'Keterangan Cetakan' },
+    { id:'fitur',     label:'Fitur Administrator' },
+    { id:'sesi',      label:'Login Pengguna' },
+    { id:'tampilan',  label:'Tampilan & Tema' },
   ],
 };
 
@@ -424,13 +425,12 @@ function MultiTabNav({ tabGroups, activeGroup, onGroupClick, onTabClick, onTabCl
               onClick={() => onGroupClick(m.id)}
               title={m.label}
             >
-              <span className="group-dot" style={{ background: color }} />
               <span className="mod-icon">{m.icon(13)}</span>
               <span>{m.label}</span>
               {hasSubs && group.collapsed && (
                 <span style={{
                   fontSize:10, fontWeight:700, lineHeight:1,
-                  background: color, color:'#fff',
+                  background: 'var(--primary)', color:'#fff',
                   borderRadius:10, padding:'2px 5px', marginLeft:2,
                 }}>
                   {group.openSubs.length}
