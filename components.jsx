@@ -301,7 +301,8 @@ const MODULES = [
   { id: 'home',     label: 'Home',         icon: I.home },
   { id: 'sales',    label: 'Pelanggan',    icon: I.users },
   { id: 'purchase', label: 'Purchase',     icon: I.truck },
-  { id: 'inventory',label: 'Inventory',    icon: I.box  },
+  { id: 'inventory',  label: 'Inventory',   icon: I.box  },
+  { id: 'manufaktur', label: 'Manufaktur', icon: I.list },
   { id: 'finance',  label: 'Akuntan',      icon: I.bank },
   { id: 'cashbank', label: 'Keuangan',     icon: I.bank },
   { id: 'reports',  label: 'Reports',      icon: I.chart},
@@ -329,6 +330,13 @@ const MODULE_SUBS = {
               { id:'nota', label:'Nota Pembelian' }, { id:'retur', label:'Retur Pembelian' }],
   sales:     [{ id:'katalog', label:'Katalog Pelanggan' }, { id:'order', label:'Order Penjualan' },
                { id:'nota', label:'Nota Penjualan' }, { id:'retur', label:'Retur Penjualan' }],
+  manufaktur: [
+    { id:'spk',      label:'Surat Perintah Kerja' },
+    { id:'produksi', label:'Hasil Produksi & Pemakaian Bahan' },
+    { id:'bpbl',     label:'Bukti Pemakaian Barang Lain' },
+    { id:'rpbl',     label:'Retur Pakai Barang Lain' },
+    { id:'planning', label:'Planning Schedule Produksi Harian' },
+  ],
   inventory: [{ id:'barang', label:'Katalog Barang' }, { id:'kategori', label:'Kategori Produk' },
                { id:'mutasi', label:'Mutasi Barang' }, { id:'penyesuaian', label:'Penyesuaian' },
                { id:'opname', label:'Stock Opname' }],
@@ -373,6 +381,7 @@ const MODULE_SUBS = {
 
 const GROUP_COLORS = {
   home:'#6366f1', purchase:'#0ea5e9', sales:'#10b981', inventory:'#f59e0b',
+  manufaktur:'#f97316',
   finance:'#8b5cf6', cashbank:'#ec4899', reports:'#14b8a6', master:'#64748b', admin:'#ef4444',
 };
 

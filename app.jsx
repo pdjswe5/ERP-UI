@@ -149,7 +149,8 @@ function App() {
   const renderContent = () => {
     if (g === 'home')      return <HomeDashboard onNavigate={navigateTo} />;
     if (g === 'purchase')  return <PurchasePage  activeSub={sub} onSubChange={id => onSubChange('purchase', id)} onNavigate={navigateTo} />;
-    if (g === 'inventory') return <InventoryPage activeSub={sub} onSubChange={id => onSubChange('inventory', id)} onNavigate={navigateTo} />;
+    if (g === 'inventory')  return <InventoryPage  activeSub={sub} onSubChange={id => onSubChange('inventory', id)}  onNavigate={navigateTo} />;
+    if (g === 'manufaktur') return <ManufakturPage activeSub={sub} onSubChange={id => onSubChange('manufaktur', id)} onNavigate={navigateTo} />;
     if (g === 'sales')     return <PelangganPage activeSub={sub} onSubChange={id => onSubChange('sales', id)} onNavigate={navigateTo} />;
     if (g === 'finance')   return <AkuntanPage   activeSub={sub} onSubChange={id => onSubChange('finance', id)} onNavigate={navigateTo} />;
     if (g === 'cashbank')  return <KeuanganPage  activeSub={sub} onSubChange={id => onSubChange('cashbank', id)} onNavigate={navigateTo} />;

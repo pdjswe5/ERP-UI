@@ -48,7 +48,7 @@ body {
 }
 button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 button { cursor: pointer; }
-.mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.mono { font-family: inherit; font-variant-numeric: tabular-nums; }
 
 /* ===== Top bar (SAP-style) ===== */
 .topbar {
