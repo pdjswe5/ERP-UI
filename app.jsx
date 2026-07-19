@@ -24,7 +24,7 @@ const INITIAL_TAB_GROUPS = () => {
 
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const [activeGroup, setActiveGroup] = React.useState('purchase');
+  const [activeGroup, setActiveGroup] = React.useState('pembelian');
   const [tabGroups, setTabGroups] = React.useState(INITIAL_TAB_GROUPS);
   const [toast, setToast] = React.useState(null);
   const [moduleOrder, setModuleOrder] = React.useState(() => MODULES.map(m => m.id));
@@ -147,16 +147,19 @@ function App() {
   const sub = tabGroups[g]?.activeSub ?? null;
 
   const renderContent = () => {
-    if (g === 'home')      return <HomeDashboard onNavigate={navigateTo} />;
-    if (g === 'purchase')  return <PurchasePage  activeSub={sub} onSubChange={id => onSubChange('purchase', id)} onNavigate={navigateTo} />;
-    if (g === 'inventory')  return <InventoryPage  activeSub={sub} onSubChange={id => onSubChange('inventory', id)}  onNavigate={navigateTo} />;
-    if (g === 'manufaktur') return <ManufakturPage activeSub={sub} onSubChange={id => onSubChange('manufaktur', id)} onNavigate={navigateTo} />;
-    if (g === 'sales')     return <PelangganPage activeSub={sub} onSubChange={id => onSubChange('sales', id)} onNavigate={navigateTo} />;
-    if (g === 'finance')   return <AkuntanPage   activeSub={sub} onSubChange={id => onSubChange('finance', id)} onNavigate={navigateTo} />;
-    if (g === 'cashbank')  return <KeuanganPage  activeSub={sub} onSubChange={id => onSubChange('cashbank', id)} onNavigate={navigateTo} />;
-    if (g === 'master')    return <MasterPage    activeSub={sub} onSubChange={id => onSubChange('master', id)} onNavigate={navigateTo} />;
-    if (g === 'reports')   return <ReportsPage   activeSub={sub} onSubChange={id => onSubChange('reports', id)} onNavigate={navigateTo} />;
-    if (g === 'admin')     return <AdminPage     activeSub={sub} onSubChange={id => onSubChange('admin', id)} onNavigate={navigateTo} theme={t} setTheme={setTweak} />;
+    if (g === 'home')        return <HomeDashboard onNavigate={navigateTo} />;
+    if (g === 'pembelian')   return <PembelianPage   activeSub={sub} onSubChange={id => onSubChange('pembelian', id)}   onNavigate={navigateTo} />;
+    if (g === 'barang')      return <BarangPage      activeSub={sub} onSubChange={id => onSubChange('barang', id)}      onNavigate={navigateTo} />;
+    if (g === 'kataloglain') return <KatalogLainPage activeSub={sub} onSubChange={id => onSubChange('kataloglain', id)} onNavigate={navigateTo} />;
+    if (g === 'manufaktur')  return <ManufakturPage  activeSub={sub} onSubChange={id => onSubChange('manufaktur', id)}  onNavigate={navigateTo} />;
+    if (g === 'sales')       return <PenjualanPage   activeSub={sub} onSubChange={id => onSubChange('sales', id)}       onNavigate={navigateTo} />;
+    if (g === 'finance')     return <AkuntanPage     activeSub={sub} onSubChange={id => onSubChange('finance', id)}     onNavigate={navigateTo} />;
+    if (g === 'cashbank')    return <KeuanganPage    activeSub={sub} onSubChange={id => onSubChange('cashbank', id)}    onNavigate={navigateTo} />;
+    if (g === 'master')      return <MasterPage      activeSub={sub} onSubChange={id => onSubChange('master', id)}      onNavigate={navigateTo} />;
+    if (g === 'reports')     return <ReportsPage     activeSub={sub} onSubChange={id => onSubChange('reports', id)}     onNavigate={navigateTo} />;
+    if (g === 'pengaturan')  return <PengaturanPage  activeSub={sub} onSubChange={id => onSubChange('pengaturan', id)}  onNavigate={navigateTo} />;
+    if (g === 'admin')       return <AdminPage       activeSub={sub} onSubChange={id => onSubChange('admin', id)}       onNavigate={navigateTo} theme={t} setTheme={setTweak} />;
+    if (g === 'inventory')   return <InventoryPage   activeSub={sub} onSubChange={id => onSubChange('inventory', id)}   onNavigate={navigateTo} />;
     return null;
   };
 
@@ -201,7 +204,7 @@ function App() {
 
         <TweakSection label="Navigation" />
         <TweakButton label="Go to Dashboard"       onClick={() => activateGroup('home')} />
-        <TweakButton label="Go to Order Pembelian" onClick={() => openSubTab('purchase', 'order')} secondary />
+        <TweakButton label="Go to Pembelian"       onClick={() => activateGroup('pembelian')} secondary />
         <TweakButton label="Go to Inventory"       onClick={() => activateGroup('inventory')} secondary />
         <TweakButton label="Go to Pelanggan"       onClick={() => activateGroup('sales')} secondary />
         <TweakButton label="Go to Akuntan"         onClick={() => activateGroup('finance')} secondary />

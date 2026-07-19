@@ -29,6 +29,7 @@ const I = {
   cart:    (s=16)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4A2 2 0 0 0 9.7 16h9.4a2 2 0 0 0 2-1.6L23 6H6"/></svg>,
   truck:   (s=16)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="6" width="13" height="11" rx="1"/><polyline points="14 9 18 9 22 13 22 17 14 17"/><circle cx="6" cy="20" r="2"/><circle cx="18" cy="20" r="2"/></svg>,
   box:     (s=16)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>,
+  layers:  (s=16)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 22 8 12 14 2 8 12 2"/><polyline points="2 17 12 23 22 17"/><polyline points="2 12 12 18 22 12"/></svg>,
   invoice: (s=16)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>,
   list:    (s=16)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>,
   zoom:    (s=16)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>,
@@ -38,6 +39,7 @@ const I = {
   shield:  (s=16)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
   check:   (s=14)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
   arrowR:  (s=12)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+  fileX:   (s=14)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8.5"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="13" y2="13"/><line x1="16.5" y1="17.5" x2="21.5" y2="22.5"/><line x1="21.5" y1="17.5" x2="16.5" y2="22.5"/></svg>,
 };
 
 // PDJ logo mark — abstract geometric (no Ford)
@@ -298,16 +300,18 @@ function TopBar({ onHome, onNavigate }) {
 
 // ---------- Module nav (SAP-style horizontal tabs) ----------
 const MODULES = [
-  { id: 'home',     label: 'Home',         icon: I.home },
-  { id: 'sales',    label: 'Pelanggan',    icon: I.users },
-  { id: 'purchase', label: 'Purchase',     icon: I.truck },
-  { id: 'inventory',  label: 'Inventory',   icon: I.box  },
-  { id: 'manufaktur', label: 'Manufaktur', icon: I.list },
-  { id: 'finance',  label: 'Akuntan',      icon: I.bank },
-  { id: 'cashbank', label: 'Keuangan',     icon: I.bank },
-  { id: 'reports',  label: 'Reports',      icon: I.chart},
-  { id: 'master',   label: 'Master Data',  icon: I.users},
-  { id: 'admin',    label: 'System Admin', icon: I.shield},
+  { id: 'home',        label: 'Home',         icon: I.home },
+  { id: 'sales',       label: 'Penjualan',    icon: I.users },
+  { id: 'pembelian',   label: 'Pembelian',    icon: I.truck },
+  { id: 'barang',      label: 'Barang',       icon: I.box },
+  { id: 'kataloglain', label: 'Katalog Lain', icon: I.layers },
+  { id: 'manufaktur',  label: 'Manufaktur',   icon: I.list },
+  { id: 'finance',     label: 'Akuntan',      icon: I.bank },
+  { id: 'cashbank',    label: 'Keuangan',     icon: I.bank },
+  { id: 'reports',     label: 'Reports',      icon: I.chart },
+  { id: 'master',      label: 'Master Data',  icon: I.users },
+  { id: 'admin',       label: 'System Admin', icon: I.shield },
+  { id: 'pengaturan',  label: 'Pengaturan',   icon: I.settings },
 ];
 
 function ModuleNav({ active, onChange }) {
@@ -326,10 +330,13 @@ function ModuleNav({ active, onChange }) {
 // ---------- Multi-tab nav (Chrome-style tab groups) ----------
 const MODULE_SUBS = {
   home:      [],
-  purchase:  [{ id:'pemasok', label:'Katalog Pemasok' }, { id:'order', label:'Order Pembelian' },
-              { id:'nota', label:'Nota Pembelian' }, { id:'retur', label:'Retur Pembelian' }],
-  sales:     [{ id:'katalog', label:'Katalog Pelanggan' }, { id:'order', label:'Order Penjualan' },
-               { id:'nota', label:'Nota Penjualan' }, { id:'retur', label:'Retur Penjualan' }],
+  pembelian: [{ id:'pemasok', label:'Katalog Pemasok' }, { id:'pr', label:'Purchase Request' },
+              { id:'rfq', label:'Request for Quotation' }, { id:'quotation', label:'Quotation' },
+              { id:'gr', label:'Goods Receive' }, { id:'po', label:'Purchase Order' },
+              { id:'beli', label:'Nota Pembelian' }, { id:'retur', label:'Retur Beli' }],
+  sales:     [{ id:'katalog', label:'Katalog Pelanggan' }, { id:'konfirmasi', label:'Konfirmasi Penjualan' },
+               { id:'salesorder', label:'Sales Order' }, { id:'delivery', label:'Delivery Order' },
+               { id:'invoice', label:'Invoice' }, { id:'retur', label:'Sales Return' }],
   manufaktur: [
     { id:'spk',      label:'Surat Perintah Kerja' },
     { id:'produksi', label:'Hasil Produksi & Pemakaian Bahan' },
@@ -361,6 +368,25 @@ const MODULE_SUBS = {
     { id:'produksi',   label:'Hasil Produksi & Pemakaian Barang' },
     { id:'pemakaian',  label:'Pemakaian Bahan' },
   ],
+  barang: [
+    { id:'baranglain',   label:'Barang Lain' },
+    { id:'bahankaku',    label:'Bahan Baku' },
+    { id:'barangjadi',   label:'Barang Jadi Umum & PU' },
+    { id:'mutasi',       label:'Mutasi Barang & Konsinyasi' },
+    { id:'penyesuaian',  label:'Penyesuaian Barang' },
+    { id:'opname',       label:'Stock Opname' },
+  ],
+  kataloglain: [
+    { id:'salesman',     label:'Katalog Salesman' },
+    { id:'gudang',       label:'Katalog Gudang' },
+    { id:'kategori',     label:'Katalog Kategori Barang' },
+    { id:'satuan',       label:'Katalog Satuan Barang' },
+    { id:'pelengkap',    label:'Pelengkap Bahan Baku & Barang Umum' },
+    { id:'akunbukubesar',label:'Katalog Akun Buku Besar' },
+    { id:'aktiva',       label:'Katalog Aktiva' },
+    { id:'user',         label:'Katalog User' },
+    { id:'grupuser',     label:'Katalog Grup User' },
+  ],
   master: [
     { id:'salesman', label:'Katalog Salesman' },
     { id:'gudang',   label:'Katalog Gudang' },
@@ -368,6 +394,14 @@ const MODULE_SUBS = {
     { id:'user',     label:'Katalog User' },
     { id:'grup',     label:'Katalog Grup User' },
     { id:'menu',     label:'Katalog Menu' },
+  ],
+  pengaturan: [
+    { id:'akses',      label:'Akses User' },
+    { id:'menu',       label:'Menu' },
+    { id:'grupmenu',   label:'Grup Menu' },
+    { id:'sistem',     label:'Konfigurasi Sistem' },
+    { id:'organisasi', label:'Konfigurasi Organisasi' },
+    { id:'penjualan',  label:'Konfigurasi Penjualan' },
   ],
   admin: [
     { id:'profil',    label:'Profil Perusahaan' },
@@ -380,9 +414,10 @@ const MODULE_SUBS = {
 };
 
 const GROUP_COLORS = {
-  home:'#6366f1', purchase:'#0ea5e9', sales:'#10b981', inventory:'#f59e0b',
-  manufaktur:'#f97316',
+  home:'#6366f1', pembelian:'#0ea5e9', sales:'#10b981', inventory:'#f59e0b',
+  barang:'#f59e0b', kataloglain:'#0d9488', manufaktur:'#f97316',
   finance:'#8b5cf6', cashbank:'#ec4899', reports:'#14b8a6', master:'#64748b', admin:'#ef4444',
+  pengaturan:'#6b7280',
 };
 
 function MultiTabNav({ tabGroups, activeGroup, onGroupClick, onTabClick, onTabClose, onToggleCollapse, moduleOrder, onReorderGroups, onReorderSubTabs }) {
@@ -515,10 +550,317 @@ function MultiTabNav({ tabGroups, activeGroup, onGroupClick, onTabClick, onTabCl
   );
 }
 
+// ---------- Reusable module dashboard (Pengaturan, Katalog Lain, Barang) ----------
+function ModuleDashboard({ title, subtitle, sections, activityLog, onOpenSub, activityTitle = 'Log Aktivitas Terbaru', activitySub = 'Operasi sistem yang dideteksi secara real-time' }) {
+  return (
+    <div className="page" data-screen-label={title}>
+      <div className="crumbs">
+        <a onClick={() => onOpenSub?.(null)} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
+        <span className="current">{title}</span>
+      </div>
+      <div className="page-head">
+        <div>
+          <h1>{title}</h1>
+          <div className="sub">{subtitle}</div>
+        </div>
+      </div>
+      <div style={{display:'grid', gridTemplateColumns:'1.5fr 1fr', gap:20, alignItems:'start'}}>
+        <div>
+          {sections.map((sec, i) => (
+            <div key={i} style={{marginBottom:24}}>
+              {sec.title && (
+                <h3 className="section-title" style={{textTransform:'uppercase', letterSpacing:'.06em', fontSize:12, color:'var(--text-3)'}}>
+                  {sec.title} <span className="count">{sec.count}</span>
+                </h3>
+              )}
+              <div className="tile-grid">
+                {sec.tiles.map(t => (
+                  <button key={t.id} className="tile" onClick={() => onOpenSub?.(t.id)}>
+                    <div className="tile-head">
+                      <div className="tile-icon-wrap" style={{background:'var(--primary-50)', color:'var(--primary)'}}>{t.icon || I.list(20)}</div>
+                      {t.badge && <span className="tile-badge">{t.badge}</span>}
+                    </div>
+                    <div>
+                      <h3>{t.title}</h3>
+                    </div>
+                    <div className="tile-foot"><b style={{color:'var(--text-3)', fontWeight:500}}>Buka</b> {I.arrowR(11)}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="panel">
+          <h3>{activityTitle}</h3>
+          <div className="sub" style={{marginBottom:14}}>{activitySub}</div>
+          <div style={{display:'flex', flexDirection:'column', gap:14}}>
+            {activityLog.map((log, idx) => (
+              <div key={idx} style={{display:'flex', gap:12}}>
+                <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+                  <span style={{width:10, height:10, borderRadius:'50%', background: log.color || 'var(--primary)', border:'2px solid #fff', boxShadow:'0 0 0 1px var(--border)'}}></span>
+                  {idx < activityLog.length - 1 && <div style={{width:1, flex:1, background:'var(--border)', marginTop:4}}></div>}
+                </div>
+                <div style={{flex:1, paddingBottom:12}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
+                    <b style={{fontSize:13}}>{log.user}</b>
+                    <span style={{fontSize:11, color:'var(--text-4)'}}>{log.time}</span>
+                  </div>
+                  <div style={{fontSize:12.5, color:'var(--text-2)', marginTop:2}}>{log.action} <b style={{color:'var(--primary)'}}>{log.detail}</b></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------- Toast ----------
 function Toast({ msg, kind = 'success' }) {
   if (!msg) return null;
   return <div className={`toast ${kind}`}>{kind==='success' ? I.check() : null}{msg}</div>;
 }
 
-Object.assign(window, { I, BrandMark, TopBar, ModuleNav, MODULES, Toast, MultiTabNav, MODULE_SUBS, GROUP_COLORS });
+// ---------- Confirmation Modal (Batalkan / Selesaikan Manual / dll) ----------
+function ConfirmationModal({ title, message, onConfirm, onCancel, confirmLabel='Konfirmasi', cancelLabel='Batal', confirmKind='danger', requireReason=true }) {
+  const [reason, setReason] = React.useState('');
+  const canConfirm = !requireReason || reason.trim();
+  return (
+    <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+      <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:480}}>
+        <div className="modal-head"><h2>{title}</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
+        <div className="modal-body">
+          <p style={{margin:'0 0 14px', color:'var(--text-2)'}}>{message}</p>
+          {requireReason && (
+            <div className="field"><label>Alasan <span style={{color:'var(--danger)'}}>*</span></label><textarea className="textarea" value={reason} onChange={e=>setReason(e.target.value)} placeholder="Masukkan alasan…"/></div>
+          )}
+        </div>
+        <div className="modal-foot">
+          <button className="btn" onClick={onCancel}>{cancelLabel}</button>
+          <button className={`btn btn-${confirmKind}`} onClick={()=>onConfirm(reason)} disabled={!canConfirm}>{confirmLabel}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Item Picker Modal ----------
+function ItemPickerModal({ title, items, onConfirm, onCancel }) {
+  const [q, setQ] = React.useState('');
+  const [selected, setSelected] = React.useState({});
+  const [qtyMap, setQtyMap] = React.useState({});
+
+  const filtered = React.useMemo(() => {
+    if (!q) return items;
+    const ql = q.toLowerCase();
+    return items.filter(it => (it.nama||it.name||it.Nama_Item||'').toLowerCase().includes(ql) || (it.kode||it.code||it.Kode_Item||'').toLowerCase().includes(ql));
+  }, [items, q]);
+
+  const toggle = (code) => {
+    setSelected(prev => {
+      const next = { ...prev };
+      if (next[code]) {
+        delete next[code];
+        // hapus qty juga
+        setQtyMap(qm => { const nqm={...qm}; delete nqm[code]; return nqm; });
+      } else {
+        next[code] = true;
+      }
+      return next;
+    });
+  };
+
+  const setQty = (code, val) => setQtyMap(prev => ({ ...prev, [code]: Math.max(1, +val || 1) }));
+
+  const selectedCount = Object.keys(selected).length;
+
+  const handleConfirm = () => {
+    const picked = Object.keys(selected).map(code => {
+      const it = items.find(x => (x.kode||x.code||x.Kode_Item) === code);
+      return { ...it, _qty: qtyMap[code] || 1 };
+    });
+    onConfirm(picked);
+  };
+
+  return (
+    <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+      <div className="modal item-picker-modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-head"><h2>{title || 'Pilih Barang'}</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
+        <div className="modal-body">
+          <div style={{display:'flex', justifyContent:'flex-end', marginBottom:12}}>
+            <div className="field" style={{width:'40%', minWidth:200, marginBottom:0}}>
+              <div className="input-w-icon">{I.search(14)}<input className="input" placeholder="Cari kode atau nama barang…" value={q} onChange={e=>setQ(e.target.value)}/></div>
+            </div>
+          </div>
+          <div className="line-items picker-table" style={{maxHeight:320, overflowY:'auto'}}>
+            <table>
+              <thead><tr><th style={{width:40}}></th><th>Kode</th><th>Nama Barang</th><th style={{width:90}}>Jumlah</th></tr></thead>
+              <tbody>
+                {filtered.length === 0 && <tr><td colSpan={4} className="empty">Tidak ditemukan.</td></tr>}
+                {filtered.map(it => {
+                  const code = it.kode || it.code || it.Kode_Item;
+                  const name = it.nama || it.name || it.Nama_Item;
+                  const isSel = !!selected[code];
+                  return (
+                    <tr key={code} className={isSel ? 'selected' : ''} onClick={()=>toggle(code)}>
+                      <td><input type="checkbox" checked={isSel} onChange={()=>toggle(code)} onClick={e=>e.stopPropagation()}/></td>
+                      <td className="mono">{code}</td>
+                      <td>{name}</td>
+                      <td>
+                        {isSel ? (
+                          <input className="cell num" type="number" min={1} value={qtyMap[code]||1} onChange={e=>setQty(code, e.target.value)} onClick={e=>e.stopPropagation()}/>
+                        ) : (
+                          <span className="muted">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <div className="muted" style={{fontSize:12.5}}>{selectedCount} barang dipilih</div>
+          <div className="right" style={{display:'flex', gap:8}}>
+            <button className="btn" onClick={onCancel}>Batal</button>
+            <button className="btn btn-primary" onClick={handleConfirm} disabled={selectedCount===0}>{I.plus()} Tambah Item ({selectedCount})</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- ScrollNavModal (wide modal shell with nav buttons + 3-mode) ----------
+function ScrollNavModal({
+  title,
+  subtitle,
+  mode,
+  sections,
+  summaryPanel,
+  preContent,
+  statusBadge,
+  locked,
+  onClose,
+  onSave,
+  onSaveAndClose,
+  onCancelDoc,
+  onCompleteDoc,
+  onEditMode,
+  onCancelEdit,
+  showSelesai,
+  xwide,
+}) {
+  const bodyRef = React.useRef(null);
+  const sectionRefs = React.useRef({});
+  const [activeSection, setActiveSection] = React.useState(sections[0]?.id);
+
+  const scrollTo = (id) => {
+    setActiveSection(id);
+    const el = sectionRefs.current[id];
+    const body = bodyRef.current;
+    if (el && body) {
+      const bodyRect = body.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      body.scrollBy({ top: elRect.top - bodyRect.top - 12, behavior: 'smooth' });
+    }
+  };
+
+  React.useEffect(() => {
+    if (!bodyRef.current) return;
+    const body = bodyRef.current;
+    const onScroll = () => {
+      const bodyTop = body.getBoundingClientRect().top;
+      let closest = null, closestDist = Infinity;
+      sections.forEach(s => {
+        const el = sectionRefs.current[s.id];
+        if (!el) return;
+        const dist = Math.abs(el.getBoundingClientRect().top - bodyTop - 12);
+        if (dist < closestDist) { closestDist = dist; closest = s.id; }
+      });
+      if (closest) setActiveSection(closest);
+    };
+    body.addEventListener('scroll', onScroll, { passive: true });
+    return () => body.removeEventListener('scroll', onScroll);
+  }, [sections]);
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className={`modal modal-wide ${xwide ? 'modal-xwide' : ''}`} onClick={e=>e.stopPropagation()}>
+        <div className="modal-head">
+          <div>
+            <h2 style={{display:'flex', alignItems:'center', gap:10, flexWrap:'wrap'}}>
+              {title}
+              {statusBadge}
+            </h2>
+            {subtitle && <div className="sub">{subtitle}</div>}
+          </div>
+          <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
+        </div>
+
+        <div className="scroll-nav-bar">
+          {sections.map(s => (
+            <button key={s.id} className={activeSection===s.id?'active':''} onClick={()=>scrollTo(s.id)}>{s.label}</button>
+          ))}
+        </div>
+
+        <div className="modal-body modal-body-scroll" ref={bodyRef}>
+          <div className={`scroll-modal-layout ${summaryPanel ? 'with-side' : ''}`}>
+            <div className="scroll-modal-main">
+              {preContent}
+              {sections.map(s => (
+                <div key={s.id} ref={el => sectionRefs.current[s.id] = el} className="scroll-section">
+                  {s.content}
+                </div>
+              ))}
+            </div>
+            {summaryPanel && (
+              <div className="scroll-modal-side">
+                {summaryPanel}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="modal-foot">
+          <div className="muted" style={{fontSize:12.5}}><kbd>Esc</kbd> untuk batal</div>
+          <div className="right" style={{display:'flex', gap:8}}>
+            {mode === 'VIEW' && !locked && onEditMode && (
+              <button className="btn btn-primary" onClick={onEditMode}>{I.edit()} Edit</button>
+            )}
+            {mode === 'VIEW' && !locked && onCancelDoc && (
+              <button className="btn btn-danger-outline" onClick={onCancelDoc}>{I.fileX(14)} Batalkan Transaksi</button>
+            )}
+            {mode === 'VIEW' && !locked && onCompleteDoc && showSelesai && (
+              <button className="btn btn-success" onClick={onCompleteDoc}>{I.check()} Selesaikan Manual</button>
+            )}
+            {mode === 'VIEW' && (
+              <button className="btn" onClick={()=>window.__erpToast && window.__erpToast('Fitur cetak belum tersedia pada prototipe ini.')}>{I.print()} Cetak</button>
+            )}
+            {mode === 'CREATE' && (
+              <>
+                <button className="btn" onClick={onClose}>Tutup</button>
+                <button className="btn btn-primary btn-soft" onClick={onSaveAndClose}>{I.check()} Simpan & Tutup</button>
+                <button className="btn btn-primary" onClick={onSave}>{I.check()} Simpan</button>
+              </>
+            )}
+            {mode === 'EDIT' && (
+              <>
+                <button className="btn" onClick={onClose}>Tutup</button>
+                <button className="btn btn-danger-outline" onClick={onCancelEdit}>Batalkan Perubahan</button>
+                <button className="btn btn-primary" onClick={onSave}>{I.check()} Simpan</button>
+              </>
+            )}
+            {mode === 'VIEW' && (
+              <button className="btn" onClick={onClose}>Tutup</button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { I, BrandMark, TopBar, ModuleNav, MODULES, Toast, MultiTabNav, MODULE_SUBS, GROUP_COLORS, ModuleDashboard, ConfirmationModal, ItemPickerModal, ScrollNavModal });
