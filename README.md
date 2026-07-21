@@ -20,13 +20,13 @@ Prototype sistem ERP berbasis web untuk PT. Pacific Data Jaya. Dibangun dengan R
 Project ini adalah aplikasi HTML statis — cukup serve file-nya dengan web server lokal.
 
 ### Github Pages
-[ERP Pada Jaya](https://pdjswe5.github.io/ERP-UI/erp.html)
+[ERP Pada Jaya](https://demo2.pacificdatajaya.com/) (custom domain — root langsung memuat `index.html`)
 
 ### Menggunakan VS Code Live Preview (Recommended)
 
 1. Install ekstensi [Live Preview](https://marketplace.visualstudio.com/items?itemName=ms-vscode.live-server) di VS Code
 2. Buka folder `ERP` di VS Code
-3. Klik kanan file `erp.html` → **Show Preview**
+3. Klik kanan file `index.html` → **Show Preview**
    - Atau tekan `Ctrl+Shift+P` → ketik `Live Preview: Show Preview (External Browser)`
 
 > Konfigurasi default preview sudah diatur di `.vscode/settings.json`.
@@ -37,7 +37,7 @@ Project ini adalah aplikasi HTML statis — cukup serve file-nya dengan web serv
 python -m http.server 8080
 ```
 
-Lalu buka browser ke `http://localhost:8080/erp.html`
+Lalu buka browser ke `http://localhost:8080/index.html`
 
 ### Menggunakan Node.js
 
@@ -45,15 +45,15 @@ Lalu buka browser ke `http://localhost:8080/erp.html`
 npx serve .
 ```
 
-Lalu buka URL yang muncul di terminal dan tambahkan `/erp.html`.
+Lalu buka URL yang muncul di terminal (root sudah memuat `index.html` otomatis).
 
-> **Catatan:** Jangan buka `erp.html` dengan double-click langsung (file://). Browser akan memblokir pemuatan file JSX karena kebijakan CORS.
+> **Catatan:** Jangan buka `index.html` dengan double-click langsung (file://). Browser akan memblokir pemuatan file JSX karena kebijakan CORS.
 
 ## Struktur File
 
 ```
 ERP/
-├── erp.html          # Entry point — load semua script
+├── index.html        # Entry point — load semua script
 ├── styles.css        # Global stylesheet
 ├── app.jsx           # App shell & routing
 ├── components.jsx    # TopBar, MultiTabNav, icon set, shared components

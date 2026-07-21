@@ -1,0 +1,12 @@
+// Barang — seed data Barang Jadi Umum & PU. Dipindah dari root barang.jsx, nilai tidak diubah.
+
+const BARANG_JADI = [
+  { kodeProduk:'PRD001', namaProduk:'Plastik Kemasan Premium', kodeKategori:'JADI', satuan:'PCS', hppStandar:12500.5, minimQty:10, tipeData:'F', status:'AKTIF', kodeHrg:'HRG001', warna:'AA', tebal:1.08, lebar:25, tebalTop:1.09, tebalBot:1.07, tipe:'CUSTOM', warnaTop:'Merah', warnaBot:'Putih', merk:'AL', panjang:100.21, satPjg:'MTR', berat:12.5, lbrReal:25.0, pjgReal:99.5, ketwarna:'ABU ANGOLA', bahan:3, bmt:5.5, ongkos:2500, jenis:'ROLL', namaCetak:'LOGO PERUSAHAAN', aktif:true, keterangan:'Produk untuk kemasan makanan',
+    detailsPU:[
+      { lapisKe:1, kodeProdukPU:'PRD001', namaProdukPU:'Plastik Kemasan Premium', kodeProduk:'AS1025ATBONON075000410', namaProduk:'ATAP SALJU 4CM TEBAL 0.25 ATAP BIRU BOGOWONTO NON BSI LEBAR 750 MM PANJANG 4.10 MTR', satuan:'KG' },
+      { lapisKe:2, kodeProdukPU:'PRD001', namaProdukPU:'Plastik Kemasan Premium', kodeProduk:'AS1025ATBONON075000600', namaProduk:'ATAP SALJU 4CM TEBAL 0.25 ATAP BIRU BOGOWONTO NON BSI LEBAR 750 MM PANJANG 6 MTR', satuan:'KG' },
+    ] },
+  { kodeProduk:'*CO ABALAZ00010500', namaProduk:'COIL ATAP FIBERGLASS BURNT ALMOND AZ LEBAR 1 MM PANJANG 5 MTR', kodeKategori:'JADI', satuan:'PCS', hppStandar:100000, minimQty:5, tipeData:'F', status:'AKTIF', kodeHrg:'HRG002', warna:'AL', tebal:0, lebar:1, tebalTop:0, tebalBot:0, tipe:'F', warnaTop:'', warnaBot:'', merk:'AZ', panjang:5, satPjg:'MTR', berat:0, lbrReal:0, pjgReal:0, ketwarna:'', bahan:0, bmt:0, ongkos:0, jenis:'*CO', namaCetak:'CETAK 1', aktif:true, keterangan:'', detailsPU:[] },
+  { kodeProduk:'AM11-UM-260630110652', namaProduk:'BT ATAP FIBERGLASS ABU ANGKOLA AZ 100', kodeKategori:'JADI', satuan:'PCS', hppStandar:300000, minimQty:5, tipeData:'F', status:'AKTIF', kodeHrg:'HRG003', warna:'AA', tebal:0, lebar:0, tebalTop:0, tebalBot:0, tipe:'AB', warnaTop:'', warnaBot:'', merk:'AL', panjang:0, satPjg:'', berat:0, lbrReal:0, pjgReal:0, ketwarna:'', bahan:0, bmt:0, ongkos:0, jenis:'BT', namaCetak:'', aktif:true, keterangan:'Jangan ada yang cacat', detailsPU:[] },
+  { kodeProduk:'K012', namaProduk:'Barang Kursi', kodeKategori:'JADI', satuan:'PCS', hppStandar:215000, minimQty:40, tipeData:'F', status:'NONAKTIF', kodeHrg:'HRG004', warna:'', tebal:0, lebar:0, tebalTop:0, tebalBot:0, tipe:'', warnaTop:'', warnaBot:'', merk:'', panjang:0, satPjg:'', berat:0, lbrReal:0, pjgReal:0, ketwarna:'', bahan:0, bmt:0, ongkos:0, jenis:'', namaCetak:'', aktif:false, keterangan:'Barang Bagusss', detailsPU:[] },
+];

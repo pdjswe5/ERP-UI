@@ -199,7 +199,7 @@ function MfSpkPickerModal({ onPick, onClose }) {
 // ─── SO Picker Modal ──────────────────────────────────────────────────────────
 // Salinan pola picker dokumen milik SO (lihat KoDocPickerModal di salesorder.data.jsx, dipakai
 // "Buat SO dari KO") — di sini dipakai SPK untuk mengambil referensi Sales Order (bukan KO).
-// Sumber SALES_ORDER_SEED (modul Penjualan, sudah dimuat lebih dulu di erp.html).
+// Sumber SALES_ORDER_SEED (modul Penjualan, sudah dimuat lebih dulu di index.html).
 
 function MfSoPickerModal({ onCancel, onConfirm }) {
   const [q, setQ] = React.useState('');
