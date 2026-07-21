@@ -452,6 +452,11 @@ button { cursor: pointer; }
 .textarea { height: auto; padding: 8px 10px; min-height: 64px; resize: vertical; }
 .input:focus, .select:focus, .textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(56,107,224,.12); }
 .input[readonly] { background: var(--bg-sub); }
+/* Field terkunci (mis. gerbang F/K sebelum No. Bukti diisi) — sama gelapnya dengan .view-value,
+   supaya terlihat jelas non-aktif alih-alih abu-abu bawaan browser. */
+.input:disabled, .select:disabled, .textarea:disabled {
+  background: var(--bg-sub); color: var(--text-3); border-color: var(--border); cursor: not-allowed;
+}
 .input-w-icon { position: relative; }
 .input-w-icon .input { padding-left: 30px; }
 .input-w-icon svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--text-4); }
