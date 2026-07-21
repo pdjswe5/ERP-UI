@@ -1,9 +1,54 @@
-// Barang — seed data Bahan Baku. Dipindah dari root barang.jsx, nilai tidak diubah.
+// Barang — seed data Bahan Baku.
+//
+// 40 record dibangun lewat helper bbRow supaya variatif (mengikuti pola generator seed data lain
+// sesi ini, mis. lnRow di Barang Lain) tanpa menulis tiap baris manual. warna/az/yield memakai
+// kode dari BRG_WARNA_OPTS/BRG_AZ_OPTS/BRG_YIELD_OPTS (master.data.jsx, dimuat lebih dulu di
+// index.html), keterangan dirangkai otomatis persis seperti logika autofill di BahanBakuModal.
 
-const BAHAN_BAKU = [
-  { kodeProduk:'BBKKAAAA', namaProduk:'BAKU AG TEBAL 1 LEBAR 1 AZ 100 G-400', kodeKategori:'BAKU', warna:'AG', tebal:1, lebar:1, satuan:'PCS', hppStandar:125000, namaProdukSupplier:'AG Steel', tipeData:'K', az:'100', yield:'400', slow:true, marketing:true, minimQty:12, minimBhp:12, minimNon:9, koefisien:12, toleransi:12, margin:0, aktif:true, keterangan:'' },
-  { kodeProduk:'AA0450914100550', namaProduk:'BAHAN ABU ANGKOLA TEBAL 0.45 LEBAR 914 MM AZ 100 G-550', kodeKategori:'BAKU', warna:'AA', tebal:0.45, lebar:914, satuan:'LBR', hppStandar:275000, namaProdukSupplier:'PT Sinar Jaya', tipeData:'K', az:'100', yield:'550', slow:false, marketing:true, minimQty:50, minimBhp:20, minimNon:10, koefisien:1.2, toleransi:0.02, margin:5, aktif:true, keterangan:'Bahan produksi utama' },
-  { kodeProduk:'BB040091470550', namaProduk:'BAHAGIA BIRU BROMO TEBAL 0.40 LEBAR 914 MM AZ 70 G-550', kodeKategori:'BAKU', warna:'BB', tebal:0.40, lebar:914, satuan:'LBR', hppStandar:260000, namaProdukSupplier:'PT Sinar Jaya', tipeData:'K', az:'70', yield:'550', slow:false, marketing:false, minimQty:30, minimBhp:15, minimNon:8, koefisien:1.1, toleransi:0.03, margin:4, aktif:true, keterangan:'' },
-  { kodeProduk:'AS1025ATBONON075000410', namaProduk:'ATAP SALJU 4CM TEBAL 0.25 ATAP BIRU BOGOWONTO NON BSI LEBAR 750 MM PANJANG 4.10 MTR', kodeKategori:'BAKU', warna:'AS', tebal:0.25, lebar:750, satuan:'KG', hppStandar:98000, namaProdukSupplier:'Bogowonto Metal', tipeData:'K', az:'100', yield:'400', slow:true, marketing:false, minimQty:10, minimBhp:5, minimNon:3, koefisien:1.0, toleransi:0.05, margin:3, aktif:true, keterangan:'' },
-  { kodeProduk:'BBBA', namaProduk:'Kursi Paling Baru 2025', kodeKategori:'BAKU', warna:'BR', tebal:0.5, lebar:500, satuan:'PCS', hppStandar:1, namaProdukSupplier:'BREAKKKKK', tipeData:'K', az:'100', yield:'400', slow:true, marketing:true, minimQty:1, minimBhp:12, minimNon:9, koefisien:12, toleransi:12, margin:0, aktif:false, keterangan:'Sample data' },
-];
+const BB_WARNA_CODES = BRG_WARNA_OPTS.map(w => w.kode);
+const BB_AZ_CODES = BRG_AZ_OPTS.map(a => a.kode);
+const BB_YIELD_CODES = BRG_YIELD_OPTS.map(y => y.kode);
+const BB_SATUAN_CODES = BRG_SATUAN_OPTS;
+const BB_SUPPLIERS = ['PT Sinar Jaya', 'AG Steel', 'Bogowonto Metal', 'PT Baja Makmur', 'CV Logam Sejahtera', 'PT Metal Perkasa', 'UD Sumber Rejeki', 'PT Cahaya Logam'];
+const BB_LEBAR_STEPS = [500, 750, 900, 914, 1000, 1219];
+
+function bbNama(opts, kode) { return opts.find(o => o.kode === kode)?.nama || ''; }
+
+function bbKeterangan(warna, az, yld) {
+  return [
+    warna && `Warna: ${bbNama(BRG_WARNA_OPTS, warna)} (${warna})`,
+    az && `AZ: ${bbNama(BRG_AZ_OPTS, az)}`,
+    yld && `Yield: ${bbNama(BRG_YIELD_OPTS, yld)}`,
+  ].filter(Boolean).join('; ');
+}
+
+function bbRow(idx) {
+  const warna = BB_WARNA_CODES[idx % BB_WARNA_CODES.length];
+  const az = BB_AZ_CODES[idx % BB_AZ_CODES.length];
+  const yld = BB_YIELD_CODES[idx % BB_YIELD_CODES.length];
+  const satuan = BB_SATUAN_CODES[idx % BB_SATUAN_CODES.length];
+  const tebal = +(0.2 + (idx % 8) * 0.05).toFixed(2);
+  const lebar = BB_LEBAR_STEPS[idx % BB_LEBAR_STEPS.length];
+  const kodeProduk = `BB-${String(idx + 1).padStart(3, '0')}`;
+  const namaProduk = `BAHAN ${bbNama(BRG_WARNA_OPTS, warna).toUpperCase()} TEBAL ${tebal} LEBAR ${lebar} MM AZ ${az} G-${yld}`;
+  return {
+    kodeProduk, namaProduk, kodeKategori:'BAKU',
+    warna, tebal, lebar, satuan,
+    hppStandar: 80000 + (idx % 12) * 15000,
+    namaProdukSupplier: BB_SUPPLIERS[idx % BB_SUPPLIERS.length],
+    tipeData: idx % 5 === 0 ? 'F' : 'K',
+    az, yield: yld,
+    slow: idx % 7 === 0,
+    marketing: idx % 3 !== 0,
+    minimQty: 10 + (idx % 10) * 5,
+    minimBhp: 5 + (idx % 8) * 2,
+    minimNon: 3 + (idx % 6) * 2,
+    koefisien: +(1 + (idx % 10) * 0.1).toFixed(2),
+    toleransi: +(0.02 + (idx % 5) * 0.01).toFixed(2),
+    margin: +((idx % 6) * 1.5).toFixed(1),
+    aktif: idx % 13 !== 0,
+    keterangan: bbKeterangan(warna, az, yld),
+  };
+}
+
+const BAHAN_BAKU = Array.from({ length: 40 }, (_, idx) => bbRow(idx));

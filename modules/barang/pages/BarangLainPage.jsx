@@ -6,7 +6,7 @@
 // dan satuan tunggal dihapus, digantikan tabel "Satuan & Konversi" (banyak baris per produk,
 // masing-masing punya Satuan+Isi+Harga Jual+Status sendiri via BrgInlineTable kolom select).
 
-function BarangLainList({ rows, onAdd, onEdit }) {
+function BarangLainList({ rows, onAdd, onEdit, onDelete }) {
   const [q, setQ] = React.useState('');
   const filtered = rows.filter(r => !q || r.namaProduk.toLowerCase().includes(q.toLowerCase()) || r.kodeProduk.toLowerCase().includes(q.toLowerCase()));
   return (
@@ -31,7 +31,7 @@ function BarangLainList({ rows, onAdd, onEdit }) {
                   <td className="mono">{r.minimQty}</td>
                   <td className="num mono">{(r.satuanKonversi || []).length}</td>
                   <td>{brgAktifPill(r.aktif)}</td>
-                  <td onClick={e=>e.stopPropagation()}><div className="row-actions"><button className="btn btn-icon btn-sm" onClick={()=>onEdit(r)}>{I.edit()}</button><button className="btn btn-icon btn-sm del">{I.trash()}</button></div></td>
+                  <td onClick={e=>e.stopPropagation()}><div className="row-actions"><button className="btn btn-icon btn-sm" onClick={()=>onEdit(r)}>{I.edit()}</button><button className="btn btn-icon btn-sm del" onClick={()=>onDelete(r)}>{I.trash()}</button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -52,8 +52,14 @@ function BarangLainModal({ data, onClose, onSave }) {
     return base;
   });
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
+  const handleSave = () => {
+    // Buang baris Satuan & Konversi yang ditandai _deleted (soft-delete) + strip flag
+    // _deleted/_added sebelum disimpan — sama pola dengan tabel item Penjualan/Pembelian/Manufaktur.
+    const cleanSatuan = form.satuanKonversi.filter(r => !r._deleted).map(({_deleted, _added, ...r}) => r);
+    onSave({ ...form, satuanKonversi: cleanSatuan });
+  };
   return (
-    <BrgModalShell title={isEdit ? `Edit Barang Lain — ${form.kodeProduk}` : 'Tambah Barang Lain'} onClose={onClose} onSave={()=>onSave(form)} wide>
+    <BrgModalShell title={isEdit ? `Edit Barang Lain — ${form.kodeProduk}` : 'Tambah Barang Lain'} onClose={onClose} onSave={handleSave} wide>
       <div className="panel">
         <h3>Informasi Persediaan</h3>
         <div style={{display:'grid', gridTemplateColumns:'repeat(2, minmax(0,1fr))', gap:12}}>
@@ -72,12 +78,13 @@ function BarangLainModal({ data, onClose, onSave }) {
           columns={[
             { key:'kodeSatuan', label:'Satuan', type:'select', width:140, options: () => BRG_SATUAN_KONVERSI_OPTS.map(s => ({ value:s.kode, label:s.nama })) },
             { key:'isi', label:'Isi', type:'number', num:true, width:100 },
-            { key:'hargaJual', label:'Harga Jual', type:'number', num:true, width:150 },
-            { key:'aktif', label:'Status', type:'select', width:120, default:'1', options:[{value:'1',label:'Ya'},{value:'0',label:'Tidak'}] },
+            { key:'hargaJual', label:'Harga Jual', type:'currency', width:160 },
+            { key:'aktif', label:'Status', type:'select', width:130, default:'1', options:[{value:'1',label:'Aktif'},{value:'0',label:'Non-aktif'}] },
           ]}
           rows={form.satuanKonversi}
           setRows={v => set('satuanKonversi', v)}
           addLabel="Item"
+          softDelete
         />
       </div>
     </BrgModalShell>
@@ -88,15 +95,32 @@ function BarangLainPage() {
   const [rows, setRows] = React.useState(BARANG_LAIN);
   const [modal, setModal] = React.useState(null);
   const [showModal, setShowModal] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(null);
   const save = (form) => {
     setRows(prev => showModal===2 ? prev.map(r => r.kodeProduk===modal.kodeProduk ? form : r) : [...prev, form]);
     window.__erpToast && window.__erpToast('Barang lain berhasil disimpan.');
     setShowModal(false); setModal(null);
   };
+  const deleteRow = () => {
+    setRows(prev => prev.filter(r => r.kodeProduk !== confirmDelete.kodeProduk));
+    window.__erpToast && window.__erpToast('Barang lain berhasil dihapus.');
+    setConfirmDelete(null);
+  };
   return (
     <>
-      <BarangLainList rows={rows} onAdd={()=>{setModal(null); setShowModal(1);}} onEdit={(r)=>{setModal(r); setShowModal(2);}} />
+      <BarangLainList rows={rows} onAdd={()=>{setModal(null); setShowModal(1);}} onEdit={(r)=>{setModal(r); setShowModal(2);}} onDelete={setConfirmDelete} />
       {showModal && <BarangLainModal data={modal} onClose={()=>setShowModal(false)} onSave={save} />}
+      {confirmDelete && (
+        <ConfirmationModal
+          title="Hapus Barang Lain"
+          message={`Barang "${confirmDelete.namaProduk}" (${confirmDelete.kodeProduk}) akan dihapus. Tindakan ini tidak bisa dibatalkan.`}
+          confirmLabel="Hapus"
+          confirmKind="danger"
+          requireReason={false}
+          onCancel={()=>setConfirmDelete(null)}
+          onConfirm={deleteRow}
+        />
+      )}
     </>
   );
 }

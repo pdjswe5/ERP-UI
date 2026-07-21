@@ -348,6 +348,7 @@ button { cursor: pointer; }
 .btn-lg { height: 38px; padding: 0 18px; font-size: 14px; }
 .btn-icon { width: 32px; padding: 0; justify-content: center; }
 .btn-icon.btn-sm { width: 28px; }
+.inline-table .btn-icon:disabled { background: var(--bg-sub); color: var(--text-3); cursor: not-allowed; }
 
 /* ===== Cards (module tiles) ===== */
 .tile-grid {
@@ -703,6 +704,8 @@ table.data tbody tr:last-child td { border-bottom: 0; }
 }
 .line-items input.cell:hover,
 .line-items select.cell:hover { border-color: var(--text-4); background: var(--bg); }
+.line-items input.cell[readonly],
+.line-items input.cell:disabled { background: var(--bg-sub); color: var(--text-3); cursor: not-allowed; }
 .line-items input.cell:focus,
 .line-items select.cell:focus { border-color: var(--primary); border-bottom-color: var(--primary); background: #fff; }
 .line-items input.cell.num { text-align: right; font-variant-numeric: tabular-nums; }
