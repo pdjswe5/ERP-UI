@@ -395,11 +395,19 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
                 </div>
               )}
             </div>
-            <div className={variant === 'pdf' ? 'cetak-canvas' : 'cetak-canvas cetak-canvas-scroll'} style={variant === 'pdf' ? {padding:0, justifyContent:'stretch', alignItems:'stretch'} : null}>
+            <div className={variant === 'pdf' ? 'cetak-canvas' : 'cetak-canvas cetak-canvas-scroll'} style={variant === 'pdf' ? {padding:16} : null}>
               {selectedRows.length === 0 ? (
                 <div className="empty" style={{padding:'60px 0'}}>Belum ada dokumen dipilih untuk dicetak.</div>
               ) : variant === 'pdf' ? (
-                <iframe src={encodeURI(pdfPath)} title={docLabel} style={{width:'100%', height:'100%', border:'none', display:'block'}} />
+                // height:100% + aspect-ratio (bukan width:100%+height:100% independen) supaya kotak
+                // preview selalu proporsi dokumen portrait apa pun bentuk jendela browser-nya — kalau
+                // dipaksa stretch di 2 sumbu sekaligus, pada layar yang lebih pendek/lebar kotaknya
+                // jadi landscape pendek, dan PDF viewer Chrome melebarkan bar hitam di kiri-kanan
+                // supaya halaman portrait tetap muat (persis bug yang dilaporkan: preview jadi kecil
+                // terjepit di antara 2 bar hitam besar).
+                <div style={{height:'100%', maxWidth:'100%', aspectRatio:'0.75', margin:'0 auto', background:'#fff', boxShadow:'var(--shadow-lg)'}}>
+                  <iframe src={encodeURI(pdfPath)} title={docLabel} style={{width:'100%', height:'100%', border:'none', display:'block'}} />
+                </div>
               ) : previewMode === 'register' ? (
                 variant === 'jurnal' ? (
                   registerPages.map((lines, idx) => (
