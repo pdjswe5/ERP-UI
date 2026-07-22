@@ -37,6 +37,27 @@
 [data-density="compact"] { --row-h: 34px; --pad-x: 20px; }
 [data-density="comfy"]  { --row-h: 52px; --pad-x: 36px; }
 
+/* ===== Initial page-load screen =====
+   Semua .jsx di app ini ditranspile langsung di browser lewat Babel standalone (tidak ada build
+   step), jadi ada jeda beberapa detik antara HTML pertama kali tampil dan React akhirnya mount —
+   tanpa ini, layar putih kosong itu terlihat seperti error/hang. Markup #app-loading ditulis
+   statis di dalam <div id="root"> pada index.html (bukan dirender lewat React), jadi langsung
+   tampil begitu HTML di-parse, sebelum satupun <script> jalan. Begitu App berhasil mount,
+   ReactDOM.createRoot(...).render() otomatis mengganti seluruh isi #root (termasuk elemen ini) —
+   tidak perlu JS tambahan untuk menyembunyikannya. */
+#app-loading {
+  height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; background: var(--bg); font-family: 'IBM Plex Sans', system-ui, sans-serif;
+}
+#app-loading .spinner {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 3px solid var(--primary-100); border-top-color: var(--primary);
+  animation: app-loading-spin .8s linear infinite;
+}
+#app-loading .brand { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: .01em; }
+#app-loading .hint { font-size: 13px; color: var(--text-3); }
+@keyframes app-loading-spin { to { transform: rotate(360deg); } }
+
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; height: 100%; }
 body {
