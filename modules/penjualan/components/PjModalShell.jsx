@@ -10,7 +10,7 @@
 
 function PjModalShell({ title, sub, onClose, onSave, children, saveLabel = 'Simpan', wide = false }) {
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={wide ? {maxWidth: 1100} : {maxWidth: 700}}>
         <div className="modal-head">
           <div><h2>{title}</h2>{sub && <div className="sub">{sub}</div>}</div>

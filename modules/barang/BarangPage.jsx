@@ -2,23 +2,40 @@
 // Dipindah dari root barang.jsx, tidak diubah.
 
 function BarangDashboard({ onOpenSub }) {
+  const lainAktif = BARANG_LAIN.filter(b => b.aktif).length;
+  const bakuAktif = BAHAN_BAKU.filter(b => b.aktif).length;
+  const jadiAktif = BARANG_JADI.filter(b => b.aktif).length;
+  const totalAktif = lainAktif + bakuAktif + jadiAktif;
+  const totalItem = BARANG_LAIN.length + BAHAN_BAKU.length + BARANG_JADI.length;
+
+  const mutasiAktif = MUTASI_BARANG.filter(r => !r.batal).length;
+  const penyesuaianAktif = PENYESUAIAN_BARANG.filter(r => !r.batal).length;
+  const opnameAktif = STOCK_OPNAME.filter(r => !r.batal).length;
+
+  const kpis = [
+    { label:'Total Item Aktif', value: totalAktif, sub:`dari ${totalItem} total item master` },
+    { label:'Mutasi Barang Aktif', value: mutasiAktif, sub:`dari ${MUTASI_BARANG.length} total mutasi` },
+    { label:'Penyesuaian Barang Aktif', value: penyesuaianAktif, sub:`dari ${PENYESUAIAN_BARANG.length} total penyesuaian` },
+    { label:'Stock Opname Aktif', value: opnameAktif, sub:`dari ${STOCK_OPNAME.length} total opname` },
+  ];
+
   const sections = [
     {
       title:'Barang & Kelengkapan',
       count:'3',
       tiles:[
-        { id:'baranglain', title:'Barang Lain',          badge:'24 item', icon:I.box(20) },
-        { id:'bahankaku',  title:'Bahan Baku',           badge:'18 item', icon:I.box(20) },
-        { id:'barangjadi', title:'Barang Jadi Umum & PU', badge:'32 item', icon:I.box(20) },
+        { id:'baranglain', title:'Barang Lain',          badge:`${lainAktif} dari ${BARANG_LAIN.length} aktif`, icon:I.box(20) },
+        { id:'bahankaku',  title:'Bahan Baku',           badge:`${bakuAktif} dari ${BAHAN_BAKU.length} aktif`, icon:I.box(20) },
+        { id:'barangjadi', title:'Barang Jadi Umum & PU', badge:`${jadiAktif} dari ${BARANG_JADI.length} aktif`, icon:I.box(20) },
       ]
     },
     {
       title:'Stock & Persediaan',
       count:'3',
       tiles:[
-        { id:'mutasi',      title:'Mutasi Barang & Konsinyasi', badge:'6 mutasi', icon:I.truck(20) },
-        { id:'penyesuaian', title:'Penyesuaian Barang',         badge:'3 adj',    icon:I.list(20) },
-        { id:'opname',      title:'Stock Opname',               badge:'2 opname', icon:I.list(20) },
+        { id:'mutasi',      title:'Mutasi Barang & Konsinyasi', badge:`${mutasiAktif} mutasi aktif`, icon:I.truck(20) },
+        { id:'penyesuaian', title:'Penyesuaian Barang',         badge:`${penyesuaianAktif} adj aktif`,    icon:I.list(20) },
+        { id:'opname',      title:'Stock Opname',               badge:`${opnameAktif} opname aktif`, icon:I.list(20) },
       ]
     },
   ];
@@ -26,6 +43,7 @@ function BarangDashboard({ onOpenSub }) {
     <ModuleDashboard
       title="Dashboard Barang"
       subtitle="Halaman ini digunakan untuk mengelola data barang, tersedia 6 menu pendukung."
+      kpis={kpis}
       sections={sections}
       activityLog={ACTIVITY_LOG_BARANG}
       onOpenSub={onOpenSub}

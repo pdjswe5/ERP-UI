@@ -11,6 +11,18 @@
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
 function MfManufakturDashboard({ onOpenSub, spkRows, produksiRows, bpblRows, rpblRows, planningRows }) {
+  const spkAktif = spkRows.filter(s => !['Batal','Cancelled','Selesai'].includes(s.status));
+  const spkPendingApproval = spkRows.filter(s => s.status === 'Pending Approval').length;
+  const planningOutstanding = planningRows.filter(r => r.status === 'outstanding').length;
+  const menitTerjadwal = planningRows.filter(r => r.status !== 'Batal').reduce((s,r) => s + (+r.menit || 0), 0);
+
+  const kpis = [
+    { label:'SPK Aktif', value: spkAktif.length, sub:`dari ${spkRows.length} total SPK` },
+    { label:'SPK Menunggu Approval', value: spkPendingApproval, sub: spkPendingApproval > 0 ? 'Perlu ditinjau' : 'Tidak ada yang menunggu', color: spkPendingApproval > 0 ? 'var(--warn)' : null },
+    { label:'Hasil Produksi Tercatat', value: produksiRows.length, sub:`${bpblRows.length} BPBL, ${rpblRows.length} RPBL` },
+    { label:'Antrian Produksi Outstanding', value: planningOutstanding, sub:`${menitTerjadwal} menit terjadwal` },
+  ];
+
   const tiles = [
     {
       id: 'spk',
@@ -61,6 +73,15 @@ function MfManufakturDashboard({ onOpenSub, spkRows, produksiRows, bpblRows, rpb
           <h1>Manufaktur</h1>
           <div className="sub">Kelola proses produksi dan pemakaian bahan</div>
         </div>
+      </div>
+      <div className="kpi-strip">
+        {kpis.map((k, i) => (
+          <div className="kpi" key={i}>
+            <div className="lbl">{k.label}</div>
+            <div className="val mono" style={k.color ? {color:k.color} : null}>{k.value}</div>
+            {k.sub && <div className="delta">{k.sub}</div>}
+          </div>
+        ))}
       </div>
       <div className="tile-grid">
         {tiles.map(t => (

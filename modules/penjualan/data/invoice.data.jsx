@@ -136,7 +136,7 @@ function SoDocPickerModal({ list, onCancel, onConfirm }) {
     return list.filter(s => s.No_Bukti.toLowerCase().includes(ql) || (s.Nama_Cust || '').toLowerCase().includes(ql));
   }, [list, q]);
   return (
-    <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+    <div className="modal-backdrop" style={{zIndex:110}}>
       <div className="modal item-picker-modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-head"><h2>Pilih Sales Order</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
         <div className="modal-body">

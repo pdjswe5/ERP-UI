@@ -73,7 +73,7 @@ function PgHeader({ title, sub, onAdd, addLabel='Tambah' }) {
 
 function PgModalShell({ title, sub, onClose, onSave, children, saveLabel='Simpan', wide=false }) {
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={wide ? {maxWidth:1000, maxHeight:'92vh'} : {maxWidth:700}}>
         <div className="modal-head">
           <div><h2>{title}</h2>{sub && <div className="sub">{sub}</div>}</div>

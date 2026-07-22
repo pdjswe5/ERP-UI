@@ -121,7 +121,7 @@ function BarangJadiEntryModal({ data, onClose, onSave }) {
 
   return (
     <>
-      <div className="modal-backdrop" style={{zIndex:200}} onClick={onClose}>
+      <div className="modal-backdrop" style={{zIndex:200}}>
         <div className="modal" style={{maxWidth:820}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>
@@ -365,7 +365,7 @@ function SpkDialog({ data, onClose, onSave }) {
 
   return (
     <>
-      <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-backdrop">
         <div className="modal" style={{maxWidth:1440}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>
@@ -788,7 +788,7 @@ function SpkList({ onAdd, onEdit, onNavigate }) {
 
 function PickerShell({ title, zIndex, width, onClose, children }) {
   return (
-    <div className="modal-backdrop" style={{zIndex: zIndex || 200}} onClick={onClose}>
+    <div className="modal-backdrop" style={{zIndex: zIndex || 200}}>
       <div className="modal" style={{maxWidth: width || 960, maxHeight:'72vh'}} onClick={e => e.stopPropagation()}>
         <div className="modal-head">
           <h2>{title}</h2>
@@ -1056,7 +1056,7 @@ function SpkEntryModal({ data, onClose, onSave }) {
 
   return (
     <>
-      <div className="modal-backdrop" style={{zIndex:200}} onClick={onClose}>
+      <div className="modal-backdrop" style={{zIndex:200}}>
         <div className="modal" style={{maxWidth:700}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>
@@ -1245,7 +1245,7 @@ function HasilProduksiDialog({ data, onClose, onSave }) {
 
   return (
     <>
-      <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-backdrop">
         <div className="modal" style={{maxWidth:1440}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>
@@ -1604,7 +1604,7 @@ function BarangPakaiEntryModal({ data, onClose, onSave }) {
 
   return (
     <>
-      <div className="modal-backdrop" style={{zIndex:200}} onClick={onClose}>
+      <div className="modal-backdrop" style={{zIndex:200}}>
         <div className="modal" style={{maxWidth:640}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>
@@ -1709,7 +1709,7 @@ function PemakaianBarangDialog({ type, data, onClose, onSave }) {
 
   return (
     <>
-      <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-backdrop">
         <div className="modal" style={{maxWidth:1100}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>

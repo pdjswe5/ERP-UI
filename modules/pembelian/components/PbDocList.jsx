@@ -5,8 +5,12 @@
 //   disabled (bukan disembunyikan) kalau dokumen sudah batal, supaya tidak bisa diaktifkan lagi.
 // onView (opsional): klik baris/No.Bukti buka mode VIEW. Kalau tidak diisi, klik baris
 //   memanggil onEdit juga (perilaku lama, dipakai halaman yang belum di-split VIEW/EDIT).
+// onCetak (opsional): tombol "Cetak" di toolbar header, buka PbCetakModal dengan semua baris
+//   (hasil filter) tercentang. onCetakRow (opsional): icon Cetak per baris di kolom Aksi, buka
+//   modal yang sama tapi cuma baris itu yang tercentang — user tetap bisa print banyak sekaligus
+//   dari toolbar, tanpa terpaksa pilih semua baris kalau cuma butuh satu dokumen.
 
-function PbDocList({ title, sub, rows, columns, onAdd, onView, onEdit, onCancelDoc, addLabel='Buat Baru', statusFilter }) {
+function PbDocList({ title, sub, rows, columns, onAdd, onView, onEdit, onCancelDoc, onCetak, onCetakRow, addLabel='Buat Baru', statusFilter }) {
   const [q, setQ] = React.useState('');
   const handleRowClick = onView || onEdit;
   const [statusVal, setStatusVal] = React.useState('');
@@ -18,7 +22,7 @@ function PbDocList({ title, sub, rows, columns, onAdd, onView, onEdit, onCancelD
   const isCancelled = (r) => !!(r.Batal || r.Status === 'BATAL');
   return (
     <>
-      <PbHeader title={title} sub={sub ?? `${filtered.length} transaksi`} onAdd={onAdd} addLabel={addLabel} />
+      <PbHeader title={title} sub={sub ?? `${filtered.length} transaksi`} onAdd={onAdd} addLabel={addLabel} onCetak={onCetak} />
       <div className="filter-bar"><div className="filter-grid">
         <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="No. Bukti…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
         {statusFilter && (
@@ -50,7 +54,7 @@ function PbDocList({ title, sub, rows, columns, onAdd, onView, onEdit, onCancelD
                       {onCancelDoc && (
                         <button className="btn btn-icon btn-sm del" title={isCancelled(r) ? 'Sudah dibatalkan' : 'Batalkan Transaksi'} disabled={isCancelled(r)} onClick={()=>onCancelDoc(r)}>{I.fileX(14)}</button>
                       )}
-                      <button className="btn btn-icon btn-sm" title="Cetak" onClick={()=>window.__erpToast && window.__erpToast('Fitur cetak belum tersedia pada prototipe ini.')}>{I.print()}</button>
+                      <button className="btn btn-icon btn-sm" title="Cetak" onClick={()=>onCetakRow ? onCetakRow(r) : (window.__erpToast && window.__erpToast('Fitur cetak belum tersedia pada prototipe ini.'))}>{I.print()}</button>
                     </div>
                   </td>
                 </tr>

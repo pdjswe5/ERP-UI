@@ -105,7 +105,7 @@ function ReturSoItemPickerModal({ salesOrderList, form, onCancel, onConfirm }) {
 
   if (!form.Kode_Cust) {
     return (
-      <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+      <div className="modal-backdrop" style={{zIndex:110}}>
         <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:480}}>
           <div className="modal-head"><h2>Pilih Barang dari Sales Order</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
           <div className="modal-body"><div className="muted">Pilih Customer terlebih dahulu di tab Informasi Umum sebelum mengambil barang dari Sales Order.</div></div>
@@ -156,7 +156,7 @@ function ReturSoItemPickerModal({ salesOrderList, form, onCancel, onConfirm }) {
   };
 
   return (
-    <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+    <div className="modal-backdrop" style={{zIndex:110}}>
       <div className="modal item-picker-modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-head"><h2>Pilih Barang dari Sales Order — {form.Nama_Cust}</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
         <div className="modal-body">

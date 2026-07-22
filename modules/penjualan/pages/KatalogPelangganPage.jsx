@@ -6,6 +6,38 @@ function pelangganStatusPill(status) {
   return <span className={`pill ${aktif ? 'approved' : 'cancelled'}`}>{aktif ? 'Aktif' : 'Non-aktif'}</span>;
 }
 
+// Field generik: kalau locked, tampil sebagai teks readonly (view-field/view-value) persis
+// pola Katalog Pemasok (PbModalShell), bukan <input disabled> yang masih terlihat seperti kontrol form.
+// Didefinisikan di top-level (bukan di dalam komponen modal) supaya identitasnya stabil antar render —
+// kalau didefinisikan di dalam body komponen, tiap keystroke bikin instance baru dan React remount
+// elemen <input>-nya sehingga focus hilang setelah 1 huruf.
+function Fld({ label, value, onChange, locked, required, span, mono, type='text', options }) {
+  const spanStyle = span ? {gridColumn:`span ${span}`} : {};
+  if (locked) {
+    return (
+      <div className="view-field" style={spanStyle}>
+        <label>{label}</label>
+        <div className={`view-value ${mono ? 'mono' : ''}`}>{value || <span className="muted">—</span>}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="field" style={spanStyle}>
+      <label>{label}{required && <span style={{color:'var(--danger)'}}> *</span>}</label>
+      {type === 'select' ? (
+        <select className="select" value={value} onChange={e=>onChange(e.target.value)}>
+          <option value="">— Pilih —</option>
+          {options.map(o => typeof o === 'string' ? <option key={o} value={o}>{o}</option> : <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      ) : type === 'textarea' ? (
+        <textarea className="textarea" value={value} onChange={e=>onChange(e.target.value)} />
+      ) : (
+        <input className={`input ${mono ? 'mono' : ''}`} type={type} value={value} onChange={e=>onChange(type==='number' ? +e.target.value : e.target.value)} />
+      )}
+    </div>
+  );
+}
+
 function KatalogPelanggan({ rows, onAdd, onView, onEdit, onDeactivate, onActivate }) {
   const [q, setQ] = React.useState('');
   const [kota, setKota] = React.useState('');
@@ -146,34 +178,6 @@ function PelangganModal({ data, initialMode, onClose, onSave }) {
   const fieldsDisabled = isView || (mode === 'CREATE' && !initialFieldsReady);
   const enterEditMode = () => setMode('EDIT');
 
-  // Field generik: kalau locked, tampil sebagai teks readonly (view-field/view-value) persis
-  // pola Katalog Pemasok (PbModalShell), bukan <input disabled> yang masih terlihat seperti kontrol form.
-  const Fld = ({ label, value, onChange, locked, required, span, mono, type='text', options }) => {
-    const spanStyle = span ? {gridColumn:`span ${span}`} : {};
-    if (locked) {
-      return (
-        <div className="view-field" style={spanStyle}>
-          <label>{label}</label>
-          <div className={`view-value ${mono ? 'mono' : ''}`}>{value || <span className="muted">—</span>}</div>
-        </div>
-      );
-    }
-    return (
-      <div className="field" style={spanStyle}>
-        <label>{label}{required && <span style={{color:'var(--danger)'}}> *</span>}</label>
-        {type === 'select' ? (
-          <select className="select" value={value} onChange={e=>onChange(e.target.value)}>
-            <option value="">— Pilih —</option>
-            {options.map(o => typeof o === 'string' ? <option key={o} value={o}>{o}</option> : <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        ) : type === 'textarea' ? (
-          <textarea className="textarea" value={value} onChange={e=>onChange(e.target.value)} />
-        ) : (
-          <input className={`input ${mono ? 'mono' : ''}`} type={type} value={value} onChange={e=>onChange(type==='number' ? +e.target.value : e.target.value)} />
-        )}
-      </div>
-    );
-  };
   const [activeSection, setActiveSection] = React.useState('dasar');
   const modalBodyRef = React.useRef(null);
   const dasarRef = React.useRef(null);
@@ -219,7 +223,7 @@ function PelangganModal({ data, initialMode, onClose, onSave }) {
   ) : null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth: 1400, maxHeight: '92vh'}}>
         <div className="modal-head">
           <div>

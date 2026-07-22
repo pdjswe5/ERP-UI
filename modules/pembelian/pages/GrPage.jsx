@@ -14,6 +14,7 @@ function GrPage({ rows, setRows }) {
   const [show, setShow] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null);
   const [confirmCancel, setConfirmCancel] = React.useState(null);
+  const [showCetak, setShowCetak] = React.useState(false);
 
   const openAdd = () => { setModal(null); setModalMode(null); setShow(true); };
   const openView = (r) => { setModal(r); setModalMode('VIEW'); setShow(true); };
@@ -77,9 +78,11 @@ function GrPage({ rows, setRows }) {
         onView={openView}
         onEdit={openEdit}
         onCancelDoc={(r)=>setConfirmCancel(r)}
+        onCetak={()=>setShowCetak(true)}
         addLabel="GR Baru"
         statusFilter={statusFilter}
       />
+      {showCetak && <PbCetakModal docLabel="Goods Receive" rows={rows} statusFilter={statusFilter} onClose={()=>setShowCetak(false)} />}
       {show && (
         <PbModalShell
           title="Goods Receive"

@@ -14,6 +14,8 @@ function RfqPage({ rows, setRows }) {
   const [show, setShow] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null); // null (CREATE) | 'VIEW' | 'EDIT'
   const [confirmCancel, setConfirmCancel] = React.useState(null);
+  const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow] = React.useState(null);
 
   const openAdd = () => { setModal(null); setModalMode(null); setShow(true); };
   const openView = (r) => { setModal(r); setModalMode('VIEW'); setShow(true); };
@@ -77,9 +79,17 @@ function RfqPage({ rows, setRows }) {
         onView={openView}
         onEdit={openEdit}
         onCancelDoc={(r)=>setConfirmCancel(r)}
+        onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
+        onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}}
         addLabel="RFQ Baru"
         statusFilter={statusFilter}
       />
+      {showCetak && (
+        <PbCetakModal docLabel="Request for Quotation" rows={rows} statusFilter={statusFilter}
+          getGroupLabel={r=>pbSuppNama(r.Kode_Supp)}
+          initialSelected={cetakRow ? [cetakRow.No_Bukti] : null}
+          onClose={()=>{setShowCetak(false); setCetakRow(null);}} />
+      )}
       {show && (
         <PbModalShell
           title="RFQ"

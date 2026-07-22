@@ -211,12 +211,17 @@ function HomeDashboard({ onNavigate }) {
   const [kpiPickerOpen, setKpiPickerOpen] = React.useState(false);
 
   const modules = [
-    { id:'purchase',  label:'Purchase',   icon:I.truck(22), color:'#0ea5e9', kpi:'63 PO aktif',           desc:'Order pembelian & supplier' },
-    { id:'sales',     label:'Pelanggan',  icon:I.users(22), color:'#10b981', kpi:'148 pelanggan aktif',   desc:'Order penjualan & nota' },
-    { id:'inventory', label:'Inventory',  icon:I.box(22),   color:'#f59e0b', kpi:'15 produk aktif',       desc:'Barang, mutasi & stock opname' },
-    { id:'finance',   label:'Akuntan',    icon:I.bank(22),  color:'#8b5cf6', kpi:'3 jurnal bulan ini',    desc:'Akun buku besar & aktiva' },
-    { id:'cashbank',  label:'Cash & Bank',icon:I.bank(22),  color:'#ec4899', kpi:'11 transaksi hari ini', desc:'Kas, bank, giro & pelunasan' },
-    { id:'master',    label:'Master Data',icon:I.users(22), color:'#64748b', kpi:'10 user aktif',         desc:'Salesman, gudang, satuan' },
+    { id:'pembelian',   label:'Pembelian',    icon:I.truck(22),    color:'#0ea5e9', kpi:`${PB_PO.filter(p=>!p.Batal).length} PO aktif`, desc:'Purchase request, RFQ, PO, nota & retur beli' },
+    { id:'sales',       label:'Penjualan',    icon:I.users(22),    color:'#10b981', kpi:`${PJ_PELANGGAN.filter(p=>p.status!=='Non-aktif').length} pelanggan aktif`, desc:'Konfirmasi order, SO, DO, invoice & retur' },
+    { id:'barang',      label:'Barang',       icon:I.box(22),      color:'#f59e0b', kpi:`${BARANG_LAIN.filter(b=>b.aktif).length + BAHAN_BAKU.filter(b=>b.aktif).length + BARANG_JADI.filter(b=>b.aktif).length} item aktif`, desc:'Barang, bahan baku, mutasi & stock opname' },
+    { id:'manufaktur',  label:'Manufaktur',   icon:I.list(22),     color:'#dc2626', kpi:`${MF_SPK_SEED.filter(s=>!['Batal','Cancelled','Selesai'].includes(s.status)).length} SPK aktif`, desc:'SPK, hasil produksi & planning schedule' },
+    { id:'finance',     label:'Akuntan',      icon:I.bank(22),     color:'#8b5cf6', kpi:'Buku besar & aktiva', desc:'Akun, jurnal memorial & laporan keuangan' },
+    { id:'cashbank',    label:'Keuangan',     icon:I.bank(22),     color:'#ec4899', kpi:'Kas, bank & giro',    desc:'Kas masuk/keluar, bank & pelunasan' },
+    { id:'kataloglain', label:'Katalog Lain', icon:I.layers(22),   color:'#0369a1', kpi:'Data pendukung',      desc:'Katalog & master data pendukung lainnya' },
+    { id:'master',      label:'Master Data',  icon:I.users(22),    color:'#64748b', kpi:'Salesman, gudang, satuan', desc:'Data master lintas modul' },
+    { id:'reports',     label:'Reports',      icon:I.chart(22),    color:'#1d4ed8', kpi:'Laporan operasional', desc:'Laporan & analitik lintas modul' },
+    { id:'pengaturan',  label:'Pengaturan',   icon:I.settings(22), color:'#6b7280', kpi:'Konfigurasi sistem',  desc:'Preferensi & konfigurasi aplikasi' },
+    { id:'admin',       label:'System Admin', icon:I.shield(22),   color:'#111827', kpi:'User & hak akses',    desc:'Manajemen user & keamanan sistem' },
   ];
 
   const toggleKpi = (id) =>
@@ -321,11 +326,11 @@ function HomeDashboard({ onNavigate }) {
           <h3>Akses Cepat</h3>
           <div style={{display:'flex', flexDirection:'column', gap:8}}>
             {[
-              { label:'Buat PO Baru',         action:()=>onNavigate('purchase') },
-              { label:'Lihat PO List',         action:()=>onNavigate('purchase') },
-              { label:'Stock Opname',          action:()=>onNavigate('inventory') },
+              { label:'Buat PO Baru',          action:()=>onNavigate('pembelian') },
+              { label:'Konfirmasi Order Baru', action:()=>onNavigate('sales') },
+              { label:'Stock Opname',          action:()=>onNavigate('barang') },
+              { label:'Buat SPK Baru',         action:()=>onNavigate('manufaktur') },
               { label:'Input Kas Masuk',       action:()=>onNavigate('cashbank') },
-              { label:'Katalog Pelanggan',     action:()=>onNavigate('sales') },
               { label:'Fitur Administrator',   action:()=>onNavigate('admin') },
             ].map(q => (
               <button key={q.label} className="btn" style={{justifyContent:'flex-start', gap:8}} onClick={q.action}>

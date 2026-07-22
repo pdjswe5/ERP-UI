@@ -11,9 +11,20 @@ function PenjualanDashboard({ onOpenSub, onNavigate, pelanggan, konfirmasi, sale
   const returPending = salesReturns.filter(r => r.Status === 'Pending').length;
   const omzet30 = invoices.reduce((s,n)=>s+(n.Details||[]).reduce((t,d)=>t+pjLineTotal(d),0), 0);
 
+  const topPelanggan = (() => {
+    const byCust = {};
+    invoices.filter(n => !n.Batal).forEach(n => {
+      const nilai = (n.Details||[]).reduce((t,d)=>t+pjLineTotal(d),0);
+      byCust[n.Nama_Cust] = (byCust[n.Nama_Cust] || 0) + nilai;
+    });
+    const sorted = Object.entries(byCust).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const max = sorted[0]?.[1] || 1;
+    return sorted.map(([nm, val]) => [nm, val, Math.round((val/max)*100)]);
+  })();
+
   const tiles = [
     { id:'katalog',    icon:I.users(20),   title:'Katalog Pelanggan',    desc:'Master data pelanggan, kontak, alamat, dan info perusahaan.', badge:`${totalPel} pelanggan`, count:`${aktifPel} aktif`, accent:null },
-    { id:'konfirmasi', icon:I.cart(20),    title:'Konfirmasi Penjualan', desc:'Buat dan kelola konfirmasi pesanan pelanggan serta approval.', badge: pendingKonf > 0 ? `${pendingKonf} perlu approval` : null, badgeKind:'pulse', accent:'#0d9488' },
+    { id:'konfirmasi', icon:I.cart(20),    title:'Confirmation Order', desc:'Buat dan kelola konfirmasi pesanan pelanggan serta approval.', badge: pendingKonf > 0 ? `${pendingKonf} perlu approval` : null, badgeKind:'pulse', accent:'#0d9488' },
     { id:'salesorder', icon:I.list(20),    title:'Sales Order',          desc:'Order penjualan resmi setelah konfirmasi disetujui.', badge:`${salesOrders.length} order`, accent:'#0369a1' },
     { id:'delivery',   icon:I.truck(20),   title:'Delivery Order',       desc:'Surat jalan dan pengiriman barang ke pelanggan.', badge:`${deliveryOrders.length} DO`, accent:'#7c3aed' },
     { id:'invoice',    icon:I.invoice(20), title:'Invoice',              desc:'Penerbitan faktur/tagihan untuk pelanggan.', badge:`${invoices.filter(n=>n.Status==='Outstanding').length} outstanding`, accent:'#b45309' },
@@ -29,12 +40,11 @@ function PenjualanDashboard({ onOpenSub, onNavigate, pelanggan, konfirmasi, sale
 
       <div className="page-head">
         <div>
-          <h1>Penjualan Workspace</h1>
+          <h1>Dashboard Penjualan</h1>
           <div className="sub">Kelola pelanggan, konfirmasi, sales order, delivery, invoice, dan sales return dalam satu workspace.</div>
         </div>
         <div style={{display:'flex', gap:8}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
-          <button className="btn btn-sm btn-primary" onClick={()=>onOpenSub('konfirmasi')}>{I.plus()} Konfirmasi Baru</button>
         </div>
       </div>
 
@@ -80,15 +90,10 @@ function PenjualanDashboard({ onOpenSub, onNavigate, pelanggan, konfirmasi, sale
 
       <div style={{display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:16, marginTop:32}}>
         <div className="panel">
-          <h3>Top Pelanggan (30 Hari)</h3>
+          <h3>Top Pelanggan</h3>
           <div style={{display:'flex', flexDirection:'column', gap:14}}>
-            {[
-              ['Toko Jaya Abadi', 35311000, 95],
-              ['INDOMILK 2',      23665000, 64],
-              ['Pelanggan 3',      9812000, 26],
-              ['PELANGGAN I',      6237000, 17],
-              ['Sari Mart',        4675000, 13],
-            ].map(([nm, val, pct]) => (
+            {topPelanggan.length === 0 && <div className="muted" style={{fontSize:12.5}}>Belum ada invoice tercatat.</div>}
+            {topPelanggan.map(([nm, val, pct]) => (
               <div key={nm}>
                 <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, marginBottom:5}}>
                   <span>{nm}</span><span className="mono muted">{fmtRp(val)}</span>

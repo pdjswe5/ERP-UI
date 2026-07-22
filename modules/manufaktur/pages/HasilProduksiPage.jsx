@@ -64,7 +64,7 @@ function MfHasilProduksiDialog({ data, onClose, onSave }) {
 
   return (
     <>
-      <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-backdrop">
         <div className="modal" style={{maxWidth:1440}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>

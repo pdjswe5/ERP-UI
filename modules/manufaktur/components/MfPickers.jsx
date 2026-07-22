@@ -5,7 +5,7 @@
 
 function MfPickerShell({ title, zIndex, width, onClose, children }) {
   return (
-    <div className="modal-backdrop" style={{zIndex: zIndex || 200}} onClick={onClose}>
+    <div className="modal-backdrop" style={{zIndex: zIndex || 200}}>
       <div className="modal" style={{maxWidth: width || 960, maxHeight:'72vh'}} onClick={e => e.stopPropagation()}>
         <div className="modal-head">
           <h2>{title}</h2>
@@ -83,7 +83,7 @@ function MfPilihBarangModal({ title, items, onConfirm, onCancel, zIndex, single 
   };
 
   return (
-    <div className="modal-backdrop" style={{zIndex: zIndex || 110}} onClick={onCancel}>
+    <div className="modal-backdrop" style={{zIndex: zIndex || 110}}>
       <div className="modal item-picker-modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-head"><h2>{title || 'Pilih Barang'}</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
         <div className="modal-body">
@@ -209,7 +209,7 @@ function MfSoPickerModal({ onCancel, onConfirm }) {
     return SALES_ORDER_SEED.filter(s => s.No_Bukti.toLowerCase().includes(ql) || (s.Nama_Cust||'').toLowerCase().includes(ql));
   }, [q]);
   return (
-    <div className="modal-backdrop" style={{zIndex:300}} onClick={onCancel}>
+    <div className="modal-backdrop" style={{zIndex:300}}>
       <div className="modal item-picker-modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-head"><h2>Pilih Sales Order</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
         <div className="modal-body">
@@ -313,7 +313,7 @@ function MfBarangJadiPickerModal({ onPick, onClose }) {
   }, [onClose]);
 
   return (
-    <div className="modal-backdrop" style={{zIndex:300}} onClick={onClose}>
+    <div className="modal-backdrop" style={{zIndex:300}}>
       <div className="modal item-picker-modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-head"><h2>Pilih Barang Jadi</h2><button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button></div>
         <div className="modal-body">
@@ -406,7 +406,7 @@ function MfBarangJadiEntryModal({ data, onClose, onSave }) {
 
   return (
     <>
-      <div className="modal-backdrop" style={{zIndex:200}} onClick={onClose}>
+      <div className="modal-backdrop" style={{zIndex:200}}>
         <div className="modal" style={{maxWidth:1180}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>
@@ -617,7 +617,7 @@ function MfBarangPakaiEntryModal({ data, onClose, onSave }) {
 
   return (
     <>
-      <div className="modal-backdrop" style={{zIndex:200}} onClick={onClose}>
+      <div className="modal-backdrop" style={{zIndex:200}}>
         <div className="modal" style={{maxWidth:640}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>

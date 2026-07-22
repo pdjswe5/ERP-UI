@@ -42,7 +42,7 @@ function BrgHeader({ title, sub, onAdd, addLabel='Tambah', extra }) {
 
 function BrgModalShell({ title, sub, onClose, onSave, children, saveLabel='Simpan', wide=false, maxWidth, footerExtra }) {
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={wide ? {maxWidth: maxWidth || 1100, maxHeight:'92vh'} : {maxWidth:700}}>
         <div className="modal-head">
           <div><h2>{title}</h2>{sub && <div className="sub">{sub}</div>}</div>

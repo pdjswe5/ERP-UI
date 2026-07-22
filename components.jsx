@@ -334,7 +334,7 @@ const MODULE_SUBS = {
               { id:'rfq', label:'Request for Quotation' }, { id:'quotation', label:'Quotation' },
               { id:'gr', label:'Goods Receive' }, { id:'po', label:'Purchase Order' },
               { id:'beli', label:'Nota Pembelian' }, { id:'retur', label:'Retur Beli' }],
-  sales:     [{ id:'katalog', label:'Katalog Pelanggan' }, { id:'konfirmasi', label:'Konfirmasi Penjualan' },
+  sales:     [{ id:'katalog', label:'Katalog Pelanggan' }, { id:'konfirmasi', label:'Confirmation Order' },
                { id:'salesorder', label:'Sales Order' }, { id:'delivery', label:'Delivery Order' },
                { id:'invoice', label:'Invoice' }, { id:'retur', label:'Sales Return' }],
   manufaktur: [
@@ -347,8 +347,12 @@ const MODULE_SUBS = {
   inventory: [{ id:'barang', label:'Katalog Barang' }, { id:'kategori', label:'Kategori Produk' },
                { id:'mutasi', label:'Mutasi Barang' }, { id:'penyesuaian', label:'Penyesuaian' },
                { id:'opname', label:'Stock Opname' }],
+  // 3 entry terakhir (labarugi/aruskas/neraca) juga harus sinkron dengan AK_SUBS di
+  // modules/akuntan/data/master.data.jsx dan AK_LAPORAN_LIST di modules/akuntan/data/laporan.data.jsx —
+  // tidak bisa disatukan karena components.jsx dieksekusi lebih dulu dari data file modul manapun.
   finance:   [{ id:'akun', label:'Katalog Akun' }, { id:'aktiva', label:'Aktiva Tetap' },
-               { id:'jurnal', label:'Jurnal Memorial' }],
+               { id:'jurnal', label:'Jurnal Memorial' }, { id:'labarugi', label:'Laba Rugi' },
+               { id:'aruskas', label:'Laporan Arus Kas' }, { id:'neraca', label:'Neraca' }],
   cashbank:  [
     { id:'kbg', label:'Kas, Bank & Giro' },
     { id:'km',  label:'Kas Masuk' },
@@ -551,7 +555,7 @@ function MultiTabNav({ tabGroups, activeGroup, onGroupClick, onTabClick, onTabCl
 }
 
 // ---------- Reusable module dashboard (Pengaturan, Katalog Lain, Barang) ----------
-function ModuleDashboard({ title, subtitle, sections, activityLog, onOpenSub, activityTitle = 'Log Aktivitas Terbaru', activitySub = 'Operasi sistem yang dideteksi secara real-time' }) {
+function ModuleDashboard({ title, subtitle, sections, activityLog, onOpenSub, activityTitle = 'Log Aktivitas Terbaru', activitySub = 'Operasi sistem yang dideteksi secara real-time', kpis }) {
   return (
     <div className="page" data-screen-label={title}>
       <div className="crumbs">
@@ -564,6 +568,17 @@ function ModuleDashboard({ title, subtitle, sections, activityLog, onOpenSub, ac
           <div className="sub">{subtitle}</div>
         </div>
       </div>
+      {kpis && kpis.length > 0 && (
+        <div className="kpi-strip">
+          {kpis.map((k, i) => (
+            <div className="kpi" key={i}>
+              <div className="lbl">{k.label}</div>
+              <div className="val mono" style={k.color ? {color:k.color} : null}>{k.value}</div>
+              {k.sub && <div className="delta">{k.sub}</div>}
+            </div>
+          ))}
+        </div>
+      )}
       <div style={{display:'grid', gridTemplateColumns:'1.5fr 1fr', gap:20, alignItems:'start'}}>
         <div>
           {sections.map((sec, i) => (
@@ -627,7 +642,7 @@ function ConfirmationModal({ title, message, onConfirm, onCancel, confirmLabel='
   const [reason, setReason] = React.useState('');
   const canConfirm = !requireReason || reason.trim();
   return (
-    <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+    <div className="modal-backdrop" style={{zIndex:110}}>
       <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:480}}>
         <div className="modal-head"><h2>{title}</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
         <div className="modal-body">
@@ -684,7 +699,7 @@ function ItemPickerModal({ title, items, onConfirm, onCancel }) {
   };
 
   return (
-    <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+    <div className="modal-backdrop" style={{zIndex:110}}>
       <div className="modal item-picker-modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-head"><h2>{title || 'Pilih Barang'}</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
         <div className="modal-body">
@@ -787,7 +802,7 @@ function ScrollNavModal({
   }, [sections]);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className={`modal modal-wide ${xwide ? 'modal-xwide' : ''}`} onClick={e=>e.stopPropagation()}>
         <div className="modal-head">
           <div>

@@ -1,6 +1,38 @@
 // Penjualan — halaman Konfirmasi Penjualan (konfirmasi pesanan pelanggan + approval)
 
-function KonfirmasiPenjualan({ rows, onAdd, onView, onEdit, onCancel }) {
+// Field generik: kalau locked, tampil sebagai teks readonly (view-field/view-value) persis
+// pola Katalog Pelanggan, bukan <input disabled> yang masih terlihat seperti kontrol form.
+// Didefinisikan di top-level (bukan di dalam komponen modal) supaya identitasnya stabil antar render —
+// kalau didefinisikan di dalam body komponen, tiap keystroke bikin instance baru dan React remount
+// elemen <input>-nya sehingga focus hilang setelah 1 huruf.
+function Fld({ label, value, onChange, required, span, mono, type='text', options, locked }) {
+  const spanStyle = span ? {gridColumn:`span ${span}`} : {};
+  if (locked) {
+    return (
+      <div className="view-field" style={spanStyle}>
+        <label>{label}</label>
+        <div className={`view-value ${mono ? 'mono' : ''}`}>{value || <span className="muted">—</span>}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="field" style={spanStyle}>
+      <label>{label}{required && <span style={{color:'var(--danger)'}}> *</span>}</label>
+      {type === 'select' ? (
+        <select className="select" value={value} onChange={e=>onChange(e.target.value)}>
+          <option value="">— Pilih —</option>
+          {options.map(o => typeof o === 'string' ? <option key={o} value={o}>{o}</option> : <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      ) : type === 'textarea' ? (
+        <textarea className="textarea" value={value} onChange={e=>onChange(e.target.value)} />
+      ) : (
+        <input className={`input ${mono ? 'mono' : ''}`} type={type} value={value} onChange={e=>onChange(type==='number' ? +e.target.value : e.target.value)} />
+      )}
+    </div>
+  );
+}
+
+function KonfirmasiPenjualan({ rows, onAdd, onView, onEdit, onCancel, onCetak, onCetakRow }) {
   const [q, setQ] = React.useState('');
   const [noBukti, setNoBukti] = React.useState('');
   const [tglDari, setTglDari] = React.useState('');
@@ -30,7 +62,8 @@ function KonfirmasiPenjualan({ rows, onAdd, onView, onEdit, onCancel }) {
 
   return (
     <>
-      <PjHeader title="Konfirmasi Penjualan" sub="Konfirmasi Pesanan Pelanggan" onAdd={onAdd} addLabel="Konfirmasi Penjualan baru" />
+      <PjHeader title="Confirmation Order" sub="Konfirmasi Pesanan Pelanggan" onAdd={onAdd} addLabel="Confirmation Order baru"
+        extra={onCetak && <button className="btn btn-sm" onClick={onCetak}>{I.print()} Cetak</button>} />
       <div className="filter-bar">
         <div className="filter-grid" style={{gridTemplateColumns:'repeat(6, minmax(0,1fr)) auto'}}>
           <div className="field">
@@ -74,11 +107,6 @@ function KonfirmasiPenjualan({ rows, onAdd, onView, onEdit, onCancel }) {
       <div className="table-card">
         <div className="table-toolbar">
           <div className="table-toolbar-left"><b>Total Item ({filtered.length})</b></div>
-          <div className="table-toolbar-right">
-            <button className="btn btn-primary btn-sm" onClick={onAdd}>{I.plus()} Konfirmasi Penjualan baru</button>
-            <button className="btn btn-sm btn-icon" title="Refresh" onClick={()=>window.__erpToast && window.__erpToast('Data diperbarui.')}>{I.refresh()}</button>
-            <button className="btn btn-sm btn-icon" title="Export" onClick={()=>window.__erpToast && window.__erpToast('Fitur export akan tersedia pada integrasi backend.')}>{I.download()}</button>
-          </div>
         </div>
         <div className="table-scroll">
           <table className="data">
@@ -117,7 +145,7 @@ function KonfirmasiPenjualan({ rows, onAdd, onView, onEdit, onCancel }) {
                     <td onClick={e=>e.stopPropagation()}>
                       <div className="row-actions">
                         <button className="btn btn-icon btn-sm" title={locked?'Lihat':'Edit'} onClick={()=>locked ? onView(k) : onEdit(k)}>{locked ? I.zoom(14) : I.edit()}</button>
-                        <button className="btn btn-icon btn-sm" title="Cetak" onClick={()=>window.__erpToast && window.__erpToast('Fitur cetak belum tersedia pada prototipe ini.')}>{I.print()}</button>
+                        <button className="btn btn-icon btn-sm" title="Cetak" onClick={()=>onCetakRow ? onCetakRow(k) : (window.__erpToast && window.__erpToast('Fitur cetak belum tersedia pada prototipe ini.'))}>{I.print()}</button>
                         <button className="btn btn-icon btn-sm del" title="Batalkan Pesanan" disabled={locked} onClick={()=>onCancel(k)}>
                           {I.fileX(14)}
                         </button>
@@ -172,7 +200,7 @@ function KonfirmasiBarangDetailModal({ jenisBarang, tipeBarang, data, onClose, o
   const isEdit = !!data;
 
   return (
-    <div className="modal-backdrop" style={{zIndex:110}} onClick={onClose}>
+    <div className="modal-backdrop" style={{zIndex:110}}>
       <div className="modal modal-wide" onClick={e=>e.stopPropagation()} style={{maxHeight:'92vh'}}>
         <div className="modal-head">
           <div><h2>{isEdit ? 'Edit Detail Barang' : 'Tambah Detail Barang'}</h2><div className="sub">Pastikan semua kolom bertanda (*) terisi.</div></div>
@@ -355,6 +383,7 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
   };
 
   const noBuktiLocked = isCreate && (!noBuktiRaw || !['F','K'].includes(noBuktiRaw[0]));
+  const gated = disabled || noBuktiLocked;
 
   const handleApprove = (reason) => {
     setApproval({ status: 'DISETUJUI', approvedBy: 'Admin', approvedAt: new Date().toLocaleString('id-ID'), catatan: reason });
@@ -409,38 +438,9 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
 
   const titleText = isCreate ? 'Tambah Konfirmasi Order' : isEdit ? `Edit Konfirmasi Order - ${form.noBukti}` : `Konfirmasi Order - ${form.noBukti}`;
 
-  // Field generik: kalau locked, tampil sebagai teks readonly (view-field/view-value) persis
-  // pola Katalog Pelanggan, bukan <input disabled> yang masih terlihat seperti kontrol form.
-  const Fld = ({ label, value, onChange, required, span, mono, type='text', options, locked }) => {
-    const spanStyle = span ? {gridColumn:`span ${span}`} : {};
-    if (disabled || locked) {
-      return (
-        <div className="view-field" style={spanStyle}>
-          <label>{label}</label>
-          <div className={`view-value ${mono ? 'mono' : ''}`}>{value || <span className="muted">—</span>}</div>
-        </div>
-      );
-    }
-    return (
-      <div className="field" style={spanStyle}>
-        <label>{label}{required && <span style={{color:'var(--danger)'}}> *</span>}</label>
-        {type === 'select' ? (
-          <select className="select" value={value} onChange={e=>onChange(e.target.value)}>
-            <option value="">— Pilih —</option>
-            {options.map(o => typeof o === 'string' ? <option key={o} value={o}>{o}</option> : <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        ) : type === 'textarea' ? (
-          <textarea className="textarea" value={value} onChange={e=>onChange(e.target.value)} />
-        ) : (
-          <input className={`input ${mono ? 'mono' : ''}`} type={type} value={value} onChange={e=>onChange(type==='number' ? +e.target.value : e.target.value)} />
-        )}
-      </div>
-    );
-  };
-
   return (
     <>
-      <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-backdrop">
         <div className="modal modal-wide" onClick={e=>e.stopPropagation()} style={{maxHeight: '92vh'}}>
           <div className="modal-head">
             <div>
@@ -507,50 +507,50 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
                     ) : (
                       <div className="view-field"><label>No. Bukti</label><div className="view-value mono">{form.noBukti}</div></div>
                     )}
-                    <Fld label="Tgl. Bukti" required type="date" value={form.tglBukti} onChange={v=>setForm(f=>({...f,tglBukti:v}))} />
-                    <Fld label="No. Ref" value={form.informasiUmum.noRef} onChange={v=>setInfo({noRef:v})} />
-                    <Fld label="Estimasi Tgl. kirim" required type="date" value={form.informasiUmum.estimasiKirim} onChange={v=>setInfo({estimasiKirim:v})} />
+                    <Fld label="Tgl. Bukti" required type="date" value={form.tglBukti} onChange={v=>setForm(f=>({...f,tglBukti:v}))} locked={gated} />
+                    <Fld label="No. Ref" value={form.informasiUmum.noRef} onChange={v=>setInfo({noRef:v})} locked={gated} />
+                    <Fld label="Estimasi Tgl. kirim" required type="date" value={form.informasiUmum.estimasiKirim} onChange={v=>setInfo({estimasiKirim:v})} locked={gated} />
 
-                    <Fld label="Customer" required type="select" options={PJ_PELANGGAN.map(p=>p.name)} value={form.customer} onChange={v=>{ const p=PJ_PELANGGAN.find(x=>x.name===v); setForm(f=>({...f,customer:v,kodeCustomer:p?p.code:''})); }} />
+                    <Fld label="Customer" required type="select" options={PJ_PELANGGAN.map(p=>p.name)} value={form.customer} onChange={v=>{ const p=PJ_PELANGGAN.find(x=>x.name===v); setForm(f=>({...f,customer:v,kodeCustomer:p?p.code:''})); }} locked={gated} />
                     <Fld label="Kode Customer" locked mono value={form.kodeCustomer} />
-                    <Fld label="Klasifikasi" required type="select" options={PJ_KLASIFIKASI_LIST} value={form.informasiUmum.klasifikasi} onChange={v=>setInfo({klasifikasi:v})} />
-                    <Fld label="Attn - PIC" required value={form.informasiUmum.attn} onChange={v=>setInfo({attn:v})} />
+                    <Fld label="Klasifikasi" required type="select" options={PJ_KLASIFIKASI_LIST} value={form.informasiUmum.klasifikasi} onChange={v=>setInfo({klasifikasi:v})} locked={gated} />
+                    <Fld label="Attn - PIC" required value={form.informasiUmum.attn} onChange={v=>setInfo({attn:v})} locked={gated} />
 
-                    <Fld label="Sales" required type="select" options={PJ_SALES.map(s=>s.nama)} value={form.sales} onChange={v=>{ const s=PJ_SALES.find(x=>x.nama===v); setForm(f=>({...f,sales:v,kodeSales:s?s.kode:''})); }} />
+                    <Fld label="Sales" required type="select" options={PJ_SALES.map(s=>s.nama)} value={form.sales} onChange={v=>{ const s=PJ_SALES.find(x=>x.nama===v); setForm(f=>({...f,sales:v,kodeSales:s?s.kode:''})); }} locked={gated} />
                     <Fld label="Kode Sales" locked mono value={form.kodeSales} />
-                    <Fld label="Telepon / HP" value={form.informasiUmum.telepon} onChange={v=>setInfo({telepon:v})} />
-                    <Fld label="Email" type="email" value={form.informasiUmum.email} onChange={v=>setInfo({email:v})} />
-                    <Fld label="Nama & HP Penerima" value={form.informasiUmum.namaHpPenerima} onChange={v=>setInfo({namaHpPenerima:v})} />
-                    <Fld label="Jenis Kendaraan" value={form.informasiUmum.jenisKendaraan} onChange={v=>setInfo({jenisKendaraan:v})} />
+                    <Fld label="Telepon / HP" value={form.informasiUmum.telepon} onChange={v=>setInfo({telepon:v})} locked={gated} />
+                    <Fld label="Email" type="email" value={form.informasiUmum.email} onChange={v=>setInfo({email:v})} locked={gated} />
+                    <Fld label="Nama & HP Penerima" value={form.informasiUmum.namaHpPenerima} onChange={v=>setInfo({namaHpPenerima:v})} locked={gated} />
+                    <Fld label="Jenis Kendaraan" value={form.informasiUmum.jenisKendaraan} onChange={v=>setInfo({jenisKendaraan:v})} locked={gated} />
 
-                    <Fld label="Incoterm" required type="select" options={PJ_INCOTERM_LIST} value={form.informasiUmum.incoterm} onChange={v=>setInfo({incoterm:v})} />
+                    <Fld label="Incoterm" required type="select" options={PJ_INCOTERM_LIST} value={form.informasiUmum.incoterm} onChange={v=>setInfo({incoterm:v})} locked={gated} />
 
-                    <Fld label="Alamat Customer" type="textarea" span={2} value={form.informasiUmum.alamatCustomer} onChange={v=>setInfo({alamatCustomer:v})} />
-                    <Fld label="Keterangan" type="textarea" span={2} value={form.informasiUmum.keterangan} onChange={v=>setInfo({keterangan:v})} />
+                    <Fld label="Alamat Customer" type="textarea" span={2} value={form.informasiUmum.alamatCustomer} onChange={v=>setInfo({alamatCustomer:v})} locked={gated} />
+                    <Fld label="Keterangan" type="textarea" span={2} value={form.informasiUmum.keterangan} onChange={v=>setInfo({keterangan:v})} locked={gated} />
 
-                    <Fld label="Alamat Pengiriman / ambil" type="textarea" span={2} value={form.informasiUmum.alamatPengiriman} onChange={v=>setInfo({alamatPengiriman:v})} />
+                    <Fld label="Alamat Pengiriman / ambil" type="textarea" span={2} value={form.informasiUmum.alamatPengiriman} onChange={v=>setInfo({alamatPengiriman:v})} locked={gated} />
                   </div>
                 </div>
 
                 <div ref={bayarRef} className="panel scroll-section" style={{marginBottom:16}}>
                   <h3>Pembayaran</h3>
                   <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:12}}>
-                    <Fld label="Cara Bayar" required type="select" options={PJ_CARA_BAYAR} value={form.caraBayar} onChange={v=>setForm(f=>({...f,caraBayar:v}))} />
-                    <Fld label="Tempo (Hari)" type="number" mono value={form.pembayaran.tempo} onChange={v=>setBayar({tempo:v})} />
-                    <Fld label="Payment 1 / DP" type="number" mono value={form.pembayaran.dp} onChange={v=>setBayar({dp:v})} />
+                    <Fld label="Cara Bayar" required type="select" options={PJ_CARA_BAYAR} value={form.caraBayar} onChange={v=>setForm(f=>({...f,caraBayar:v}))} locked={gated} />
+                    <Fld label="Tempo (Hari)" type="number" mono value={form.pembayaran.tempo} onChange={v=>setBayar({tempo:v})} locked={gated} />
+                    <Fld label="Payment 1 / DP" type="number" mono value={form.pembayaran.dp} onChange={v=>setBayar({dp:v})} locked={gated} />
 
-                    <Fld label="Akun Pembayaran" required type="select" options={PJ_AKUN_TUNAI} value={form.pembayaran.akun} onChange={v=>setBayar({akun:v})} />
-                    <Fld label="Berlaku Sampai" type="date" value={form.pembayaran.berlakuSampai} onChange={v=>setBayar({berlakuSampai:v})} />
-                    <Fld label="Payment 2" type="number" mono value={form.pembayaran.payment2} onChange={v=>setBayar({payment2:v})} />
+                    <Fld label="Akun Pembayaran" required type="select" options={PJ_AKUN_TUNAI} value={form.pembayaran.akun} onChange={v=>setBayar({akun:v})} locked={gated} />
+                    <Fld label="Berlaku Sampai" type="date" value={form.pembayaran.berlakuSampai} onChange={v=>setBayar({berlakuSampai:v})} locked={gated} />
+                    <Fld label="Payment 2" type="number" mono value={form.pembayaran.payment2} onChange={v=>setBayar({payment2:v})} locked={gated} />
 
-                    <Fld label="Payment 3" type="number" mono value={form.pembayaran.payment3} onChange={v=>setBayar({payment3:v})} />
+                    <Fld label="Payment 3" type="number" mono value={form.pembayaran.payment3} onChange={v=>setBayar({payment3:v})} locked={gated} />
                   </div>
                 </div>
 
                 <div ref={barangRef} className="panel scroll-section" style={{marginBottom:16}}>
                   <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
                     <h3 style={{margin:0}}>Barang</h3>
-                    {!disabled && (
+                    {!gated && (
                       <div style={{display:'flex', gap:8}}>
                         <button className="btn btn-primary btn-sm" onClick={()=>setBarangDetail({jenisBarang:'BIASA', editIndex:null})}>{I.plus()} Tambah Barang Biasa</button>
                         <button className="btn btn-primary btn-sm" onClick={()=>setBarangDetail({jenisBarang:'PU', editIndex:null})}>{I.plus()} Tambah Barang PU</button>
@@ -558,7 +558,7 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
                     )}
                   </div>
                   <div className="inline-table">
-                    <div className={`line-items ${disabled ? 'view-only' : ''}`} style={{maxHeight:280, overflowY:'auto', overflowX:'auto'}}>
+                    <div className={`line-items ${gated ? 'view-only' : ''}`} style={{maxHeight:280, overflowY:'auto', overflowX:'auto'}}>
                       <table>
                         <thead>
                           <tr>
@@ -566,24 +566,24 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
                             <th className="num" style={{width:90}}>Jumlah</th><th style={{width:90}}>Satuan</th>
                             <th className="num" style={{width:130}}>Hrg. Satuan</th><th className="num" style={{width:150}}>Total Rp</th>
                             {!isCreate && <th className="num" style={{width:100}}>Realisasi</th>}
-                            {!disabled && <th style={{width:70}}></th>}
+                            {!gated && <th style={{width:70}}></th>}
                           </tr>
                         </thead>
                         <tbody>
                           {form.barang.length === 0 && (
-                            <tr><td colSpan={disabled?7:8} className="empty" style={{padding:'32px 16px', textAlign:'center', color:'var(--text-3)'}}>Belum ada item. Klik "+ Tambah Barang Biasa" untuk mulai.</td></tr>
+                            <tr><td colSpan={gated?7:8} className="empty" style={{padding:'32px 16px', textAlign:'center', color:'var(--text-3)'}}>Belum ada item. Klik "+ Tambah Barang Biasa" untuk mulai.</td></tr>
                           )}
                           {form.barang.map((b, idx) => (
                             <tr key={idx} className={`${b._deleted ? 'row-deleted' : ''} ${b._added ? 'row-added' : ''}`} title={b._deleted ? 'Barang ini akan dihapus' : ''}>
                               <td className="mono">{b.Kode_Item}</td>
-                              <td>{disabled || b._deleted ? b.Nama_Item : <span className="cell-link" onClick={()=>setBarangDetail({jenisBarang:b.JenisBarang||'BIASA', editIndex:idx})}>{b.Nama_Item}</span>}</td>
+                              <td>{gated || b._deleted ? b.Nama_Item : <span className="cell-link" onClick={()=>setBarangDetail({jenisBarang:b.JenisBarang||'BIASA', editIndex:idx})}>{b.Nama_Item}</span>}</td>
                               <td>{b.Deskripsi}</td>
                               <td className="num mono">{b.Jumlah}</td>
                               <td>{b.Satuan}</td>
                               <td className="num mono">{fmtRp(b.Hrg_Sat)}</td>
                               <td className="num mono">{fmtRp(pjLineTotal(b))}</td>
                               {!isCreate && <td className="num mono muted">{b.Realisasi||0}</td>}
-                              {!disabled && (
+                              {!gated && (
                                 <td>
                                   <div className="row-actions">
                                     {b._deleted ? (
@@ -621,10 +621,10 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
                     rows={form.biaya}
                     setRows={setBiaya}
                     addLabel="Tambah Biaya"
-                    disabled={disabled}
+                    disabled={gated}
                     itemSource={{ data:PJ_AKUN_BIAYA, codeKey:'Kode_Item', nameKey:'Nama_Item' }}
                     lockItems
-                    onPickItems={!disabled ? () => setPickerBiaya(true) : null}
+                    onPickItems={!gated ? () => setPickerBiaya(true) : null}
                   />
                 </div>
               </div>
@@ -742,6 +742,8 @@ function KonfirmasiPage({ rows, setRows }) {
   const [show, setShow] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null); // null (CREATE) | 'VIEW' | 'EDIT'
   const [confirmCancel, setConfirmCancel] = React.useState(null);
+  const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow] = React.useState(null);
 
   const openAdd = () => { setModal(null); setModalMode(null); setShow(true); };
   const openView = (d) => { setModal(d); setModalMode('VIEW'); setShow(true); };
@@ -760,7 +762,16 @@ function KonfirmasiPage({ rows, setRows }) {
 
   return (
     <>
-      <KonfirmasiPenjualan rows={rows} onAdd={openAdd} onView={openView} onEdit={openEdit} onCancel={(k)=>setConfirmCancel(k)} />
+      <KonfirmasiPenjualan rows={rows} onAdd={openAdd} onView={openView} onEdit={openEdit} onCancel={(k)=>setConfirmCancel(k)}
+        onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
+        onCetakRow={(k)=>{setCetakRow(k); setShowCetak(true);}} />
+      {showCetak && (
+        <PjCetakModal docLabel="Confirmation Order" rows={rows}
+          noBuktiKey="noBukti" tglBuktiKey="tglBukti" statusKey="status" itemsKey="barang"
+          getGroupLabel={r=>r.customer}
+          initialSelected={cetakRow ? [cetakRow.noBukti] : null}
+          onClose={()=>{setShowCetak(false); setCetakRow(null);}} />
+      )}
       {show && <KonfirmasiPenjualanModal data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} />}
       {confirmCancel && (
         <ConfirmationModal

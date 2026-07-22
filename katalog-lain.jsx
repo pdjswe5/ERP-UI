@@ -105,7 +105,7 @@ function KLGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave
   const [form, setForm] = React.useState(data ? {...empty, ...data} : empty);
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:720}}>
         <div className="modal-head">
           <div><h2>{isEdit ? `Edit ${moduleTitle}` : `Tambah ${moduleTitle}`}</h2><div className="sub">Pastikan semua kolom bertanda (*) terisi.</div></div>

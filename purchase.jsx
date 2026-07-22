@@ -247,7 +247,7 @@ function KatalogPemasok({ onNavigate, onBack }) {
       </div>
 
       {showAdd && (
-        <div className="modal-backdrop" onClick={() => setShowAdd(false)}>
+        <div className="modal-backdrop">
           <div className="modal" style={{maxWidth:560}} onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               <div><h2>Tambah Pemasok Baru</h2><div className="sub">Isi data master pemasok</div></div>
@@ -364,7 +364,7 @@ function OrderPembelian({ onNavigate, onBack }) {
       </div>
 
       {showAdd && (
-        <div className="modal-backdrop" onClick={handleClose}>
+        <div className="modal-backdrop">
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               <div><h2>Tambah Order Pembelian</h2><div className="sub">Lengkapi informasi, tambahkan item, lalu simpan.</div></div>
@@ -489,7 +489,7 @@ function NotaPembelian({ onNavigate, onBack }) {
       </div>
 
       {showAdd && (
-        <div className="modal-backdrop" onClick={handleClose}>
+        <div className="modal-backdrop">
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               <div><h2>Tambah Nota Pembelian</h2><div className="sub">Isi data nota dan item yang diterima.</div></div>
@@ -638,7 +638,7 @@ function ReturPembelian({ onNavigate, onBack }) {
       </div>
 
       {showAdd && (
-        <div className="modal-backdrop" onClick={handleClose}>
+        <div className="modal-backdrop">
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               <div><h2>Tambah Retur Pembelian</h2><div className="sub">Catat retur dan klaim ke pemasok.</div></div>

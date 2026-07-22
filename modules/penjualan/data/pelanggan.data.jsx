@@ -1100,7 +1100,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Reynold",
+      name:"Reynold 2",
       code:"R006",
       alamat:"Blok M",
       kota:"JKT",
@@ -1124,11 +1124,11 @@ const PJ_PELANGGAN = [
       klasifikasi:"Korporat",
       fk:"K",
       status:"Aktif",
-      keterangan:"Data lengkap pelanggan Reynold",
+      keterangan:"Data lengkap pelanggan Reynold 2",
       alamatKirim:"Blok M",
       noNpwp:"09.019.020.21-118.022",
       jenisHarga:"Standar",
-      namaPajak:"Reynold",
+      namaPajak:"Reynold 2",
       kotaPajak:"JKT",
       plafon:95000000,
       plafonTemp:18000000,

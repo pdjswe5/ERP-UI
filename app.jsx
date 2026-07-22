@@ -24,7 +24,7 @@ const INITIAL_TAB_GROUPS = () => {
 
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const [activeGroup, setActiveGroup] = React.useState('pembelian');
+  const [activeGroup, setActiveGroup] = React.useState('home');
   const [tabGroups, setTabGroups] = React.useState(INITIAL_TAB_GROUPS);
   const [toast, setToast] = React.useState(null);
   const [moduleOrder, setModuleOrder] = React.useState(() => MODULES.map(m => m.id));

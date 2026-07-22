@@ -14,6 +14,7 @@ function BeliPage({ rows, setRows }) {
   const [show, setShow] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null);
   const [confirmCancel, setConfirmCancel] = React.useState(null);
+  const [showCetak, setShowCetak] = React.useState(false);
 
   const openAdd = () => { setModal(null); setModalMode(null); setShow(true); };
   const openView = (r) => { setModal(r); setModalMode('VIEW'); setShow(true); };
@@ -77,9 +78,11 @@ function BeliPage({ rows, setRows }) {
         onView={openView}
         onEdit={openEdit}
         onCancelDoc={(r)=>setConfirmCancel(r)}
+        onCetak={()=>setShowCetak(true)}
         addLabel="Nota Baru"
         statusFilter={statusFilter}
       />
+      {showCetak && <PbCetakModal docLabel="Nota Pembelian" rows={rows} statusFilter={statusFilter} onClose={()=>setShowCetak(false)} />}
       {show && (
         <PbModalShell
           title="Nota Pembelian"

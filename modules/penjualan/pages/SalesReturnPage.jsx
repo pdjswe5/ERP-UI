@@ -15,6 +15,8 @@ function SalesReturnPage({ rows, setRows, salesOrderList, invoiceList }) {
   const [show, setShow] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null);
   const [confirmCancel, setConfirmCancel] = React.useState(null);
+  const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow] = React.useState(null);
 
   const openAdd = () => { setModal(null); setModalMode(null); setShow(true); };
   const openView = (r) => { setModal(r); setModalMode('VIEW'); setShow(true); };
@@ -78,9 +80,17 @@ function SalesReturnPage({ rows, setRows, salesOrderList, invoiceList }) {
         onView={openView}
         onEdit={openEdit}
         onCancelDoc={(r)=>setConfirmCancel(r)}
+        onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
+        onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}}
         addLabel="Retur Baru"
         statusFilter={statusFilter}
       />
+      {showCetak && (
+        <PjCetakModal docLabel="Sales Return" rows={rows} statusFilter={statusFilter}
+          getGroupLabel={r=>r.Nama_Cust}
+          initialSelected={cetakRow ? [cetakRow.No_Bukti] : null}
+          onClose={()=>{setShowCetak(false); setCetakRow(null);}} />
+      )}
       {show && (
         <PjDocModal
           title="Sales Return"

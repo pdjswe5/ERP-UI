@@ -35,18 +35,21 @@ const PB_AKUN = [
   { kode:'200.001', nama:'Biaya Angkut Pembelian' },
   { kode:'200.002', nama:'Biaya Bongkar Muat' },
 ];
+// `jenis` (BAKU/JADI/LAIN) dipakai popup Cetak (PbCetakModal) buat hitung ringkasan item per
+// kategori di dokumen Register — tidak ada di data API asli, murni penanda lokal buat cetak.
 const PB_PRODUK = [
-  { kode:'AA0450914100550', nama:'BAHAN ABU ANGKOLA TEBAL 0.45 LEBAR 914 MM AZ 100 G-550', satuan:'LBR', harga:275000 },
-  { kode:'BB040091470550', nama:'BAHAGIA BIRU BROMO TEBAL 0.40 LEBAR 914 MM AZ 70 G-550', satuan:'LBR', harga:260000 },
-  { kode:'AS1025ATBONON075000410', nama:'ATAP SALJU 4CM TEBAL 0.25 ATAP BIRU BOGOWONTO NON BSI LEBAR 750 MM PANJANG 4.10 MTR', satuan:'PCS', harga:98000 },
-  { kode:'CC0350914080550', nama:'COKELAT CERAH TEBAL 0.35 LEBAR 914 MM AZ 80 G-550', satuan:'LBR', harga:245000 },
-  { kode:'DD0500914120600', nama:'DASAR DOFF TEBAL 0.50 LEBAR 914 MM AZ 120 G-600', satuan:'LBR', harga:310000 },
-  { kode:'EE0300762060500', nama:'EMAS ELEGAN TEBAL 0.30 LEBAR 762 MM AZ 60 G-500', satuan:'LBR', harga:185000 },
-  { kode:'FF0400914090550', nama:'FIBER FROST TEBAL 0.40 LEBAR 914 MM AZ 90 G-550', satuan:'LBR', harga:265000 },
-  { kode:'GG0250610050450', nama:'GENTENG GRANIT TEBAL 0.25 LEBAR 610 MM AZ 50 G-450', satuan:'PCS', harga:75000 },
+  { kode:'AA0450914100550', nama:'BAHAN ABU ANGKOLA TEBAL 0.45 LEBAR 914 MM AZ 100 G-550', satuan:'LBR', harga:275000, jenis:'BAKU' },
+  { kode:'BB040091470550', nama:'BAHAGIA BIRU BROMO TEBAL 0.40 LEBAR 914 MM AZ 70 G-550', satuan:'LBR', harga:260000, jenis:'BAKU' },
+  { kode:'AS1025ATBONON075000410', nama:'ATAP SALJU 4CM TEBAL 0.25 ATAP BIRU BOGOWONTO NON BSI LEBAR 750 MM PANJANG 4.10 MTR', satuan:'PCS', harga:98000, jenis:'JADI' },
+  { kode:'CC0350914080550', nama:'COKELAT CERAH TEBAL 0.35 LEBAR 914 MM AZ 80 G-550', satuan:'LBR', harga:245000, jenis:'BAKU' },
+  { kode:'DD0500914120600', nama:'DASAR DOFF TEBAL 0.50 LEBAR 914 MM AZ 120 G-600', satuan:'LBR', harga:310000, jenis:'BAKU' },
+  { kode:'EE0300762060500', nama:'EMAS ELEGAN TEBAL 0.30 LEBAR 762 MM AZ 60 G-500', satuan:'LBR', harga:185000, jenis:'JADI' },
+  { kode:'FF0400914090550', nama:'FIBER FROST TEBAL 0.40 LEBAR 914 MM AZ 90 G-550', satuan:'LBR', harga:265000, jenis:'JADI' },
+  { kode:'GG0250610050450', nama:'GENTENG GRANIT TEBAL 0.25 LEBAR 610 MM AZ 50 G-450', satuan:'PCS', harga:75000, jenis:'LAIN' },
 ];
 
 function pbProdukNama(kode) { return PB_PRODUK.find(p => p.kode === kode)?.nama || ''; }
+function pbProdukJenis(kode) { return PB_PRODUK.find(p => p.kode === kode)?.jenis || 'LAIN'; }
 function pbSuppNama(kode) { return PB_SUPPLIER.find(s => s.Kode_Supp === kode)?.Nama_Supp || kode; }
 function pbOrgNama(kode) { return PB_PURCHASING_ORG.find(o => o.kode === kode)?.nama || kode; }
 function pbGudangNama(kode) { return GUDANG_DATA.find(g => g.kode === kode)?.nama || kode; }

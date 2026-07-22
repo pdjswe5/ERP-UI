@@ -14,6 +14,8 @@ function PoPage({ rows, setRows }) {
   const [show, setShow] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null);
   const [confirmCancel, setConfirmCancel] = React.useState(null);
+  const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow] = React.useState(null);
 
   const openAdd = () => { setModal(null); setModalMode(null); setShow(true); };
   const openView = (r) => { setModal(r); setModalMode('VIEW'); setShow(true); };
@@ -77,9 +79,17 @@ function PoPage({ rows, setRows }) {
         onView={openView}
         onEdit={openEdit}
         onCancelDoc={(r)=>setConfirmCancel(r)}
+        onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
+        onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}}
         addLabel="PO Baru"
         statusFilter={statusFilter}
       />
+      {showCetak && (
+        <PbCetakModal docLabel="Purchase Order" rows={rows} statusFilter={statusFilter}
+          getGroupLabel={r=>pbSuppNama(r.Kode_Supp)}
+          initialSelected={cetakRow ? [cetakRow.No_Bukti] : null}
+          onClose={()=>{setShowCetak(false); setCetakRow(null);}} />
+      )}
       {show && (
         <PbModalShell
           title="Purchase Order"

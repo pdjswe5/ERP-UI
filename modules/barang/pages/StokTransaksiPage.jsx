@@ -20,13 +20,14 @@
 // PbDocList (KatalogPelangganPage/PemasokPage) — bedanya di sana modal generik (PjModalShell/
 // PbModalShell) yang punya toggle VIEW/EDIT bawaan, di sini masing-masing modal Mutasi/Koreksi/
 // Opname mengimplementasikan togglenya sendiri (lihat initialMode prop).
-function BrgTransList({ title, rows, onAdd, addLabel='Transaksi Baru', addExtra, onView, onEdit, onCancel }) {
+function BrgTransList({ title, rows, onAdd, addLabel='Transaksi Baru', addExtra, onView, onEdit, onCancel, onCetak, onCetakRow }) {
   const [q, setQ] = React.useState('');
   const filtered = rows.filter(r => !q || r.noBukti.toLowerCase().includes(q.toLowerCase()));
   const hasKategori = rows.some(r => r.kodeKategori);
   return (
     <>
-      <BrgHeader title={title} sub={`${filtered.length} transaksi`} onAdd={addExtra ? undefined : onAdd} addLabel={addLabel} extra={addExtra} />
+      <BrgHeader title={title} sub={`${filtered.length} transaksi`} onAdd={addExtra ? undefined : onAdd} addLabel={addLabel}
+        extra={<>{onCetak && <button className="btn btn-sm" onClick={onCetak}>{I.print()} Cetak</button>}{addExtra}</>} />
       <div className="filter-bar"><div className="filter-grid">
         <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="No. Bukti…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
         <div className="filter-actions"><button className="btn btn-primary">{I.filter()} Cari</button></div>
@@ -53,7 +54,7 @@ function BrgTransList({ title, rows, onAdd, addLabel='Transaksi Baru', addExtra,
                       {onCancel && (
                         <button className="btn btn-icon btn-sm del" title={r.batal ? 'Sudah dibatalkan' : 'Batalkan Transaksi'} disabled={r.batal} onClick={()=>onCancel(r)}>{I.fileX(14)}</button>
                       )}
-                      <button className="btn btn-icon btn-sm" title="Cetak">{I.print()}</button>
+                      <button className="btn btn-icon btn-sm" title="Cetak" onClick={()=>onCetakRow ? onCetakRow(r) : (window.__erpToast && window.__erpToast('Fitur cetak belum tersedia pada prototipe ini.'))}>{I.print()}</button>
                     </div>
                   </td>
                 </tr>
@@ -99,7 +100,7 @@ function MutasiItemPickerModal({ onConfirm, onCancel }) {
     onConfirm(picked);
   };
   return (
-    <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+    <div className="modal-backdrop" style={{zIndex:110}}>
       <div className="modal item-picker-modal" style={{maxWidth:900}} onClick={e=>e.stopPropagation()}>
         <div className="modal-head">
           <div><h2>Pilih barang yang ingin ditambahkan</h2><div className="sub">Pilih barang untuk ditambahkan ke daftar barang</div></div>
@@ -283,7 +284,7 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
   const modalTitle = isCreate ? `Buat ${title}` : isEdit ? `Edit ${title} — ${form.noBukti}` : `${title} — ${form.noBukti}`;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" style={{maxWidth:1300, maxHeight:'92vh'}} onClick={e=>e.stopPropagation()}>
         <div className="modal-head">
           <div><h2>{modalTitle}</h2><div className="sub">{isView ? brgBatalPill(form.batal) : 'Pastikan semua kolom bertanda (*) terisi.'}</div></div>
@@ -378,6 +379,8 @@ function MutasiBarangPage() {
   const [modalJenis, setModalJenis] = React.useState(null); // null | 'MUTASI' | 'KONSINYASI'
   const [modalMode, setModalMode] = React.useState(null); // null | 'VIEW' | 'EDIT'
   const [confirmCancel, setConfirmCancel] = React.useState(null);
+  const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow] = React.useState(null);
   const closeModal = () => { setModalJenis(null); setModal(null); setModalMode(null); };
   const save = (form) => {
     setRows(prev => modal ? prev.map(r => r.noBukti===modal.noBukti ? form : r) : [...prev, form]);
@@ -400,8 +403,19 @@ function MutasiBarangPage() {
         </>}
         onView={(r)=>{setModal(r); setModalJenis(r.jenis || 'MUTASI'); setModalMode('VIEW');}}
         onEdit={(r)=>{setModal(r); setModalJenis(r.jenis || 'MUTASI'); setModalMode('EDIT');}}
-        onCancel={(r)=>setConfirmCancel(r)} />
+        onCancel={(r)=>setConfirmCancel(r)}
+        onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
+        onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}} />
       {modalJenis && <MutasiBuatModal jenis={modalJenis} data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} onRequestCancel={(r)=>setConfirmCancel(r)} />}
+      {showCetak && (
+        <BrgCetakModal docLabel="Mutasi Barang & Konsinyasi" rows={rows}
+          columns={[{label:'Satuan'},{label:'Konversi', numeric:true},{label:'Jumlah', numeric:true},{label:'Satuan Terkecil', numeric:true}]}
+          getItems={r => (r.details||[]).map(d => ({ kode:d.kodeItem, nama:d.namaItem, values:[d.satuan, d.konversi, d.jumlah, d.satuanTerkecil] }))}
+          getGroupLabel={r => `${brgGudangNama(r.kodeGudangDari)} → ${brgGudangNama(r.kodeGudangKe)}`}
+          groupLabelText="Gudang Asal → Tujuan"
+          initialSelected={cetakRow ? [cetakRow.noBukti] : null}
+          onClose={()=>{setShowCetak(false); setCetakRow(null);}} />
+      )}
       {confirmCancel && (
         <ConfirmationModal
           title="Batalkan Transaksi"
@@ -447,7 +461,7 @@ function KoreksiItemPickerModal({ onConfirm, onCancel }) {
     onConfirm(picked);
   };
   return (
-    <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+    <div className="modal-backdrop" style={{zIndex:110}}>
       <div className="modal item-picker-modal" style={{maxWidth:900}} onClick={e=>e.stopPropagation()}>
         <div className="modal-head">
           <div><h2>Pilih barang yang ingin ditambahkan</h2><div className="sub">Pilih barang untuk ditambahkan ke daftar barang</div></div>
@@ -616,7 +630,7 @@ function PenyesuaianKoreksiModal({ data, initialMode, onClose, onSave, onRequest
   const modalTitle = isCreate ? 'Buat Koreksi' : isEdit ? `Edit Koreksi — ${form.noBukti}` : `Koreksi — ${form.noBukti}`;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" style={{maxWidth:1300, maxHeight:'92vh'}} onClick={e=>e.stopPropagation()}>
         <div className="modal-head">
           <div><h2>{modalTitle}</h2><div className="sub">{isView ? brgBatalPill(form.batal) : 'Pastikan semua kolom bertanda (*) terisi.'}</div></div>
@@ -695,6 +709,8 @@ function PenyesuaianBarangPage() {
   const [showModal, setShowModal] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null); // null | 'VIEW' | 'EDIT'
   const [confirmCancel, setConfirmCancel] = React.useState(null);
+  const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow] = React.useState(null);
   const closeModal = () => { setShowModal(false); setModal(null); setModalMode(null); };
   const save = (form) => {
     setRows(prev => modal ? prev.map(r => r.noBukti===modal.noBukti ? form : r) : [...prev, form]);
@@ -716,8 +732,19 @@ function PenyesuaianBarangPage() {
         onAdd={()=>{setModal(null); setShowModal(true); setModalMode(null);}}
         onView={(r)=>{setModal(r); setShowModal(true); setModalMode('VIEW');}}
         onEdit={(r)=>{setModal(r); setShowModal(true); setModalMode('EDIT');}}
-        onCancel={(r)=>setConfirmCancel(r)} />
+        onCancel={(r)=>setConfirmCancel(r)}
+        onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
+        onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}} />
       {showModal && <PenyesuaianKoreksiModal data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} onRequestCancel={(r)=>setConfirmCancel(r)} />}
+      {showCetak && (
+        <BrgCetakModal docLabel="Penyesuaian Barang (Koreksi)" rows={rows}
+          columns={[{label:'Satuan'},{label:'Konversi', numeric:true},{label:'Jumlah', numeric:true},{label:'Harga Total', numeric:true}]}
+          getItems={r => (r.details||[]).map(d => ({ kode:d.kodeItem, nama:d.namaItem, values:[d.satuan, d.konversi, d.jumlah, fmtRp(d.hargaTotal)] }))}
+          getGroupLabel={r => brgGudangNama(r.kodeGudang)}
+          groupLabelText="Gudang"
+          initialSelected={cetakRow ? [cetakRow.noBukti] : null}
+          onClose={()=>{setShowCetak(false); setCetakRow(null);}} />
+      )}
       {confirmCancel && (
         <ConfirmationModal
           title="Batalkan Transaksi"
@@ -762,7 +789,7 @@ function OpnameItemPickerModal({ onConfirm, onCancel }) {
     onConfirm(picked);
   };
   return (
-    <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+    <div className="modal-backdrop" style={{zIndex:110}}>
       <div className="modal item-picker-modal" style={{maxWidth:900}} onClick={e=>e.stopPropagation()}>
         <div className="modal-head">
           <div><h2>Pilih barang yang ingin ditambahkan</h2><div className="sub">Pilih barang untuk ditambahkan ke daftar barang</div></div>
@@ -913,7 +940,7 @@ function StockOpnameModal({ data, initialMode, onClose, onSave, onRequestCancel 
   const modalTitle = isCreate ? 'Buat Opname' : isEdit ? `Edit Opname — ${form.noBukti}` : `Opname — ${form.noBukti}`;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" style={{maxWidth:1300, maxHeight:'92vh'}} onClick={e=>e.stopPropagation()}>
         <div className="modal-head">
           <div><h2>{modalTitle}</h2><div className="sub">{isView ? brgBatalPill(form.batal) : 'Pastikan semua kolom bertanda (*) terisi.'}</div></div>
@@ -992,6 +1019,8 @@ function StockOpnamePage() {
   const [showModal, setShowModal] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null); // null | 'VIEW' | 'EDIT'
   const [confirmCancel, setConfirmCancel] = React.useState(null);
+  const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow] = React.useState(null);
   const closeModal = () => { setShowModal(false); setModal(null); setModalMode(null); };
   const save = (form) => {
     setRows(prev => modal ? prev.map(r => r.noBukti===modal.noBukti ? form : r) : [...prev, form]);
@@ -1012,8 +1041,19 @@ function StockOpnamePage() {
         onAdd={()=>{setModal(null); setShowModal(true); setModalMode(null);}}
         onView={(r)=>{setModal(r); setShowModal(true); setModalMode('VIEW');}}
         onEdit={(r)=>{setModal(r); setShowModal(true); setModalMode('EDIT');}}
-        onCancel={(r)=>setConfirmCancel(r)} />
+        onCancel={(r)=>setConfirmCancel(r)}
+        onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
+        onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}} />
       {showModal && <StockOpnameModal data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} onRequestCancel={(r)=>setConfirmCancel(r)} />}
+      {showCetak && (
+        <BrgCetakModal docLabel="Stock Opname" rows={rows}
+          columns={[{label:'Satuan'},{label:'Konversi', numeric:true},{label:'Saldo', numeric:true},{label:'Fisik', numeric:true}]}
+          getItems={r => (r.details||[]).map(d => ({ kode:d.kodeItem, nama:d.namaItem, values:[d.satuan, d.konversi, d.saldo, d.fisik] }))}
+          getGroupLabel={r => brgGudangNama(r.kodeGudang)}
+          groupLabelText="Gudang"
+          initialSelected={cetakRow ? [cetakRow.noBukti] : null}
+          onClose={()=>{setShowCetak(false); setCetakRow(null);}} />
+      )}
       {confirmCancel && (
         <ConfirmationModal
           title="Batalkan Transaksi"

@@ -1,6 +1,19 @@
 // Pembelian — dashboard modul (tile per sub-halaman)
 
 function PembelianDashboard({ onOpenSub }) {
+  const poAktif = PB_PO.filter(p => !p.Batal && p.Status !== 'SELESAI');
+  const nilaiPoAktif = poAktif.reduce((s, p) => s + (p.Details||[]).reduce((t,d) => t + pbLineTotal(d), 0), 0);
+  const poMenungguProses = PB_PO.filter(p => !p.Batal && !p.Status).length;
+  const nilaiNotaBeli = PB_BELI.filter(b => !b.Batal).reduce((s, b) => s + (b.Details||[]).reduce((t,d) => t + pbLineTotal(d), 0), 0);
+  const returAktif = PB_RETUR_BELI.filter(r => !r.Batal).length;
+
+  const kpis = [
+    { label:'Nilai PO Aktif', value: fmtRp(nilaiPoAktif), sub:`${poAktif.length} dari ${PB_PO.length} PO` },
+    { label:'PO Menunggu Diproses', value: poMenungguProses, sub: poMenungguProses > 0 ? 'Perlu ditindaklanjuti' : 'Semua PO sudah diproses', color: poMenungguProses > 0 ? 'var(--warn)' : null },
+    { label:'Nilai Nota Pembelian', value: fmtRp(nilaiNotaBeli), sub:`${PB_BELI.filter(b=>!b.Batal).length} nota aktif` },
+    { label:'Retur Beli Aktif', value: returAktif, sub:`dari ${PB_RETUR_BELI.length} total retur` },
+  ];
+
   const sections = [
     {
       title:'Master & Permintaan',
@@ -33,6 +46,7 @@ function PembelianDashboard({ onOpenSub }) {
     <ModuleDashboard
       title="Dashboard Pembelian"
       subtitle="Alur pengadaan barang: Purchase Request → RFQ → Quotation → Goods Receive → Purchase Order → Nota Pembelian → Retur Beli."
+      kpis={kpis}
       sections={sections}
       activityLog={ACTIVITY_LOG_PEMBELIAN}
       onOpenSub={onOpenSub}

@@ -271,7 +271,7 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
 
   return (
     <>
-      <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-backdrop">
         <div className="modal" style={{maxWidth:1440}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>
@@ -658,7 +658,7 @@ function MfSpkEntryModal({ data, onClose, onSave }) {
 
   return (
     <>
-      <div className="modal-backdrop" style={{zIndex:200}} onClick={onClose}>
+      <div className="modal-backdrop" style={{zIndex:200}}>
         <div className="modal" style={{maxWidth:860}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>

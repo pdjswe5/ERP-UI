@@ -14,6 +14,8 @@ function PrPage({ rows, setRows }) {
   const [show, setShow] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null); // null (CREATE) | 'VIEW' | 'EDIT'
   const [confirmCancel, setConfirmCancel] = React.useState(null); // row dibatalkan langsung dari list
+  const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow] = React.useState(null); // baris tunggal saat cetak dipicu dari kolom Aksi
 
   const openAdd = () => { setModal(null); setModalMode(null); setShow(true); };
   const openView = (r) => { setModal(r); setModalMode('VIEW'); setShow(true); };
@@ -72,9 +74,17 @@ function PrPage({ rows, setRows }) {
         onView={openView}
         onEdit={openEdit}
         onCancelDoc={(r)=>setConfirmCancel(r)}
+        onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
+        onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}}
         addLabel="PR Baru"
         statusFilter={statusFilter}
       />
+      {showCetak && (
+        <PbCetakModal docLabel="Permintaan Pembelian" rows={rows} statusFilter={statusFilter}
+          getGroupLabel={r=>pbOrgNama(r.Kode_PurchasingORG)}
+          initialSelected={cetakRow ? [cetakRow.No_Bukti] : null}
+          onClose={()=>{setShowCetak(false); setCetakRow(null);}} />
+      )}
       {show && (
         <PbModalShell
           title="Purchase Request"

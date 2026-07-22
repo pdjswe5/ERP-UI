@@ -210,7 +210,7 @@ function KoDocPickerModal({ list, onCancel, onConfirm }) {
     return list.filter(k => k.noBukti.toLowerCase().includes(ql) || (k.customer || '').toLowerCase().includes(ql));
   }, [list, q]);
   return (
-    <div className="modal-backdrop" style={{zIndex:110}} onClick={onCancel}>
+    <div className="modal-backdrop" style={{zIndex:110}}>
       <div className="modal item-picker-modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-head"><h2>Pilih Konfirmasi Penjualan</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
         <div className="modal-body">

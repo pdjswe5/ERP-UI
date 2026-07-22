@@ -475,7 +475,7 @@ function StockOpname({ onEdit, onAdd }) {
 
 function ModalShell({ title, sub, onClose, onSave, children, saveLabel = 'Simpan', wide = false }) {
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={wide ? {maxWidth: 980} : {maxWidth: 640}}>
         <div className="modal-head">
           <div>

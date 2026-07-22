@@ -37,7 +37,7 @@ function NewPODialog({ onClose, onSave }) {
   const total = dpp + ppnRp;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-head">
           <div>

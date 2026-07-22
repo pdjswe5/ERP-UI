@@ -15,6 +15,7 @@ function ReturBeliPage({ rows, setRows }) {
   const [show, setShow] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null);
   const [confirmCancel, setConfirmCancel] = React.useState(null);
+  const [showCetak, setShowCetak] = React.useState(false);
 
   const openAdd = () => { setModal(null); setModalMode(null); setShow(true); };
   const openView = (r) => { setModal(r); setModalMode('VIEW'); setShow(true); };
@@ -65,9 +66,11 @@ function ReturBeliPage({ rows, setRows }) {
         onView={openView}
         onEdit={openEdit}
         onCancelDoc={(r)=>setConfirmCancel(r)}
+        onCetak={()=>setShowCetak(true)}
         addLabel="Retur Baru"
         statusFilter={statusFilter}
       />
+      {showCetak && <PbCetakModal docLabel="Retur Beli" rows={rows} statusFilter={statusFilter} onClose={()=>setShowCetak(false)} />}
       {show && (
         <PbModalShell
           title="Retur Beli"

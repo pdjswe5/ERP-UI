@@ -55,7 +55,7 @@ function pjCustOnChange(val, set) { const p = PJ_PELANGGAN.find(x=>x.code===val)
 
 const PJ_SUBS = [
   { id:'katalog',    label:'Katalog Pelanggan' },
-  { id:'konfirmasi', label:'Konfirmasi Penjualan' },
+  { id:'konfirmasi', label:'Confirmation Order' },
   { id:'salesorder', label:'Sales Order' },
   { id:'delivery',   label:'Delivery Order' },
   { id:'invoice',    label:'Invoice' },

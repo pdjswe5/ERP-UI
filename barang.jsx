@@ -98,7 +98,7 @@ function BrgHeader({ title, sub, onAdd, addLabel='Tambah', extra }) {
 
 function BrgModalShell({ title, sub, onClose, onSave, children, saveLabel='Simpan', wide=false, footerExtra }) {
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={wide ? {maxWidth:1100, maxHeight:'92vh'} : {maxWidth:700}}>
         <div className="modal-head">
           <div><h2>{title}</h2>{sub && <div className="sub">{sub}</div>}</div>
@@ -384,7 +384,7 @@ function BarangJadiModal({ data, onClose, onSave }) {
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
   const tabs = [ { id:'umum', label:'Informasi Umum' }, { id:'fisik', label:'Spesifikasi Fisik' }, { id:'pu', label:'Detail PU' } ];
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:1100, maxHeight:'92vh'}}>
         <div className="modal-head">
           <div><h2>{isEdit ? `Edit Barang Jadi — ${form.kodeProduk}` : 'Tambah Barang Jadi Baru'}</h2><div className="sub">{isEdit ? form.namaProduk : 'Pastikan semua kolom bertanda (*) terisi.'}</div></div>
@@ -539,7 +539,7 @@ function BrgTransModal({ title, data, isOpname, onClose, onSave, onCancel }) {
       : [ { key:'kodeItem', label:'Kode Item', mono:true }, { key:'namaItem', label:'Nama Item' }, { key:'konversi', label:'Konversi', type:'number', num:true, width:90 }, { key:'jumlah', label:'Jumlah', type:'number', num:true, width:100 }, { key:'satuan', label:'Satuan', width:90 } ];
   const tabs = [ { id:'umum', label:'Informasi Umum' }, { id:'barang', label:'Barang' } ];
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:1000, maxHeight:'92vh'}}>
         <div className="modal-head">
           <div><h2>{isEdit ? `Edit ${title} — ${form.noBukti}` : `${title} Baru`}</h2>{isEdit && <div className="sub">{brgBatalPill(form.batal)}</div>}</div>
