@@ -395,17 +395,17 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
                 </div>
               )}
             </div>
-            <div className={variant === 'pdf' ? 'cetak-canvas' : 'cetak-canvas cetak-canvas-scroll'} style={variant === 'pdf' ? {padding:16} : null}>
+            <div className="cetak-canvas" style={variant === 'pdf' ? {padding:16, alignItems:'flex-start'} : null}>
               {selectedRows.length === 0 ? (
                 <div className="empty" style={{padding:'60px 0'}}>Belum ada dokumen dipilih untuk dicetak.</div>
               ) : variant === 'pdf' ? (
-                // height:100% + aspect-ratio (bukan width:100%+height:100% independen) supaya kotak
-                // preview selalu proporsi dokumen portrait apa pun bentuk jendela browser-nya — kalau
-                // dipaksa stretch di 2 sumbu sekaligus, pada layar yang lebih pendek/lebar kotaknya
-                // jadi landscape pendek, dan PDF viewer Chrome melebarkan bar hitam di kiri-kanan
-                // supaya halaman portrait tetap muat (persis bug yang dilaporkan: preview jadi kecil
-                // terjepit di antara 2 bar hitam besar).
-                <div style={{height:'100%', maxWidth:'100%', aspectRatio:'0.75', margin:'0 auto', background:'#fff', boxShadow:'var(--shadow-lg)'}}>
+                // Lebar selalu 100% mengikuti batas pane preview (bukan dibatasi lebih kecil), tinggi
+                // mengikuti aspect-ratio supaya proporsinya tetap seperti dokumen portrait — bukan
+                // width:100%+height:100% independen (itu bikin kotak ikut bentuk jendela browser:
+                // di layar pendek/lebar kotaknya jadi landscape pendek, PDF viewer Chrome pun melebarkan
+                // bar hitam kiri-kanan supaya halaman portrait tetap muat). Kalau hasil tingginya lebih
+                // panjang dari pane yang kelihatan, tinggal discroll (.cetak-canvas sudah overflow:auto).
+                <div style={{width:'100%', aspectRatio:'0.75', background:'#fff', boxShadow:'var(--shadow-lg)'}}>
                   <iframe src={encodeURI(pdfPath)} title={docLabel} style={{width:'100%', height:'100%', border:'none', display:'block'}} />
                 </div>
               ) : previewMode === 'register' ? (
