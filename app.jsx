@@ -153,12 +153,8 @@ function App() {
     if (g === 'kataloglain') return <KatalogLainPage activeSub={sub} onSubChange={id => onSubChange('kataloglain', id)} onNavigate={navigateTo} />;
     if (g === 'manufaktur')  return <ManufakturPage  activeSub={sub} onSubChange={id => onSubChange('manufaktur', id)}  onNavigate={navigateTo} />;
     if (g === 'sales')       return <PenjualanPage   activeSub={sub} onSubChange={id => onSubChange('sales', id)}       onNavigate={navigateTo} />;
-    if (g === 'finance')     return <AkuntanPage     activeSub={sub} onSubChange={id => onSubChange('finance', id)}     onNavigate={navigateTo} />;
-    if (g === 'cashbank')    return <KeuanganPage    activeSub={sub} onSubChange={id => onSubChange('cashbank', id)}    onNavigate={navigateTo} />;
-    if (g === 'master')      return <MasterPage      activeSub={sub} onSubChange={id => onSubChange('master', id)}      onNavigate={navigateTo} />;
-    if (g === 'reports')     return <ReportsPage     activeSub={sub} onSubChange={id => onSubChange('reports', id)}     onNavigate={navigateTo} />;
+    if (g === 'keuangan')   return <KeuanganPage    activeSub={sub} onSubChange={id => onSubChange('keuangan', id)}   onNavigate={navigateTo} />;
     if (g === 'pengaturan')  return <PengaturanPage  activeSub={sub} onSubChange={id => onSubChange('pengaturan', id)}  onNavigate={navigateTo} />;
-    if (g === 'admin')       return <AdminPage       activeSub={sub} onSubChange={id => onSubChange('admin', id)}       onNavigate={navigateTo} theme={t} setTheme={setTweak} />;
     if (g === 'inventory')   return <InventoryPage   activeSub={sub} onSubChange={id => onSubChange('inventory', id)}   onNavigate={navigateTo} />;
     return null;
   };
@@ -207,8 +203,7 @@ function App() {
         <TweakButton label="Go to Pembelian"       onClick={() => activateGroup('pembelian')} secondary />
         <TweakButton label="Go to Inventory"       onClick={() => activateGroup('inventory')} secondary />
         <TweakButton label="Go to Pelanggan"       onClick={() => activateGroup('sales')} secondary />
-        <TweakButton label="Go to Akuntan"         onClick={() => activateGroup('finance')} secondary />
-        <TweakButton label="Go to Keuangan"        onClick={() => activateGroup('cashbank')} secondary />
+        <TweakButton label="Go to Keuangan"        onClick={() => activateGroup('keuangan')} secondary />
       </TweaksPanel>
 
       {!t.showKpi && <style>{`.kpi-strip{display:none !important}`}</style>}

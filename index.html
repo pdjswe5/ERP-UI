@@ -58,6 +58,7 @@
 <script type="text/babel" src="modules/barang/data/baranglain.data.jsx"></script>
 <script type="text/babel" src="modules/barang/data/bahanbaku.data.jsx"></script>
 <script type="text/babel" src="modules/barang/data/barangjadi.data.jsx"></script>
+<script type="text/babel" src="modules/barang/data/bom.data.jsx"></script>
 <script type="text/babel" src="modules/barang/data/mutasi.data.jsx"></script>
 <script type="text/babel" src="modules/barang/data/penyesuaian.data.jsx"></script>
 <script type="text/babel" src="modules/barang/data/opname.data.jsx"></script>
@@ -66,6 +67,7 @@
 <script type="text/babel" src="modules/barang/pages/BarangLainPage.jsx"></script>
 <script type="text/babel" src="modules/barang/pages/BahanBakuPage.jsx"></script>
 <script type="text/babel" src="modules/barang/pages/BarangJadiPage.jsx"></script>
+<script type="text/babel" src="modules/barang/pages/BomPage.jsx"></script>
 <script type="text/babel" src="modules/barang/pages/StokTransaksiPage.jsx"></script>
 <script type="text/babel" src="modules/barang/BarangPage.jsx"></script>
 <!-- end Barang module -->
@@ -94,29 +96,30 @@
 <script type="text/babel" src="modules/penjualan/PenjualanDashboard.jsx"></script>
 <script type="text/babel" src="modules/penjualan/PenjualanPage.jsx"></script>
 <!-- end Penjualan module -->
-<!-- Akuntan module (modules/akuntan) -->
-<script type="text/babel" src="modules/akuntan/data/akun.data.jsx"></script>
-<script type="text/babel" src="modules/akuntan/data/aktiva.data.jsx"></script>
-<script type="text/babel" src="modules/akuntan/data/jurnal.data.jsx"></script>
-<script type="text/babel" src="modules/akuntan/data/laporan.data.jsx"></script>
-<script type="text/babel" src="modules/akuntan/data/labarugi.data.jsx"></script>
-<script type="text/babel" src="modules/akuntan/data/aruskas.data.jsx"></script>
-<script type="text/babel" src="modules/akuntan/data/neraca.data.jsx"></script>
-<script type="text/babel" src="modules/akuntan/data/master.data.jsx"></script>
-<script type="text/babel" src="modules/akuntan/components/AkShared.jsx"></script>
-<script type="text/babel" src="modules/akuntan/components/AkCetakModal.jsx"></script>
-<script type="text/babel" src="modules/akuntan/pages/KatalogAkunPage.jsx"></script>
-<script type="text/babel" src="modules/akuntan/pages/AktivaPage.jsx"></script>
-<script type="text/babel" src="modules/akuntan/pages/JurnalMemorialPage.jsx"></script>
-<script type="text/babel" src="modules/akuntan/pages/LaporanKeuanganPage.jsx"></script>
-<script type="text/babel" src="modules/akuntan/AkuntanDashboard.jsx"></script>
-<script type="text/babel" src="modules/akuntan/AkuntanPage.jsx"></script>
-<!-- end Akuntan module -->
+<!-- Keuangan module (modules/keuangan) — gabungan Akuntan + Kas/Bank/Giro/Transfer/Pelunasan -->
+<script type="text/babel" src="modules/keuangan/data/akun.data.jsx"></script>
+<script type="text/babel" src="modules/keuangan/data/aktiva.data.jsx"></script>
+<script type="text/babel" src="modules/keuangan/data/jurnal.data.jsx"></script>
+<script type="text/babel" src="modules/keuangan/data/laporan.data.jsx"></script>
+<script type="text/babel" src="modules/keuangan/data/labarugi.data.jsx"></script>
+<script type="text/babel" src="modules/keuangan/data/aruskas.data.jsx"></script>
+<script type="text/babel" src="modules/keuangan/data/neraca.data.jsx"></script>
+<script type="text/babel" src="modules/keuangan/data/kasbank.data.jsx"></script>
+<script type="text/babel" src="modules/keuangan/data/saldo.data.jsx"></script>
+<script type="text/babel" src="modules/keuangan/data/master.data.jsx"></script>
+<script type="text/babel" src="modules/keuangan/components/AkShared.jsx"></script>
+<script type="text/babel" src="modules/keuangan/components/AkCetakModal.jsx"></script>
+<script type="text/babel" src="modules/keuangan/components/KuShared.jsx"></script>
+<script type="text/babel" src="modules/keuangan/pages/KatalogAkunPage.jsx"></script>
+<script type="text/babel" src="modules/keuangan/pages/AktivaPage.jsx"></script>
+<script type="text/babel" src="modules/keuangan/pages/JurnalMemorialPage.jsx"></script>
+<script type="text/babel" src="modules/keuangan/pages/LaporanKeuanganPage.jsx"></script>
+<script type="text/babel" src="modules/keuangan/pages/KasBankGiroPage.jsx"></script>
+<script type="text/babel" src="modules/keuangan/KeuanganDashboard.jsx"></script>
+<script type="text/babel" src="modules/keuangan/KeuanganPage.jsx"></script>
+<!-- end Keuangan module -->
 <script type="text/babel" src="pengaturan.jsx"></script>
-<script type="text/babel" src="keuangan.jsx"></script>
-<script type="text/babel" src="master.jsx"></script>
-<script type="text/babel" src="admin.jsx"></script>
-<script type="text/babel" src="reports.jsx"></script>
+
 <!-- Manufaktur module (modules/manufaktur) -->
 <script type="text/babel" src="modules/manufaktur/data/master.data.jsx"></script>
 <script type="text/babel" src="modules/manufaktur/data/spk.data.jsx"></script>
@@ -124,7 +127,12 @@
 <script type="text/babel" src="modules/manufaktur/data/bpbl.data.jsx"></script>
 <script type="text/babel" src="modules/manufaktur/data/rpbl.data.jsx"></script>
 <script type="text/babel" src="modules/manufaktur/data/planning.data.jsx"></script>
+<!-- modules/manufaktur/data/bom.data.jsx (MF_BOM_LIST) sengaja tidak dimuat lagi — digantikan
+     BRG_BOM_SEED di modul Barang (modules/barang/data/bom.data.jsx), yang menghubungkan
+     BARANG_JADI ke BAHAN_BAKU/BARANG_LAIN sungguhan, bukan MF_BARANG (katalog ad-hoc berkode "*"
+     yang sudah dipensiunkan). File lama dibiarkan ada di disk (bukan dihapus), cuma di-orphan. -->
 <script type="text/babel" src="modules/manufaktur/components/MfPickers.jsx"></script>
+<script type="text/babel" src="modules/manufaktur/components/MfCetakModal.jsx"></script>
 <script type="text/babel" src="modules/manufaktur/pages/SpkPage.jsx"></script>
 <script type="text/babel" src="modules/manufaktur/pages/HasilProduksiPage.jsx"></script>
 <script type="text/babel" src="modules/manufaktur/pages/PemakaianBarangPage.jsx"></script>

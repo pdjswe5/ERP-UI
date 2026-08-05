@@ -40,20 +40,10 @@ const MF_SO_LIST = [
   { no:'SO-2026-0105', pelanggan:'PT Eka Steel',       tgl:'24-06-2026' },
 ];
 
-const MF_BARANG = [
-  { code:'*CO',              nama:'COIL',                                              satuan:'pcs', status:'Aktif', merk:'Alumindo'  },
-  { code:'*CO AGBESHD',      nama:'COIL ATAP GALVANIZE (TR) BIRU BELAWAN SHANDONG',   satuan:'pcs', status:'Aktif', merk:'Galvalex'  },
-  { code:'*CO100TRS00020',   nama:'COIL TEBAL 1.00 TRUSS SILVER NON BSI 0.20 MTR',   satuan:'mtr', status:'Aktif', merk:'Austeel'   },
-  { code:'*F',               nama:'JASA FOARMING',                                    satuan:'pcs', status:'Aktif', merk:'Az'        },
-  { code:'*P',               nama:'PACKING',                                           satuan:'pcs', status:'Aktif', merk:'Bofeng'    },
-  { code:'*PCR3120AN120',    nama:'PACKING CR-3 TEBALA 1.20 ABU ANGKASA LEBAR 1MM',  satuan:'pcs', status:'Aktif', merk:'NS BHP'    },
-  { code:'*UM',              nama:'UANG MUKA PENJUALAN',                               satuan:'pcs', status:'Tidak', merk:''          },
-  { code:'AS1023ATBBKW750',  nama:'ATAP SALJU 4CM TEBAL 0.23 BIRU BROMO KW2 750MM',  satuan:'mtr', status:'Aktif', merk:'Diamond'   },
-  { code:'AS1023ATBBKW1500', nama:'ATAP SALJU 4CM TEBAL 0.23 BIRU BROMO KW2 1500MM', satuan:'mtr', status:'Aktif', merk:'Bhusan'    },
-  { code:'AS1023ATGAKW1600', nama:'ATAP SALJU 4CM TEBAL 0.23 GALVALUME BIRU 1600MM', satuan:'mtr', status:'Aktif', merk:'Alumindo'  },
-  { code:'CO100TRSL0020',    nama:'COIL TEBAL 1.00 TRUSS SILVER LEBAR 0.20 MTR',     satuan:'mtr', status:'Aktif', merk:'Galvalex'  },
-  { code:'GAL023BRU750',     nama:'GALVALUME 0.23 BIRU BROMO LEBAR 750MM',            satuan:'mtr', status:'Aktif', merk:'Austeel'   },
-];
+// MF_BARANG (katalog kecil ad-hoc, campur barang jadi asli & kode "*" palsu yang bukan barang
+// sungguhan) sudah dipensiunkan — Barang Jadi/Bahan SPK & sub-modul lain di Manufaktur sekarang
+// pakai katalog modul Barang langsung: BARANG_JADI, BAHAN_BAKU, BARANG_LAIN (lihat spk.data.jsx,
+// bpbl.data.jsx, rpbl.data.jsx, MfPickers.jsx).
 
 const MF_COIL_LIST = [
   { no:'CO-2026-001', barang:'Coil PPGL 0.23mm Galvalume',   gudang:'Gudang Utama',    sisa:1250.50 },

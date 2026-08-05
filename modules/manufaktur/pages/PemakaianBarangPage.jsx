@@ -7,7 +7,7 @@
 
 // ─── Pemakaian / Retur Barang Dialog ─────────────────────────────────────────
 
-function MfPemakaianBarangDialog({ type, data, onClose, onSave }) {
+function MfPemakaianBarangDialog({ type, data, spkRows, onClose, onSave }) {
   const prefix = type === 'bpbl' ? 'BPBL' : 'RPBL';
   const title  = type === 'bpbl' ? 'Bukti Pemakaian Barang Lain' : 'Retur Pakai Barang Lain';
   const isCreate = !data;
@@ -202,6 +202,7 @@ function MfPemakaianBarangDialog({ type, data, onClose, onSave }) {
       {barangModal && (
         <MfBarangPakaiEntryModal
           data={barangModal === 'add' ? null : barangModal.data}
+          spkRows={spkRows}
           onClose={() => setBarangModal(null)}
           onSave={(entry) => {
             if (barangModal === 'add') {
@@ -228,8 +229,14 @@ function MfPemakaianBarangList({ type, rows, onAdd, onEdit }) {
   const [page,     setPage]     = React.useState(1);
   const perPage = 10;
 
+  // r.tgl seed pakai "DD-MM-YYYY" (lihat mfToIso di SpkPage.jsx), sedangkan input type="date"
+  // ngasih "YYYY-MM-DD" — tanpa konversi, filter Tgl Dari/Sampai (yang sudah ada input-nya tapi
+  // sebelumnya tidak pernah dipakai di sini) salah bandingnya kalau langsung string-compare.
   const filtered = rows.filter(r => {
-    if (qBagian && !r.bagian.toLowerCase().includes(qBagian.toLowerCase())) return false;
+    if (qBagian && !(r.bagian || '').toLowerCase().includes(qBagian.toLowerCase())) return false;
+    const iso = mfToIso(r.tgl);
+    if (tglDari && iso && iso < tglDari) return false;
+    if (tglSmpai && iso && iso > tglSmpai) return false;
     return true;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));

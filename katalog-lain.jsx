@@ -35,12 +35,121 @@ const KL_SATUAN = [
   { kodeSatuan:'70', namaSatuan:'ROLL', keterangan:'', aktif:false },
 ];
 
+// KL_PELENGKAP: katalog datar lama, dibiarkan ada (tidak dipakai KLPelengkapPage lagi — halaman itu
+// sekarang dirombak jadi 13 kategori data master di bawah, lihat KLPelengkapPage).
 const KL_PELENGKAP = [
   { kodeProduk:'AS1023ATBBKW2075000150', kodeSatuan:'56', isi:1, hrgJual:50000, keterangan:'Baik', aktif:true },
   { kodeProduk:'AA0450914100550', kodeSatuan:'56', isi:1, hrgJual:275000, keterangan:'', aktif:true },
   { kodeProduk:'BB040091470550', kodeSatuan:'60', isi:1, hrgJual:260000, keterangan:'', aktif:true },
   { kodeProduk:'PRD001', kodeSatuan:'45', isi:1, hrgJual:15000, keterangan:'', aktif:true },
   { kodeProduk:'LN-005', kodeSatuan:'53', isi:12, hrgJual:2500, keterangan:'', aktif:false },
+];
+
+// ─── 13 kategori "Pelengkap Bahan Baku & Barang Umum" (KLPelengkapPage) ─────
+// Kolom "Kelompok" di Warna/Yield/AZ/Jenis/Tipe/Merk semuanya FK ke KL_KELOMPOK_WARNA (1 daftar
+// kelompok dipakai bersama lintas kategori) — kolom "Kelompok" DI DALAM KL_KELOMPOK_WARNA sendiri
+// tetap teks bebas (bukan menunjuk ke dirinya sendiri). KL_BERAT py 3 FK sekaligus (Tebal/Kelompok
+// Warna/AZ) — kode-kodenya sengaja match ke array FK-nya supaya dropdown & lookup render di list
+// langsung benar (bukan kode karangan lepas).
+
+const KL_TEBAL = [
+  { kodeTebal:'T020', tebal:0.20, aktif:true },
+  { kodeTebal:'T025', tebal:0.25, aktif:true },
+  { kodeTebal:'T030', tebal:0.30, aktif:true },
+  { kodeTebal:'T035', tebal:0.35, aktif:true },
+  { kodeTebal:'T040', tebal:0.40, aktif:false },
+];
+
+const KL_AREA = [
+  { kodeArea:'AR01', area:'Surabaya', aktif:true },
+  { kodeArea:'AR02', area:'Sidoarjo', aktif:true },
+  { kodeArea:'AR03', area:'Gresik', aktif:true },
+  { kodeArea:'AR04', area:'Malang', aktif:true },
+  { kodeArea:'AR05', area:'Jakarta', aktif:false },
+];
+
+const KL_BRAND = [
+  { kodeBrand:'BR01', brand:'Solite', aktif:true },
+  { kodeBrand:'BR02', brand:'Alderon', aktif:true },
+  { kodeBrand:'BR03', brand:'Superroof', aktif:true },
+  { kodeBrand:'BR04', brand:'Onduline', aktif:true },
+  { kodeBrand:'BR05', brand:'Multiroof', aktif:false },
+];
+
+// Sengaja tanpa kolom Kode terpisah (sesuai spesifikasi user) — `id` internal dipakai sbg keyField
+// KLSimpleCatalog tapi TIDAK dimasukkan ke listColumns, jadi tidak tampil di tabel.
+const KL_CHECKER = [
+  { id:'chk01', checklistPoint:'Ketebalan sesuai spesifikasi', aktif:true },
+  { id:'chk02', checklistPoint:'Warna merata, tidak belang', aktif:true },
+  { id:'chk03', checklistPoint:'Tidak ada goresan/cacat permukaan', aktif:true },
+  { id:'chk04', checklistPoint:'Ukuran panjang & lebar sesuai order', aktif:true },
+  { id:'chk05', checklistPoint:'Kemasan rapi & label terpasang', aktif:false },
+];
+
+const KL_KELOMPOK_WARNA = [
+  { kodeKelompokWarna:'KW01', keterangan:'Warna Terang', kelompok:'Standard', indexWarna:1, aktif:true },
+  { kodeKelompokWarna:'KW02', keterangan:'Warna Gelap', kelompok:'Standard', indexWarna:2, aktif:true },
+  { kodeKelompokWarna:'KW03', keterangan:'Warna Metalik', kelompok:'Premium', indexWarna:3, aktif:true },
+  { kodeKelompokWarna:'KW04', keterangan:'Warna Custom', kelompok:'Special Order', indexWarna:4, aktif:true },
+  { kodeKelompokWarna:'KW05', keterangan:'Warna Netral', kelompok:'Standard', indexWarna:5, aktif:false },
+];
+
+const KL_WARNA = [
+  { kodeWarna:'AG', keterangan:'Abu Gelap', kelompok:'KW02', kelompokPu:'KW02', aktif:true },
+  { kodeWarna:'AA', keterangan:'Abu Angkola', kelompok:'KW01', kelompokPu:'KW01', aktif:true },
+  { kodeWarna:'BB', keterangan:'Biru Bromo', kelompok:'KW03', kelompokPu:'KW01', aktif:true },
+  { kodeWarna:'AS', keterangan:'Abu Salju', kelompok:'KW01', kelompokPu:'KW05', aktif:true },
+  { kodeWarna:'BR', keterangan:'Bata Merah', kelompok:'KW04', kelompokPu:'KW04', aktif:false },
+];
+
+const KL_YIELD = [
+  { kodeYield:'400', keterangan:'Yield G-400', kelompok:'KW01', aktif:true },
+  { kodeYield:'550', keterangan:'Yield G-550', kelompok:'KW02', aktif:true },
+  { kodeYield:'600', keterangan:'Yield G-600', kelompok:'KW03', aktif:true },
+  { kodeYield:'700', keterangan:'Yield G-700', kelompok:'KW01', aktif:false },
+];
+
+const KL_AZ = [
+  { kodeAz:'70', keterangan:'AZ 70', kelompok:'KW01', aktif:true },
+  { kodeAz:'100', keterangan:'AZ 100', kelompok:'KW01', aktif:true },
+  { kodeAz:'150', keterangan:'AZ 150', kelompok:'KW02', aktif:true },
+  { kodeAz:'200', keterangan:'AZ 200', kelompok:'KW03', aktif:false },
+];
+
+const KL_JENIS = [
+  { kodeJenis:'FBR', keterangan:'Fiber', kelompok:'KW01', aktif:true },
+  { kodeJenis:'MTL', keterangan:'Metal', kelompok:'KW02', aktif:true },
+  { kodeJenis:'GEN', keterangan:'Genteng', kelompok:'KW03', aktif:true },
+  { kodeJenis:'PVC', keterangan:'PVC', kelompok:'KW01', aktif:false },
+];
+
+const KL_TIPE = [
+  { kodeTipe:'STD', keterangan:'Standard', kelompok:'KW01', aktif:true },
+  { kodeTipe:'CST', keterangan:'Custom', kelompok:'KW04', aktif:true },
+  { kodeTipe:'PRM', keterangan:'Premium', kelompok:'KW03', aktif:true },
+  { kodeTipe:'ECO', keterangan:'Ekonomis', kelompok:'KW01', aktif:false },
+];
+
+const KL_MERK = [
+  { kodeMerk:'MK01', keterangan:'Solite', kelompok:'KW03', aktif:true },
+  { kodeMerk:'MK02', keterangan:'Alderon', kelompok:'KW02', aktif:true },
+  { kodeMerk:'MK03', keterangan:'Superroof', kelompok:'KW01', aktif:true },
+  { kodeMerk:'MK04', keterangan:'Onduline', kelompok:'KW03', aktif:false },
+];
+
+const KL_BERAT = [
+  { kodeBerat:'BRT01', kodeTebal:'T020', kodeKelompokWarna:'KW01', kodeAz:'70', berat:2.15, hpp:35000, aktif:true },
+  { kodeBerat:'BRT02', kodeTebal:'T025', kodeKelompokWarna:'KW02', kodeAz:'100', berat:2.68, hpp:42000, aktif:true },
+  { kodeBerat:'BRT03', kodeTebal:'T030', kodeKelompokWarna:'KW03', kodeAz:'150', berat:3.20, hpp:50000, aktif:true },
+  { kodeBerat:'BRT04', kodeTebal:'T035', kodeKelompokWarna:'KW01', kodeAz:'70', berat:3.75, hpp:58000, aktif:false },
+];
+
+const KL_MESIN = [
+  { noMesin:'001', namaMesin:'TRIM 1', noGlobal:'', operator:'Andi P.', qty:1, satuan:'MTR', detik:3, aktif:true },
+  { noMesin:'002', namaMesin:'TRIM 2 VIETNAM', noGlobal:'', operator:'Budi S.', qty:1, satuan:'MTR', detik:2, aktif:true },
+  { noMesin:'003', namaMesin:'SPAN 68', noGlobal:'SPAN', operator:'Charlie R.', qty:1, satuan:'MTR', detik:9, aktif:true },
+  { noMesin:'004', namaMesin:'SPAN 93', noGlobal:'SPAN', operator:'Dewi K.', qty:1, satuan:'MTR', detik:5, aktif:true },
+  { noMesin:'005', namaMesin:'SLITTING 1 LEBAR 450', noGlobal:'SLITTING', operator:'', qty:1, satuan:'MTR', detik:4, aktif:false },
 ];
 
 const KL_AKUN = [
@@ -98,6 +207,23 @@ function KLHeader({ title, sub, onAdd, addLabel='Tambah' }) {
 }
 
 function klAktifPill(aktif) { return <span className={`pill ${aktif ? 'approved' : 'cancelled'}`}>{aktif ? 'Aktif' : 'Non-aktif'}</span>; }
+
+// Tab pill scroll-spy (dipakai KLPelengkapPage) — klik pill scroll-jump ke section itu, BUKAN
+// mount/unmount switcher; semua section tetap ada di DOM (13 tabel sekaligus, panjang), pill cuma
+// nge-highlight kategori mana yang lagi "aktif" secara visual.
+function KLPillTabs({ tabs, active, onSelect }) {
+  return (
+    <div style={{display:'flex', gap:8, flexWrap:'wrap', padding:'12px 0 20px', position:'sticky', top:0, background:'var(--bg)', zIndex:5}}>
+      {tabs.map(t => (
+        <button key={t.id} onClick={()=>onSelect(t.id)} style={{
+          padding:'6px 16px', borderRadius:999, border:'1px solid var(--border)', fontSize:13, fontWeight:500,
+          background: active===t.id ? 'var(--primary)' : 'var(--bg-sub)',
+          color: active===t.id ? '#fff' : 'var(--text)', cursor:'pointer',
+        }}>{t.label}</button>
+      ))}
+    </div>
+  );
+}
 
 function KLGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave }) {
   const isEdit = !!data;
@@ -308,27 +434,295 @@ function KLSatuanBarangPage() {
   );
 }
 
+// Helper dipakai berulang oleh Warna/Yield/AZ/Jenis/Tipe/Merk & Berat — "Kelompok" di kategori
+// itu semuanya FK ke KL_KELOMPOK_WARNA (1 daftar kelompok dipakai bersama), lihat catatan di atas
+// deklarasi KL_KELOMPOK_WARNA.
+function klKelompokWarnaOptions() { return KL_KELOMPOK_WARNA.map(k => ({ value:k.kodeKelompokWarna, label:k.keterangan })); }
+function klKelompokWarnaLabel(kode) { return KL_KELOMPOK_WARNA.find(k => k.kodeKelompokWarna === kode)?.keterangan || kode; }
+
+// Pelengkap Bahan Baku & Barang Umum — 13 kategori data master, pola scroll-spy: klik pill
+// (KLPillTabs) scroll-jump ke section-nya, semua 13 <KLSimpleCatalog> tetap ter-render sekaligus
+// (bukan tab switcher mount/unmount satu-satu) — sama seperti tampilan referensi user.
 function KLPelengkapPage() {
+  const [activeTab, setActiveTab] = React.useState('berat');
+  const tabs = [
+    { id:'berat', label:'Berat' }, { id:'tebal', label:'Tebal' }, { id:'area', label:'Area' },
+    { id:'brand', label:'Brand' }, { id:'checker', label:'Checker' }, { id:'kelompokwarna', label:'Kelompok Warna' },
+    { id:'warna', label:'Warna' }, { id:'yield', label:'Yield' }, { id:'az', label:'AZ' },
+    { id:'jenis', label:'Jenis' }, { id:'tipe', label:'Tipe' }, { id:'merk', label:'Merk' }, { id:'mesin', label:'Mesin' },
+  ];
+  const refs = React.useRef({});
+  tabs.forEach(t => { if (!refs.current[t.id]) refs.current[t.id] = React.createRef(); });
+  const scrollTo = (id) => {
+    setActiveTab(id);
+    refs.current[id]?.current?.scrollIntoView({ behavior:'smooth', block:'start' });
+  };
+
   return (
-    <KLSimpleCatalog
-      moduleTitle="Pelengkap Bahan Baku & Barang Umum" addLabel="Tambah Data" keyField="kodeProduk" initialRows={KL_PELENGKAP}
-      note="konversi satuan & harga jual"
-      listColumns={[
-        { key:'kodeProduk', label:'Kode Produk', mono:true },
-        { key:'kodeSatuan', label:'Satuan Konversi', render:v => KL_SATUAN.find(s=>s.kodeSatuan===v)?.namaSatuan || v },
-        { key:'isi', label:'Isi' },
-        { key:'hrgJual', label:'Harga Jual', render:v => fmtRp(v) },
-        { key:'aktif', label:'Status', render:v => klAktifPill(v) },
-      ]}
-      fields={[
-        { key:'kodeProduk', label:'Kode Produk', required:true, mono:true, span:2 },
-        { key:'kodeSatuan', label:'Satuan Konversi', type:'select', options:()=>KL_SATUAN.map(s=>({value:s.kodeSatuan, label:s.namaSatuan})) },
-        { key:'isi', label:'Isi', type:'number' },
-        { key:'hrgJual', label:'Harga Jual', type:'number' },
-        { key:'keterangan', label:'Keterangan', type:'textarea', span:2 },
-        { key:'aktif', type:'aktif' },
-      ]}
-    />
+    <>
+      <div className="page-head">
+        <div>
+          <h1>Pelengkap Bahan Baku & Barang Umum</h1>
+          <div className="sub">Data master pelengkap: berat, dimensi, atribut warna, dan mesin.</div>
+        </div>
+      </div>
+      <KLPillTabs tabs={tabs} active={activeTab} onSelect={scrollTo} />
+
+      <div ref={refs.current.berat} style={{marginTop:24}}>
+        <KLSimpleCatalog
+          moduleTitle="Berat" addLabel="Tambah Berat" keyField="kodeBerat" initialRows={KL_BERAT}
+          listColumns={[
+            { key:'kodeBerat', label:'Kode', mono:true },
+            { key:'kodeTebal', label:'Kode Tebal', mono:true },
+            { key:'kodeKelompokWarna', label:'Kode Kelompok Warna', render:v => klKelompokWarnaLabel(v) },
+            { key:'kodeAz', label:'Kode AZ', render:v => KL_AZ.find(a=>a.kodeAz===v)?.keterangan || v },
+            { key:'berat', label:'Berat' },
+            { key:'hpp', label:'Hpp', render:v => fmtRp(v) },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeBerat', label:'Kode', required:true, mono:true },
+            { key:'kodeTebal', label:'Kode Tebal', type:'select', required:true, options:()=>KL_TEBAL.map(t=>({value:t.kodeTebal, label:`${t.kodeTebal} — ${t.tebal}`})) },
+            { key:'kodeKelompokWarna', label:'Kode Kelompok Warna', type:'select', required:true, options:klKelompokWarnaOptions },
+            { key:'kodeAz', label:'Kode AZ', type:'select', required:true, options:()=>KL_AZ.map(a=>({value:a.kodeAz, label:a.keterangan})) },
+            { key:'berat', label:'Berat', type:'number' },
+            { key:'hpp', label:'Hpp', type:'number' },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.tebal} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Tebal" addLabel="Tambah Tebal" keyField="kodeTebal" initialRows={KL_TEBAL}
+          listColumns={[
+            { key:'kodeTebal', label:'Kode', mono:true },
+            { key:'tebal', label:'Tebal' },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeTebal', label:'Kode', required:true, mono:true },
+            { key:'tebal', label:'Tebal', type:'number', required:true },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.area} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Area" addLabel="Tambah Area" keyField="kodeArea" initialRows={KL_AREA}
+          listColumns={[
+            { key:'kodeArea', label:'Kode', mono:true },
+            { key:'area', label:'Area' },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeArea', label:'Kode', required:true, mono:true },
+            { key:'area', label:'Area', required:true },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.brand} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Brand" addLabel="Tambah Brand" keyField="kodeBrand" initialRows={KL_BRAND}
+          listColumns={[
+            { key:'kodeBrand', label:'Kode', mono:true },
+            { key:'brand', label:'Brand' },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeBrand', label:'Kode', required:true, mono:true },
+            { key:'brand', label:'Brand', required:true },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.checker} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Checker" addLabel="Tambah Checklist" keyField="id" initialRows={KL_CHECKER}
+          listColumns={[
+            { key:'checklistPoint', label:'Checklist Point' },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'id', label:'ID', required:true, mono:true },
+            { key:'checklistPoint', label:'Checklist Point', required:true, span:2 },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.kelompokwarna} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Kelompok Warna" addLabel="Tambah Kelompok Warna" keyField="kodeKelompokWarna" initialRows={KL_KELOMPOK_WARNA}
+          listColumns={[
+            { key:'kodeKelompokWarna', label:'Kode', mono:true },
+            { key:'keterangan', label:'Keterangan' },
+            { key:'kelompok', label:'Kelompok' },
+            { key:'indexWarna', label:'Index Warna' },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeKelompokWarna', label:'Kode', required:true, mono:true },
+            { key:'keterangan', label:'Keterangan', required:true },
+            { key:'kelompok', label:'Kelompok' },
+            { key:'indexWarna', label:'Index Warna', type:'number' },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.warna} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Warna" addLabel="Tambah Warna" keyField="kodeWarna" initialRows={KL_WARNA}
+          listColumns={[
+            { key:'kodeWarna', label:'Kode', mono:true },
+            { key:'keterangan', label:'Keterangan' },
+            { key:'kelompok', label:'Kelompok', render:v => klKelompokWarnaLabel(v) },
+            { key:'kelompokPu', label:'Kelompok PU', render:v => klKelompokWarnaLabel(v) },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeWarna', label:'Kode', required:true, mono:true },
+            { key:'keterangan', label:'Keterangan', required:true },
+            { key:'kelompok', label:'Kelompok', type:'select', options:klKelompokWarnaOptions },
+            { key:'kelompokPu', label:'Kelompok PU', type:'select', options:klKelompokWarnaOptions },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.yield} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Yield" addLabel="Tambah Yield" keyField="kodeYield" initialRows={KL_YIELD}
+          listColumns={[
+            { key:'kodeYield', label:'Kode', mono:true },
+            { key:'keterangan', label:'Keterangan' },
+            { key:'kelompok', label:'Kelompok', render:v => klKelompokWarnaLabel(v) },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeYield', label:'Kode', required:true, mono:true },
+            { key:'keterangan', label:'Keterangan', required:true },
+            { key:'kelompok', label:'Kelompok', type:'select', options:klKelompokWarnaOptions },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.az} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="AZ" addLabel="Tambah AZ" keyField="kodeAz" initialRows={KL_AZ}
+          listColumns={[
+            { key:'kodeAz', label:'Kode', mono:true },
+            { key:'keterangan', label:'Keterangan' },
+            { key:'kelompok', label:'Kelompok', render:v => klKelompokWarnaLabel(v) },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeAz', label:'Kode', required:true, mono:true },
+            { key:'keterangan', label:'Keterangan', required:true },
+            { key:'kelompok', label:'Kelompok', type:'select', options:klKelompokWarnaOptions },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.jenis} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Jenis" addLabel="Tambah Jenis" keyField="kodeJenis" initialRows={KL_JENIS}
+          listColumns={[
+            { key:'kodeJenis', label:'Kode', mono:true },
+            { key:'keterangan', label:'Keterangan' },
+            { key:'kelompok', label:'Kelompok', render:v => klKelompokWarnaLabel(v) },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeJenis', label:'Kode', required:true, mono:true },
+            { key:'keterangan', label:'Keterangan', required:true },
+            { key:'kelompok', label:'Kelompok', type:'select', options:klKelompokWarnaOptions },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.tipe} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Tipe" addLabel="Tambah Tipe" keyField="kodeTipe" initialRows={KL_TIPE}
+          listColumns={[
+            { key:'kodeTipe', label:'Kode', mono:true },
+            { key:'keterangan', label:'Keterangan' },
+            { key:'kelompok', label:'Kelompok', render:v => klKelompokWarnaLabel(v) },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeTipe', label:'Kode', required:true, mono:true },
+            { key:'keterangan', label:'Keterangan', required:true },
+            { key:'kelompok', label:'Kelompok', type:'select', options:klKelompokWarnaOptions },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.merk} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Merk" addLabel="Tambah Merk" keyField="kodeMerk" initialRows={KL_MERK}
+          listColumns={[
+            { key:'kodeMerk', label:'Kode', mono:true },
+            { key:'keterangan', label:'Keterangan' },
+            { key:'kelompok', label:'Kelompok', render:v => klKelompokWarnaLabel(v) },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'kodeMerk', label:'Kode', required:true, mono:true },
+            { key:'keterangan', label:'Keterangan', required:true },
+            { key:'kelompok', label:'Kelompok', type:'select', options:klKelompokWarnaOptions },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+
+      <hr style={{margin:'40px 0 0', border:'none', borderTop:'1px solid var(--border)'}} />
+      <div ref={refs.current.mesin} style={{marginTop:32}}>
+        <KLSimpleCatalog
+          moduleTitle="Mesin" addLabel="Tambah Mesin" keyField="noMesin" initialRows={KL_MESIN}
+          listColumns={[
+            { key:'noMesin', label:'No Mesin', mono:true },
+            { key:'namaMesin', label:'Nama Mesin' },
+            { key:'noGlobal', label:'No Global' },
+            { key:'operator', label:'Operator' },
+            { key:'qty', label:'Qty' },
+            { key:'satuan', label:'Satuan' },
+            { key:'detik', label:'Detik' },
+            { key:'aktif', label:'Status', render:v => klAktifPill(v) },
+          ]}
+          fields={[
+            { key:'noMesin', label:'No Mesin', required:true, mono:true },
+            { key:'namaMesin', label:'Nama Mesin', required:true },
+            { key:'noGlobal', label:'No Global' },
+            { key:'operator', label:'Operator' },
+            { key:'qty', label:'Qty', type:'number' },
+            { key:'satuan', label:'Satuan' },
+            { key:'detik', label:'Detik', type:'number' },
+            { key:'aktif', type:'aktif' },
+          ]}
+        />
+      </div>
+    </>
   );
 }
 
@@ -445,7 +839,7 @@ function KatalogLainDashboard({ onOpenSub }) {
       tiles:[
         { id:'kategori',  title:'Katalog Kategori Barang', badge:'12 kategori', icon:I.list(20) },
         { id:'satuan',    title:'Katalog Satuan Barang',   badge:'15 satuan',   icon:I.list(20) },
-        { id:'pelengkap', title:'Pelengkap Bahan Baku & Barang Umum', badge:'20 item', icon:I.list(20) },
+        { id:'pelengkap', title:'Pelengkap Bahan Baku & Barang Umum', badge:'13 kategori', icon:I.list(20) },
       ]
     },
     {

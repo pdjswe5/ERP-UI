@@ -194,20 +194,32 @@ function Dashboard({ onOpenList }) {
 }
 
 // ─── Home Dashboard (global analytics) ──────────────────────────────────────
-
-const ALL_HOME_KPIS = [
-  { id:'po',       label:'Total PO Bulan Ini',       val:'63',         unit:'',  delta:'▲ 8.4% vs bulan lalu', up:true,  data:[40,45,42,50,48,55,52,58,60,63] },
-  { id:'pelanggan',label:'Pelanggan Aktif',           val:'148',        unit:'',  delta:'▲ 3.2%',               up:true,  data:[130,133,135,138,140,142,144,145,147,148], color:'var(--realisasi)' },
-  { id:'barang',   label:'Total Barang Aktif',        val:'15',         unit:'',  delta:'4 di bawah min stock', up:false, data:[14,14,15,15,14,15,15,15,15,15], color:'#a16207' },
-  { id:'kas',      label:'Transaksi Kas Hari Ini',    val:'11',         unit:'',  delta:'▲ 2 vs kemarin',       up:true,  data:[6,8,7,9,8,10,9,11,9,11], color:'var(--realisasi)' },
-  { id:'hutang',   label:'Hutang Jatuh Tempo (7d)',   val:'Rp 48,5 jt', unit:'', delta:'3 supplier',           up:false, data:[20,25,22,30,28,35,40,45,42,48], color:'#dc2626' },
-  { id:'piutang',  label:'Piutang Outstanding',       val:'Rp 126 jt',  unit:'', delta:'12 pelanggan',         up:false, data:[80,90,95,100,105,110,115,120,123,126], color:'#7c3aed' },
-  { id:'mutasi',   label:'Mutasi Barang (30d)',        val:'9',          unit:'', delta:'2 pending',            up:false, data:[5,6,7,6,8,7,9,8,10,9], color:'#0369a1' },
-  { id:'jurnal',   label:'Jurnal Memorial Bulan Ini', val:'3',          unit:'', delta:'Semua approved',       up:true,  data:[1,1,2,1,2,2,3,2,3,3], color:'#8b5cf6' },
-];
-
+// 4 KPI grafik Ringkasan dihitung dari data nyata (bukan angka karangan): Omset Penjualan
+// Bulan Ini/Tahun Ini dari INVOICE_SEED (Penjualan, exclude nota Batal, total pakai pjLineTotal
+// yang sama dipakai InvoicePage), Total Piutang/Hutang dari SALDO_PIUTANG_ITEMS/SALDO_HUTANG_ITEMS
+// (Keuangan) — cuma jenis:'Nota' yang dihitung (tagihan outstanding asli), Uang Muka/Retur
+// dikecualikan karena itu kredit yang mengurangi tagihan, bukan piutang/hutang itu sendiri.
+// Ketiganya (INVOICE_SEED, SALDO_*_ITEMS) baru termuat setelah dashboard.jsx di index.html, jadi
+// harus dihitung di dalam body HomeDashboard (render-time) — sama pola dgn `modules` array di
+// bawah yg juga baca PB_PO/PJ_PELANGGAN/dst secara langsung tanpa masalah.
 function HomeDashboard({ onNavigate }) {
-  const [visibleKpis, setVisibleKpis] = React.useState(['po','pelanggan','barang','kas']);
+  const invoiceTotal = (inv) => [...(inv.Details||[]), ...(inv.Details2||[])].reduce((s,x)=>s+pjLineTotal(x),0);
+  const nonBatalInvoices = INVOICE_SEED.filter(inv => !inv.Batal).slice().sort((a,b)=>a.Tgl_Bukti.localeCompare(b.Tgl_Bukti));
+  const invBulanIni = nonBatalInvoices.filter(inv => inv.Tgl_Bukti.slice(0,7) === '2026-07');
+  const invTahunIni = nonBatalInvoices.filter(inv => inv.Tgl_Bukti.slice(0,4) === '2026');
+  const cumulative = (list) => { let run = 0; return list.map(inv => (run += invoiceTotal(inv))); };
+
+  const piutangNota = SALDO_PIUTANG_ITEMS.filter(it => it.jenis === 'Nota');
+  const hutangNota = SALDO_HUTANG_ITEMS.filter(it => it.jenis === 'Nota');
+
+  const ALL_HOME_KPIS = [
+    { id:'omsetBulan', label:'Omset Penjualan Bulan Ini', val:fmtRp(invBulanIni.reduce((s,inv)=>s+invoiceTotal(inv),0)), delta:`${invBulanIni.length} nota bulan ini`, up:true, data:cumulative(invBulanIni), color:'var(--realisasi)' },
+    { id:'omsetTahun', label:'Omset Penjualan Tahun Ini', val:fmtRp(invTahunIni.reduce((s,inv)=>s+invoiceTotal(inv),0)), delta:`${invTahunIni.length} nota tahun ini`, up:true, data:cumulative(invTahunIni), color:'var(--primary)' },
+    { id:'piutang', label:'Total Piutang', val:fmtRp(piutangNota.reduce((s,it)=>s+it.sisa,0)), delta:`${piutangNota.length} nota outstanding`, up:false, data:piutangNota.map(it=>it.sisa), color:'#7c3aed' },
+    { id:'hutang', label:'Total Hutang', val:fmtRp(hutangNota.reduce((s,it)=>s+it.sisa,0)), delta:`${hutangNota.length} nota outstanding`, up:false, data:hutangNota.map(it=>it.sisa), color:'#dc2626' },
+  ];
+
+  const [visibleKpis, setVisibleKpis] = React.useState(['omsetBulan','omsetTahun','piutang','hutang']);
   const [kpiPickerOpen, setKpiPickerOpen] = React.useState(false);
 
   const modules = [
@@ -215,13 +227,9 @@ function HomeDashboard({ onNavigate }) {
     { id:'sales',       label:'Penjualan',    icon:I.users(22),    color:'#10b981', kpi:`${PJ_PELANGGAN.filter(p=>p.status!=='Non-aktif').length} pelanggan aktif`, desc:'Konfirmasi order, SO, DO, invoice & retur' },
     { id:'barang',      label:'Barang',       icon:I.box(22),      color:'#f59e0b', kpi:`${BARANG_LAIN.filter(b=>b.aktif).length + BAHAN_BAKU.filter(b=>b.aktif).length + BARANG_JADI.filter(b=>b.aktif).length} item aktif`, desc:'Barang, bahan baku, mutasi & stock opname' },
     { id:'manufaktur',  label:'Manufaktur',   icon:I.list(22),     color:'#dc2626', kpi:`${MF_SPK_SEED.filter(s=>!['Batal','Cancelled','Selesai'].includes(s.status)).length} SPK aktif`, desc:'SPK, hasil produksi & planning schedule' },
-    { id:'finance',     label:'Akuntan',      icon:I.bank(22),     color:'#8b5cf6', kpi:'Buku besar & aktiva', desc:'Akun, jurnal memorial & laporan keuangan' },
-    { id:'cashbank',    label:'Keuangan',     icon:I.bank(22),     color:'#ec4899', kpi:'Kas, bank & giro',    desc:'Kas masuk/keluar, bank & pelunasan' },
+    { id:'keuangan',    label:'Keuangan',     icon:I.bank(22),     color:'#8b5cf6', kpi:'Akuntansi & kas/bank', desc:'Akun, jurnal, laporan keuangan, kas, bank & giro' },
     { id:'kataloglain', label:'Katalog Lain', icon:I.layers(22),   color:'#0369a1', kpi:'Data pendukung',      desc:'Katalog & master data pendukung lainnya' },
-    { id:'master',      label:'Master Data',  icon:I.users(22),    color:'#64748b', kpi:'Salesman, gudang, satuan', desc:'Data master lintas modul' },
-    { id:'reports',     label:'Reports',      icon:I.chart(22),    color:'#1d4ed8', kpi:'Laporan operasional', desc:'Laporan & analitik lintas modul' },
     { id:'pengaturan',  label:'Pengaturan',   icon:I.settings(22), color:'#6b7280', kpi:'Konfigurasi sistem',  desc:'Preferensi & konfigurasi aplikasi' },
-    { id:'admin',       label:'System Admin', icon:I.shield(22),   color:'#111827', kpi:'User & hak akses',    desc:'Manajemen user & keamanan sistem' },
   ];
 
   const toggleKpi = (id) =>
@@ -295,48 +303,28 @@ function HomeDashboard({ onNavigate }) {
         ))}
       </div>
 
-      <div style={{display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:16, marginTop:32}}>
-        <div className="panel">
-          <h3>Aktivitas Terkini (Semua Modul)</h3>
-          <div className="timeline">
-            <div className="timeline-item done">
-              <div className="ti-when">Hari ini · 14:22</div>
-              <div className="ti-what"><b className="ti-who">Andi P.</b> menyetujui PO-2026-0631 · Purchase</div>
-            </div>
-            <div className="timeline-item done">
-              <div className="ti-when">Hari ini · 13:08</div>
-              <div className="ti-what"><b className="ti-who">Rini K.</b> memulai stock opname SO26040002 · Inventory</div>
-            </div>
-            <div className="timeline-item done">
-              <div className="ti-when">Hari ini · 11:45</div>
-              <div className="ti-what"><b className="ti-who">Kevin H.</b> input kas masuk KM-2026-0412 · Cash &amp; Bank</div>
-            </div>
-            <div className="timeline-item">
-              <div className="ti-when">Kemarin · 17:30</div>
-              <div className="ti-what"><b className="ti-who">Brandon</b> membuat nota penjualan NJ-2026-0388 · Pelanggan</div>
-            </div>
-            <div className="timeline-item">
-              <div className="ti-when">Kemarin · 09:12</div>
-              <div className="ti-what"><b className="ti-who">Sistem</b> mendeteksi 4 item barang di bawah min stock · Inventory</div>
-            </div>
+      <div className="panel" style={{marginTop:32}}>
+        <h3>Aktivitas Terkini (Semua Modul)</h3>
+        <div className="timeline">
+          <div className="timeline-item done">
+            <div className="ti-when">Hari ini · 14:22</div>
+            <div className="ti-what"><b className="ti-who">Andi P.</b> menyetujui PO-2026-0631 · Purchase</div>
           </div>
-        </div>
-
-        <div className="panel">
-          <h3>Akses Cepat</h3>
-          <div style={{display:'flex', flexDirection:'column', gap:8}}>
-            {[
-              { label:'Buat PO Baru',          action:()=>onNavigate('pembelian') },
-              { label:'Konfirmasi Order Baru', action:()=>onNavigate('sales') },
-              { label:'Stock Opname',          action:()=>onNavigate('barang') },
-              { label:'Buat SPK Baru',         action:()=>onNavigate('manufaktur') },
-              { label:'Input Kas Masuk',       action:()=>onNavigate('cashbank') },
-              { label:'Fitur Administrator',   action:()=>onNavigate('admin') },
-            ].map(q => (
-              <button key={q.label} className="btn" style={{justifyContent:'flex-start', gap:8}} onClick={q.action}>
-                {I.arrowR(12)} {q.label}
-              </button>
-            ))}
+          <div className="timeline-item done">
+            <div className="ti-when">Hari ini · 13:08</div>
+            <div className="ti-what"><b className="ti-who">Rini K.</b> memulai stock opname SO26040002 · Inventory</div>
+          </div>
+          <div className="timeline-item done">
+            <div className="ti-when">Hari ini · 11:45</div>
+            <div className="ti-what"><b className="ti-who">Kevin H.</b> input kas masuk KM-2026-0412 · Cash &amp; Bank</div>
+          </div>
+          <div className="timeline-item">
+            <div className="ti-when">Kemarin · 17:30</div>
+            <div className="ti-what"><b className="ti-who">Brandon</b> membuat nota penjualan NJ-2026-0388 · Pelanggan</div>
+          </div>
+          <div className="timeline-item">
+            <div className="ti-when">Kemarin · 09:12</div>
+            <div className="ti-what"><b className="ti-who">Sistem</b> mendeteksi 4 item barang di bawah min stock · Inventory</div>
           </div>
         </div>
       </div>

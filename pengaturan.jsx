@@ -424,34 +424,40 @@ function KonfigurasiPenjualan() {
 function PengaturanDashboard({ onOpenSub }) {
   const sections = [
     {
-      title:'',
-      count:'',
-      tiles:[
-        { id:'akses', title:'Akses User', badge:'12 user', icon:I.users(20) },
-        { id:'menu',  title:'Menu',       badge:'45 menu', icon:I.list(20) },
-      ]
-    },
-    {
-      title:'',
-      count:'',
-      tiles:[
-        { id:'grupmenu', title:'Grup Menu', badge:'8 grup', icon:I.layers(20) },
-      ]
-    },
-    {
       title:'Pengaturan Umum',
-      count:'3',
+      count:'6',
       tiles:[
         { id:'sistem',      title:'Konfigurasi Sistem',      badge:'12 item', icon:I.settings(20) },
-        { id:'organisasi',  title:'Konfigurasi Organisasi',  badge:'5 item',  icon:I.building?.(20) || I.list(20) },
+        { id:'organisasi',  title:'Konfigurasi Organisasi',  badge:'5 item',  icon:I.list(20) },
         { id:'penjualan',   title:'Konfigurasi Penjualan',   badge:'9 item',  icon:I.cart(20) },
+      ]
+    },
+    {
+      title:'Hak Akses & Menu',
+      count:'3',
+      tiles:[
+        { id:'akses',      title:'Akses User',     badge:'12 user', icon:I.users(20) },
+        { id:'menu',       title:'Menu',           badge:'45 menu', icon:I.list(20) },
+        { id:'grupmenu',   title:'Grup Menu',      badge:'8 grup',  icon:I.layers(20) },
+      ]
+    },
+    {
+      title:'Administrasi',
+      count:'6',
+      tiles:[
+        { id:'profil',     title:'Profil Perusahaan',     badge:'10 field',  icon:I.invoice(20) },
+        { id:'default',    title:'Nilai Default',         badge:'8 default', icon:I.settings(20) },
+        { id:'cetakan',    title:'Keterangan Cetakan',    badge:'4 catatan', icon:I.print(20)   },
+        { id:'fitur',      title:'Fitur Administrator',   badge:'6 hak akses', icon:I.shield(20) },
+        { id:'sesi',       title:'Login Pengguna',        badge:'1 sesi',    icon:I.users(20) },
+        { id:'tampilan',   title:'Tampilan & Tema',       badge:'4 preset',  icon:I.layers(20) },
       ]
     },
   ];
   return (
     <ModuleDashboard
       title="Dashboard Pengaturan"
-      subtitle="Halaman ini digunakan untuk mengelola data pengaturan, tersedia 6 menu pendukung."
+      subtitle="Halaman ini digunakan untuk mengelola data pengaturan, tersedia 15 menu pendukung."
       sections={sections}
       activityLog={ACTIVITY_LOG_PENGATURAN}
       onOpenSub={onOpenSub}
@@ -459,7 +465,7 @@ function PengaturanDashboard({ onOpenSub }) {
   );
 }
 
-function PengaturanPage({ activeSub, onSubChange, onNavigate }) {
+function PengaturanPage({ activeSub, onSubChange, onNavigate, theme, setTheme }) {
   if (!activeSub) return <PengaturanDashboard onOpenSub={onSubChange} />;
   const subLabel = MODULE_SUBS.pengaturan.find(s => s.id === activeSub)?.label ?? activeSub;
   return (
@@ -469,12 +475,20 @@ function PengaturanPage({ activeSub, onSubChange, onNavigate }) {
         <a onClick={()=>onSubChange(null)} style={{cursor:'pointer'}}>Pengaturan</a><span className="sep">/</span>
         <span className="current">{subLabel}</span>
       </div>
+      {/* Pengaturan subs */}
       {activeSub === 'akses'       && <AksesUserList />}
       {activeSub === 'menu'        && <MenuList />}
       {activeSub === 'grupmenu'    && <GrupMenuList />}
       {activeSub === 'sistem'      && <KonfigurasiSistem />}
       {activeSub === 'organisasi'  && <KonfigurasiOrganisasi />}
       {activeSub === 'penjualan'   && <KonfigurasiPenjualan />}
+      {/* Admin subs (digabung ke Pengaturan) */}
+      {activeSub === 'profil'      && typeof AdminProfil !== 'undefined' && <AdminProfil />}
+      {activeSub === 'default'     && typeof AdminDefault !== 'undefined' && <AdminDefault />}
+      {activeSub === 'cetakan'     && typeof AdminCetakan !== 'undefined' && <AdminCetakan />}
+      {activeSub === 'fitur'       && typeof AdminFitur !== 'undefined' && <AdminFitur />}
+      {activeSub === 'sesi'        && typeof AdminSesi !== 'undefined' && <AdminSesi />}
+      {activeSub === 'tampilan'    && typeof AdminTampilan !== 'undefined' && <AdminTampilan theme={theme} setTheme={setTheme} />}
     </div>
   );
 }

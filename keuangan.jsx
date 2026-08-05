@@ -600,12 +600,21 @@ function KbgModal({ data, onClose, onSave }) {
 }
 
 function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
+  // State untuk accounting subs (dari modul Akuntan)
+  const [akunRows, setAkunRows] = React.useState(AKUN_BB);
+  const [aktivaRows, setAktivaRows] = React.useState(AKTIVA);
+  const [jurnalRows, setJurnalRows] = React.useState(JURNAL_MEMO);
+  const [labaRugiRows, setLabaRugiRows] = React.useState(LABA_RUGI);
+  const [arusKasRows, setArusKasRows] = React.useState(ARUS_KAS);
+  const [neracaRows, setNeracaRows] = React.useState(NERACA);
+
   const [modal, setModal] = React.useState(null);
   const close = () => setModal(null);
   const onSave = () => { setModal(null); window.__erpToast && window.__erpToast('Transaksi berhasil disimpan.'); };
   if (!activeSub) return <KeuanganDashboard onOpenSub={onSubChange} onNavigate={onNavigate} />;
 
-  const subLabel = KU_SUBS.find(s=>s.id===activeSub)?.label;
+  const subLabel = KU_SUBS.find(s=>s.id===activeSub)?.label
+    || (typeof MODULE_SUBS !== 'undefined' ? MODULE_SUBS.keuangan?.find(s=>s.id===activeSub)?.label : null);
   const totalForKind = (kind) => {
     const sum = (arr) => arr.reduce((s,r)=>s+(r.nominal||r.terbayar||0),0);
     return ({
@@ -637,6 +646,13 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
       </div>
 
       {activeSub === 'kbg' && <KasBankGiro onAdd={()=>setModal({kind:'kbg'})} onEdit={(d)=>setModal({kind:'kbg', data:d})} />}
+      {/* Accounting subs (dari modul Akuntan) */}
+      {activeSub === 'akun'    && <KatalogAkunPage rows={akunRows} setRows={setAkunRows} />}
+      {activeSub === 'aktiva'  && <AktivaPage rows={aktivaRows} setRows={setAktivaRows} />}
+      {activeSub === 'jurnal'  && <JurnalMemorialPage rows={jurnalRows} setRows={setJurnalRows} akunRows={akunRows} />}
+      {activeSub === 'labarugi' && <LaporanKeuanganPage reportId="labarugi" rows={labaRugiRows} setRows={setLabaRugiRows} />}
+      {activeSub === 'aruskas' && <LaporanKeuanganPage reportId="aruskas" rows={arusKasRows} setRows={setArusKasRows} />}
+      {activeSub === 'neraca'  && <LaporanKeuanganPage reportId="neraca" rows={neracaRows} setRows={setNeracaRows} />}
       {txMap[activeSub] && (
         <TxPage
           title={txMap[activeSub].title}

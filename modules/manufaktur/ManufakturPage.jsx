@@ -185,12 +185,13 @@ function ManufakturPage({ activeSub, onSubChange, onNavigate }) {
       {activeSub === 'rpbl' && <MfPemakaianBarangList type="rpbl" rows={rpblRows}
         onAdd={() => setModal({type:'rpbl', data:null})}
         onEdit={r  => setModal({type:'rpbl', data:r})} />}
-      {activeSub === 'planning' && <MfPlanningScheduleList rows={planningRows} setRows={setPlanningRows} />}
+      {activeSub === 'planning' && <MfPlanningScheduleList rows={planningRows} setRows={setPlanningRows} spkRows={spkRows}
+        onSelesai={(completed) => setProduksiRows(prev => [...prev, ...mfBuildHpRecordsFromPlanning(completed, spkRows)])} />}
 
       {modal?.type === 'spk'      && <MfSpkDialog           data={modal.data} initialMode={spkModalMode} onClose={() => setModal(null)} onSave={saveToRows(setSpkRows)} onCancelDoc={cancelSpkFromModal} />}
-      {modal?.type === 'produksi' && <MfHasilProduksiDialog data={modal.data} onClose={() => setModal(null)} onSave={saveToRows(setProduksiRows)} />}
-      {modal?.type === 'bpbl' && <MfPemakaianBarangDialog type="bpbl" data={modal.data} onClose={() => setModal(null)} onSave={saveToRows(setBpblRows)} />}
-      {modal?.type === 'rpbl' && <MfPemakaianBarangDialog type="rpbl" data={modal.data} onClose={() => setModal(null)} onSave={saveToRows(setRpblRows)} />}
+      {modal?.type === 'produksi' && <MfHasilProduksiDialog data={modal.data} spkRows={spkRows} onClose={() => setModal(null)} onSave={saveToRows(setProduksiRows)} />}
+      {modal?.type === 'bpbl' && <MfPemakaianBarangDialog type="bpbl" data={modal.data} spkRows={spkRows} onClose={() => setModal(null)} onSave={saveToRows(setBpblRows)} />}
+      {modal?.type === 'rpbl' && <MfPemakaianBarangDialog type="rpbl" data={modal.data} spkRows={spkRows} onClose={() => setModal(null)} onSave={saveToRows(setRpblRows)} />}
 
       {confirmCancelSpk && (
         <ConfirmationModal

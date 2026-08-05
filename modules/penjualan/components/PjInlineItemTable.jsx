@@ -119,11 +119,19 @@ function InlineTable({ title, columns, rows, setRows, addLabel, shortcut, disabl
   );
 }
 
+// Katalog barang buat dropdown Kode Item: BARANG (sparepart, inventory.jsx) digabung BARANG_JADI
+// (modul Barang — dipakai Sales Order sejak seed-nya diisi kode JD-xxx/PU-xxx supaya SPK "Buat
+// dari SO" bisa auto-fill Bahan lewat BOM, lihat salesorder.data.jsx). Dinormalisasi ke bentuk
+// {code,name,hpp} yang sama biar update()/dropdown di bawah tidak perlu tahu bedanya.
+function pjBarangCatalog() {
+  return [...BARANG, ...BARANG_JADI.map(b => ({ code:b.kodeProduk, name:b.namaProduk, hpp:b.hppStandar }))];
+}
+
 function PjItemTable({ title, rows, setRows, showRealisasi, disabled, onPickItems, lockItems }) {
   const update = (idx, key, value) => {
     let row = { ...rows[idx], [key]: value };
     if (key === 'Kode_Item' && !row._deleted) {
-      const found = BARANG.find(b => b.code === value);
+      const found = pjBarangCatalog().find(b => b.code === value);
       if (found) { row.Nama_Item = found.name; row.Satuan = found.unit || row.Satuan; row.Hrg_Sat = found.price || found.hpp || 0; }
     }
     const next = [...rows]; next[idx] = row; setRows(next);
@@ -174,7 +182,7 @@ function PjItemTable({ title, rows, setRows, showRealisasi, disabled, onPickItem
                     <td>
                       <select className="cell mono" value={r.Kode_Item} onChange={e=>update(idx,'Kode_Item',e.target.value)}>
                         <option value="">— Pilih —</option>
-                        {BARANG.map(b => <option key={b.code} value={b.code}>{b.code}</option>)}
+                        {pjBarangCatalog().map(b => <option key={b.code} value={b.code}>{b.code}</option>)}
                       </select>
                     </td>
                     <td className="muted" style={{padding:'0 8px', fontSize:12.5}}>{r.Nama_Item || '—'}</td>

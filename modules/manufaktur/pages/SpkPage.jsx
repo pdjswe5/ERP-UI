@@ -5,6 +5,35 @@
 // ke onSave (sebelumnya tombol Simpan hanya memanggil onSave tanpa data apa pun, sehingga
 // Tambah/Edit tidak pernah benar-benar tersimpan). rows/setRows diangkat ke MfManufakturPage.
 
+// Seed MF_SPK_SEED.tgl pakai format "DD-MM-YYYY" (dipakai langsung di tabel list), sedangkan
+// <input type="date"> HANYA menerima/mengembalikan "YYYY-MM-DD" — tanpa konversi ini date picker
+// tampil kosong tiap kali buka View/Edit SPK lama (bug: value mentah "01-06-2026" bukan ISO valid,
+// jadi browser diam-diam menganggapnya kosong). Pola sama seperti akToIso/akFromIso di Keuangan.
+function mfToIso(dmy) {
+  if (!dmy) return '';
+  const [d, m, y] = dmy.split('-');
+  if (!d || !m || !y) return '';
+  return `${y}-${m}-${d}`;
+}
+function mfFromIso(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  if (!d || !m || !y) return '';
+  return `${d}-${m}-${y}`;
+}
+
+// Mode Lihat (View) MfSpkDialog: dulu field header tetap dirender sebagai <input>/<select> yang
+// cuma di-disable (kotak abu-abu, placeholder "dd/mm/yyyy" kalau kosong, dropdown kepencet) —
+// tampak seperti form kosong yang rusak, bukan tampilan data. ViewValue gantikan itu jadi teks
+// polos rapi (tinggi disamakan dengan .input, 32px, supaya switch ke mode Edit tidak lompat).
+function ViewValue({ children, mono }) {
+  return (
+    <div className={mono ? 'mono' : ''} style={{height:32, display:'flex', alignItems:'center', fontSize:13.5, fontWeight:500, color:'var(--text)'}}>
+      {children || <span style={{color:'var(--text-3)', fontWeight:400}}>—</span>}
+    </div>
+  );
+}
+
 // ─── SPK List ────────────────────────────────────────────────────────────────
 
 function MfSpkList({ rows, onAdd, onView, onEdit, onCancelDoc, onNavigate }) {
@@ -14,6 +43,8 @@ function MfSpkList({ rows, onAdd, onView, onEdit, onCancelDoc, onNavigate }) {
   const [q, setQ]             = React.useState('');
   const [page, setPage]       = React.useState(1);
   const perPage = 10;
+  const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow]   = React.useState(null);
 
   const filtered = rows.filter(r => {
     if (statusF && r.status !== statusF) return false;
@@ -67,7 +98,7 @@ function MfSpkList({ rows, onAdd, onView, onEdit, onCancelDoc, onNavigate }) {
           <div className="table-toolbar-right">
             <button className="btn btn-primary btn-sm" onClick={onAdd}>{I.plus()} Tambah Data</button>
             <button className="btn btn-sm btn-icon" title="Refresh">{I.refresh()}</button>
-            <button className="btn btn-sm btn-icon" title="Print">{I.print()}</button>
+            <button className="btn btn-sm btn-icon" title="Cetak" onClick={() => { setCetakRow(null); setShowCetak(true); }}>{I.print()}</button>
             <button className="btn btn-sm btn-icon btn-danger" title="Hapus">{I.trash()}</button>
           </div>
         </div>
@@ -109,6 +140,7 @@ function MfSpkList({ rows, onAdd, onView, onEdit, onCancelDoc, onNavigate }) {
                   <td className="center">
                     <div className="row-actions">
                       <button className="btn btn-icon btn-sm" title="Edit" onClick={() => onEdit(r)}>{I.edit()}</button>
+                      <button className="btn btn-icon btn-sm" title="Cetak" onClick={() => { setCetakRow(r); setShowCetak(true); }}>{I.print()}</button>
                       {onCancelDoc && (
                         <button className="btn btn-icon btn-sm del" title={r.status === 'Batal' ? 'Sudah dibatalkan' : 'Batalkan SPK'}
                           disabled={r.status === 'Batal'} onClick={() => onCancelDoc(r)}>{I.fileX(14)}</button>
@@ -132,6 +164,12 @@ function MfSpkList({ rows, onAdd, onView, onEdit, onCancelDoc, onNavigate }) {
           </div>
         </div>
       </div>
+
+      {showCetak && (
+        <MfSpkCetakModal docLabel="Surat Perintah Kerja" rows={rows}
+          initialSelected={cetakRow ? [cetakRow.no] : null}
+          onClose={() => { setShowCetak(false); setCetakRow(null); }} />
+      )}
     </>
   );
 }
@@ -161,20 +199,36 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
   React.useEffect(() => { if (isCreate && noBuktiRef.current) noBuktiRef.current.focus(); }, [isCreate]);
 
   // Header fields
-  const [tgl,      setTgl]      = React.useState(data?.tgl      || '2026-06-24');
+  // tgl: seed pakai "DD-MM-YYYY" (lihat mfToIso/mfFromIso di atas), dikonversi ke ISO di sini
+  // supaya <input type="date"> benar-benar menampilkan tanggalnya, bukan kosong.
+  const [tgl,      setTgl]      = React.useState(data?.tgl ? mfToIso(data.tgl) : '2026-06-24');
   const [noSo,     setNoSo]     = React.useState(data?.noSo     || '');
   const [stempel,  setStempel]  = React.useState(data?.stempel  || '');
   const [status,   setStatus]   = React.useState(data?.status   || 'Proses');
   const [tglKirim, setTglKirim] = React.useState(data?.tglKirim || '');
   const [soPicker, setSoPicker] = React.useState(false);
+  // SO yang baru dipilih tapi nunggu konfirmasi user — cuma dipakai kalau tabel Barang Jadi SAAT
+  // INI sudah ada isinya (baik dari SO sebelumnya maupun ditambah manual), supaya user tidak
+  // kehilangan data tanpa sadar cuma karena salah klik No. SO. Kalau tabel masih kosong, SO baru
+  // langsung diterapkan tanpa dialog (tidak ada apa-apa yang bisa hilang).
+  const [pendingSo, setPendingSo] = React.useState(null);
 
   // Line items — diisi dari data yang sudah ada supaya mode View/Edit menampilkan barisnya
   // (sebelumnya selalu mulai kosong meski data.bjLines/bahanLines terisi).
   const [bjLines,    setBjLines]    = React.useState(data?.bjLines    || []);
-  const [bahanLines, setBahanLines] = React.useState(data?.bahanLines || []);
+  // bahanLines skrg terhubung ke 1 baris Barang Jadi lewat field bjLineId (1 barang jadi bisa
+  // punya 2-3 bahan atau lebih). Data lama (sebelum field ini ada) tidak punya bjLineId sama
+  // sekali — supaya bahan itu tetap kelihatan (bukan hilang begitu saja), di-normalisasi ke
+  // barang jadi PERTAMA saat modal dibuka; untuk SPK 1-barang (kasus paling umum) ini memang
+  // benar apa adanya karena semua bahan itu pasti milik satu-satunya barang jadi yang ada.
+  const [bahanLines, setBahanLines] = React.useState(() => (data?.bahanLines || []).map(r =>
+    r.bjLineId ? r : { ...r, bjLineId: data?.bjLines?.[0]?.id ?? null }));
   const [bjModal,    setBjModal]    = React.useState(null);  // null | 'add' | {idx, data}
-  const [bahanPicker, setBahanPicker] = React.useState(false);
-  const [activeTab,  setActiveTab]  = React.useState('bj');
+  // Baris Barang Jadi yang tabel bahannya sedang di-expand (klik ▸ per baris) — bahan sekarang
+  // cuma bisa DIUBAH lewat popup Tambah/Edit Barang (lihat MfBarangJadiEntryModal), expand di sini
+  // murni tampilan ringkas supaya jelas tiap barang butuh bahan apa saja tanpa pindah section.
+  const [expandedBjIds, setExpandedBjIds] = React.useState(new Set());
+  const toggleExpand = (id) => setExpandedBjIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
   // Approval
   const fmtNow = () => {
@@ -195,50 +249,64 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
   };
 
   const modalBodyRef = React.useRef(null);
-  const bjRef        = React.useRef(null);
-  const bahanRef     = React.useRef(null);
-
-  const scrollTo = (id, ref) => {
-    setActiveTab(id);
-    if (!ref.current || !modalBodyRef.current) return;
-    const body    = modalBodyRef.current;
-    const bodyTop = body.getBoundingClientRect().top;
-    const refTop  = ref.current.getBoundingClientRect().top;
-    body.scrollBy({ top: refTop - bodyTop - 52, behavior: 'smooth' });
-  };
 
   React.useEffect(() => {
-    const h = e => { if (e.key === 'Escape' && !bjModal && !bahanPicker && !soPicker) onClose(); };
+    const h = e => { if (e.key === 'Escape' && !bjModal && !soPicker && !pendingSo) onClose(); };
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
-  }, [bjModal, bahanPicker, soPicker, onClose]);
+  }, [bjModal, soPicker, pendingSo, onClose]);
 
-  // Barang Jadi & Bahan: pola sama seperti tabel item Pembelian/Penjualan — tambah SATU baris
-  // sekaligus lewat picker (Kode/Nama terkunci begitu dipilih), hapus bersifat soft-delete
-  // (baris ditandai _deleted, masih bisa di-Restore sebelum Simpan) bukan langsung hilang.
+  // Barang Jadi: pola sama seperti tabel item Pembelian/Penjualan — tambah SATU baris sekaligus
+  // lewat popup (Kode/Nama terkunci begitu dipilih), hapus bersifat soft-delete (baris ditandai
+  // _deleted, masih bisa di-Restore sebelum Simpan) bukan langsung hilang. Bahan tidak lagi punya
+  // tabel/soft-delete sendiri di sini — sepenuhnya dikelola di dalam popup Tambah/Edit Barang
+  // (MfBarangJadiEntryModal) dan di-replace wholesale untuk bjLineId terkait tiap kali popup itu
+  // disimpan (lihat onSave bjModal di bawah).
   const softDeleteBj  = (idx) => setBjLines(ls => ls.map((r,i) => i===idx ? {...r, _deleted:true}  : r));
   const restoreBj     = (idx) => setBjLines(ls => ls.map((r,i) => i===idx ? {...r, _deleted:false} : r));
-  const softDeleteBahan = (idx) => setBahanLines(ls => ls.map((r,i) => i===idx ? {...r, _deleted:true}  : r));
-  const restoreBahan    = (idx) => setBahanLines(ls => ls.map((r,i) => i===idx ? {...r, _deleted:false} : r));
 
-  const onBahanPick = (picked) => {
-    setBahanLines(ls => [...ls, ...picked.map((b, i) => ({
-      id: Date.now() + i, gudang:'', kodeBahan:b.code, merkBahan:b.merk || '', jumlah:b._qty || '', satuan:'MTR', _added:true,
-    }))]);
-    setBahanPicker(false);
+  // Terapkan SO terpilih: REPLACE (bukan tambah) seluruh Barang Jadi & Bahan dengan item SO itu —
+  // dipanggil langsung kalau tabel masih kosong, atau setelah user konfirmasi "Ganti No. SO?"
+  // kalau sudah ada isinya (lihat dialog confirmChangeSo di bawah). Kode_Item SO berasal dari
+  // katalog Penjualan (BARANG di inventory.jsx, sparepart) yang BEDA SAMA SEKALI dari BARANG_JADI
+  // (produk atap/steel manufaktur, modul Barang) — jadi bahan cuma otomatis kebentuk kalau
+  // Kode_Item itu KEBETULAN match resep BOM (BRG_BOM_SEED, modul Barang); kalau tidak, baris
+  // Barang Jadi tetap masuk (kode/nama/qty/satuan apa adanya dari SO) tapi bahannya kosong — user
+  // lengkapi manual lewat "Edit". Mesin SELALU kosong dari import (BOM modul Barang tidak mengurus
+  // mesin) — wajib dipilih manual per barang sebelum SPK bisa disimpan (lihat hasEmptyMesin).
+  const applySoImport = (so) => {
+    setNoSo(so.No_Bukti);
+    const soItems = [...(so.Details || []), ...(so.Details2 || [])];
+    const newBj = [];
+    const newBahan = [];
+    soItems.forEach((item, i) => {
+      const newId = Date.now() + i;
+      const bom = brgBomFor(item.Kode_Item);
+      newBj.push({
+        id: newId, kodeBarang: item.Kode_Item, namaBarang: item.Nama_Item,
+        qtySPK: item.Jumlah, satuan: item.Satuan || '',
+        namaKelompokWarna:'', namaAz:'', namaBrand:'', namaMerkBarang:'',
+        stempel:'', mesinDipilih: [], _added:true,
+      });
+      if (bom) {
+        newBahan.push(...brgBomBuildBahanLines(item.Kode_Item, item.Jumlah).map((b, bi) => ({
+          ...b, id: Date.now() + i*100 + bi, bjLineId: newId, _added:true,
+        })));
+      }
+    });
+    setBjLines(newBj);
+    setBahanLines(newBahan);
+    setExpandedBjIds(new Set());
+    window.__erpToast && window.__erpToast(`${newBj.length} barang jadi diimpor dari SO ${so.No_Bukti}.`);
   };
 
-  const updateBahan = (idx, field, val) =>
-    setBahanLines(ls => ls.map((r, i) => {
-      if (i !== idx) return r;
-      if (field === 'kodeBahan') {
-        const b = MF_BARANG.find(x => x.code === val);
-        return {...r, kodeBahan: val, merkBahan: b?.merk || ''};
-      }
-      return {...r, [field]: val};
-    }));
+  // Barang Jadi tanpa Mesin tidak boleh disimpan — mesin dulunya opsional di sini, tapi jadi wajib
+  // karena impor dari SO/BOM selalu ninggalin mesinDipilih kosong (BOM cuma urus Bahan). Baris yang
+  // sudah ditandai _deleted dikecualikan (mau dihapus, jadi tidak relevan).
+  const hasEmptyMesin = bjLines.some(r => !r._deleted && (r.mesinDipilih || []).length === 0);
 
   const handleSave = () => {
+    if (hasEmptyMesin) return; // jaga-jaga — tombol Simpan sudah disabled, ini cuma defensif
     // Buang baris soft-delete + strip flag _deleted/_added sebelum disimpan (sama seperti
     // handleSave PjDocModal/PbModalShell di Penjualan/Pembelian).
     const cleanBj    = bjLines.filter(r => !r._deleted).map(({_deleted, _added, ...r}) => r);
@@ -250,7 +318,7 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
       : data.no;
     onSave({
       no: finalNo,
-      tgl, noSo, stempel, status, tglKirim,
+      tgl: mfFromIso(tgl) || tgl, noSo, stempel, status, tglKirim,
       Batal: status === 'Batal', Alasan_Batal: data?.Alasan_Batal || '',
       bjLines: cleanBj, bahanLines: cleanBahan,
       dibuatOleh, dibuatTgl, isApproved, disetujuiOleh, disetujuiTgl,
@@ -289,49 +357,78 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
               marginLeft:-24, marginRight:-24, paddingLeft:24, paddingRight:24,
               borderBottom:'1px solid var(--border)', marginBottom:0,
             }}>
-              <div style={{display:'grid', gridTemplateColumns:'220px 160px 1fr', gap:12, marginBottom:10}}>
-                <div className="field" style={{marginBottom:0}}>
-                  <label>No. SPK</label>
-                  {isCreate ? (
-                    <>
-                      <input ref={noBuktiRef} className="input mono" type="text" value={noBuktiRaw}
-                        onChange={e => handleNoBuktiChange(e.target.value)} placeholder="Ketik F atau K" maxLength={1} />
-                      {noBuktiError && <div className="no-bukti-alert">{noBuktiError}</div>}
-                    </>
-                  ) : (
-                    <input className="input" value={data?.no} readOnly />
-                  )}
+              {/* Grid 3 zona (4/4/4) — tiap zona nge-stack 2 field col-12 (full-width zona itu
+                  sendiri), bukan side-by-side lagi. Grid 1: No. SPK/Status, Grid 2: Tanggal/Tgl.
+                  Kirim, Grid 3: No. SO/Stempel. */}
+              <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:16}}>
+
+                {/* Grid 1: No. SPK, Status */}
+                <div style={{display:'flex', flexDirection:'column', gap:10}}>
+                  <div className="field" style={{marginBottom:0}}>
+                    <label>No. SPK</label>
+                    {isView ? <ViewValue mono>{data?.no}</ViewValue> : isCreate ? (
+                      <>
+                        <input ref={noBuktiRef} className="input mono" type="text" value={noBuktiRaw}
+                          onChange={e => handleNoBuktiChange(e.target.value)} placeholder="Ketik F atau K" maxLength={1} />
+                        {noBuktiError && <div className="no-bukti-alert">{noBuktiError}</div>}
+                      </>
+                    ) : (
+                      <input className="input" value={data?.no} readOnly />
+                    )}
+                  </div>
+                  <div className="field" style={{marginBottom:0}}>
+                    <label>Status</label>
+                    {isView ? <ViewValue><span className={`pill ${STATUS_CLASS[status] || 'draft'}`}>{status}</span></ViewValue> : (
+                      <select className="select" value={status} disabled={isBatal || noBuktiLocked} onChange={e => setStatus(e.target.value)}>
+                        {MF_STATUS_SPK.filter(s => s !== 'Batal').map(s => <option key={s}>{s}</option>)}
+                        {isBatal && <option>Batal</option>}
+                      </select>
+                    )}
+                  </div>
                 </div>
-                <div className="field" style={{marginBottom:0}}>
-                  <label>Tanggal *</label>
-                  <input className="input" type="date" value={tgl} disabled={isView || noBuktiLocked} onChange={e => setTgl(e.target.value)} />
+
+                {/* Grid 2: Tanggal, Tgl. Kirim */}
+                <div style={{display:'flex', flexDirection:'column', gap:10}}>
+                  <div className="field" style={{marginBottom:0}}>
+                    <label>Tanggal *</label>
+                    {isView ? <ViewValue>{mfFromIso(tgl)}</ViewValue> : (
+                      <input className="input" type="date" value={tgl} disabled={noBuktiLocked} onChange={e => setTgl(e.target.value)} />
+                    )}
+                  </div>
+                  <div className="field" style={{marginBottom:0}}>
+                    <label>Tgl. Kirim</label>
+                    {isView ? <ViewValue>{mfFromIso(tglKirim)}</ViewValue> : (
+                      <input className="input" type="date" value={tglKirim} disabled={noBuktiLocked} onChange={e => setTglKirim(e.target.value)} />
+                    )}
+                  </div>
                 </div>
-                <div className="field" style={{marginBottom:0}}>
-                  <label>No. SO</label>
-                  <input className="input" style={{cursor: (isView || noBuktiLocked) ? 'default' : 'pointer', background:'var(--bg-elev)'}}
-                    readOnly placeholder="— Pilih Sales Order —" value={noSo}
-                    onClick={() => { if (!isView && !noBuktiLocked) setSoPicker(true); }} />
+
+                {/* Grid 3: No. SO, Stempel */}
+                <div style={{display:'flex', flexDirection:'column', gap:10}}>
+                  <div className="field" style={{marginBottom:0}}>
+                    <label>No. SO</label>
+                    {isView ? <ViewValue>{noSo}</ViewValue> : (
+                      <input className="input" style={{cursor: noBuktiLocked ? 'default' : 'pointer', background:'var(--bg-elev)'}}
+                        readOnly placeholder="— Pilih Sales Order —" value={noSo}
+                        onClick={() => { if (!noBuktiLocked) setSoPicker(true); }} />
+                    )}
+                  </div>
+                  <div className="field" style={{marginBottom:0}}>
+                    <label>Stempel</label>
+                    {isView ? (
+                      <ViewValue>
+                        {stempel && <span style={{display:'inline-block', padding:'2px 8px', borderRadius:999,
+                          fontSize:11.5, fontWeight:600, background:'var(--primary)', color:'#fff'}}>{stempel}</span>}
+                      </ViewValue>
+                    ) : (
+                      <select className="select" value={stempel} disabled={noBuktiLocked} onChange={e => setStempel(e.target.value)}>
+                        <option value="">— Pilih —</option>
+                        {MF_STEMPEL_LIST.map(v => <option key={v}>{v}</option>)}
+                      </select>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div style={{display:'grid', gridTemplateColumns:'180px 160px 1fr', gap:12}}>
-                <div className="field" style={{marginBottom:0}}>
-                  <label>Tgl. Kirim</label>
-                  <input className="input" type="date" value={tglKirim} disabled={isView || noBuktiLocked} onChange={e => setTglKirim(e.target.value)} />
-                </div>
-                <div className="field" style={{marginBottom:0}}>
-                  <label>Status</label>
-                  <select className="select" value={status} disabled={isView || isBatal || noBuktiLocked} onChange={e => setStatus(e.target.value)}>
-                    {MF_STATUS_SPK.filter(s => s !== 'Batal').map(s => <option key={s}>{s}</option>)}
-                    {isBatal && <option>Batal</option>}
-                  </select>
-                </div>
-                <div className="field" style={{marginBottom:0}}>
-                  <label>Stempel</label>
-                  <select className="select" value={stempel} disabled={isView || noBuktiLocked} onChange={e => setStempel(e.target.value)}>
-                    <option value="">— Pilih —</option>
-                    {MF_STEMPEL_LIST.map(v => <option key={v}>{v}</option>)}
-                  </select>
-                </div>
+
               </div>
             </div>
 
@@ -377,7 +474,20 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
               ) : (
                 <>
                   <div style={{width:40, height:2, background:'var(--border)', flexShrink:0}} />
-                  {!isView && (
+                  {isView ? (
+                    <div style={{display:'flex', alignItems:'center', gap:10}}>
+                      <div style={{
+                        width:28, height:28, borderRadius:'50%', flexShrink:0,
+                        background:'var(--bg-elev)', border:'2px dashed var(--border)', display:'flex',
+                        alignItems:'center', justifyContent:'center', fontSize:12, color:'var(--text-3)', fontWeight:700,
+                      }}>?</div>
+                      <div>
+                        <div style={{fontSize:10.5, fontWeight:700, textTransform:'uppercase',
+                          letterSpacing:'.06em', color:'var(--text-3)', lineHeight:1}}>Status Persetujuan</div>
+                        <div style={{fontSize:13, fontWeight:600, color:'var(--text-3)'}}>Menunggu Persetujuan</div>
+                      </div>
+                    </div>
+                  ) : (
                     <button className="btn btn-primary btn-sm" onClick={handleApprove}
                       style={{whiteSpace:'nowrap'}}>
                       {I.check()} Setujui Surat Perintah Kerja
@@ -387,45 +497,50 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
               )}
             </div>}
 
-            {/* ── Sticky tab bar ─────────────────────────────── */}
-            <div style={{
-              position:'sticky', top:0, zIndex:10,
-              background:'var(--bg-elev)',
-              borderBottom:'1px solid var(--border)',
-              marginLeft:-24, marginRight:-24, paddingLeft:24, paddingRight:24,
-              paddingTop:14,
-            }}>
-              <div className="tabs-pills" style={{marginBottom:0, borderBottom:0}}>
-                <button className={activeTab === 'bj'    ? 'active' : ''} onClick={() => scrollTo('bj',    bjRef)}>Barang Jadi</button>
-                <button className={activeTab === 'bahan' ? 'active' : ''} onClick={() => scrollTo('bahan', bahanRef)}>Bahan</button>
-              </div>
-            </div>
-
             {/* ── Content ────────────────────────────────────── */}
             <div style={{paddingTop:20, display:'flex', flexDirection:'column', gap:28}}>
 
-              {/* Section: Barang Jadi */}
-              <div ref={bjRef} className="inline-table">
+              {/* Section: Barang Jadi — tiap baris bisa di-expand (▸) buat lihat bahan yang
+                  dibutuhkan barang itu; nambah/ubah/hapus bahan dilakukan lewat popup Tambah/Edit
+                  Barang, bukan di tabel ini lagi. */}
+              <div className="inline-table">
                 <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
-                  <h3 style={{margin:0, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.07em', color:'var(--text-3)'}}>Barang Jadi</h3>
+                  <h3 style={{margin:0, fontSize:14, fontWeight:700, textTransform:'uppercase', letterSpacing:'.07em', color:'var(--text)'}}>Barang Jadi</h3>
                   {!isView && (
                     <button className="btn btn-primary btn-sm" onClick={() => setBjModal('add')}>{I.plus()} Tambah Barang</button>
                   )}
                 </div>
+                {bjLines.some(r => !r._deleted) && (
+                  <div className="sub" style={{marginBottom:8, marginTop:-4}}>Klik ▸ pada tiap baris untuk melihat bahan yang dibutuhkan barang itu.</div>
+                )}
                 <div className="line-items" style={{overflowX:'auto'}}>
-                  <table style={{width:'100%', borderCollapse:'separate', borderSpacing:0, minWidth:900}}>
+                  {/* table-layout:fixed di sini PENTING: tanpa ini, baris expand (isExpanded) yang
+                      berisi grid+tabel bersarang (Bahan/Mesin) bikin browser fallback ke perhitungan
+                      lebar berbasis konten di setiap level (grid 12-kolom & tabel width:100% jadi
+                      tidak punya referensi lebar pasti), sehingga teks nowrap di dalamnya "menarik"
+                      tabel INI, lalu popup-nya, jadi jauh lebih lebar dari seharusnya (bug scroll
+                      horizontal di popup). Dengan fixed, lebar tabel murni dari kolom thead & minWidth
+                      di bawah — turun sebagai referensi pasti ke semua yang bersarang di dalamnya. */}
+                  <table style={{width:'100%', tableLayout:'fixed', borderCollapse:'separate', borderSpacing:0, minWidth:940}}>
                     <thead>
                       <tr>
-                        <th style={thS('20%')}>Nama Barang</th>
+                        {/* Kolom fixed-px (expand/aksi) + kolom % HARUS pas 100% total — kalau kurang,
+                            table-layout:fixed men-stretch SEMUA kolom (termasuk yg px) buat nutup sisanya,
+                            bikin kolom expand/aksi jadi lebar & kolom teks (Kode Brg. dll) jadi lebih
+                            sempit dari yang di-declare. Nama Barang dijadiin sisa lewat calc() supaya
+                            totalnya selalu tepat 100% berapa pun lebar tabelnya.
+                            44px expand: btn-icon.btn-sm 28px + td padding 12px = 40px minimum.
+                            76px aksi: 2x btn-icon.btn-sm (28px) + gap 2px + td padding 12px = 70px minimum. */}
+                        <th style={thS('44px', true)}></th>
+                        <th style={thS('calc(100% - 120px - 57%)')}>Nama Barang</th>
                         <th style={thS('13%')}>Kode Brg.</th>
-                        <th style={thS('7%', true)}>Qty SPK</th>
+                        <th style={thS('6%', true)}>Qty SPK</th>
                         <th style={thS('4%', true)}>Sat</th>
-                        <th style={thS('12%')}>Kelompok Warna</th>
+                        <th style={thS('11%')}>Kelompok Warna</th>
                         <th style={thS('5%')}>AZ</th>
-                        <th style={thS('10%')}>Brand</th>
+                        <th style={thS('8%')}>Brand</th>
                         <th style={thS('10%')}>Merk Barang</th>
-                        <th style={thS('14%')}>Mesin</th>
-                        <th style={thS('52px', true)}></th>
+                        <th style={thS('76px', true)}></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -434,29 +549,37 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
                           Belum ada barang jadi. Klik "+ Tambah Barang" untuk menambahkan.
                         </td></tr>
                       )}
-                      {bjLines.map((row, idx) => (
-                        <tr key={row.id} className={`${row._deleted ? 'row-deleted' : ''} ${row._added ? 'row-added' : ''}`} title={row._deleted ? 'Barang ini akan dihapus' : ''}>
-                          <td style={tdS}>{row.namaBarang || <span style={{color:'var(--text-3)'}}>—</span>}</td>
-                          <td style={tdS}><span style={{color:'var(--primary)', fontWeight:500}}>{row.kodeBarang}</span></td>
+                      {bjLines.map((row, idx) => {
+                        const bahanForRow = bahanLines.filter(b => b.bjLineId === row.id && !b._deleted);
+                        const isExpanded = expandedBjIds.has(row.id);
+                        return (
+                        <React.Fragment key={row.id}>
+                        <tr
+                          className={`${row._deleted ? 'row-deleted' : ''} ${row._added ? 'row-added' : ''}`}
+                          title={row._deleted ? 'Barang ini akan dihapus' : ''}>
+                          <td style={{...tdS, textAlign:'center'}}>
+                            {!row._deleted && (
+                              <button className="btn btn-icon btn-sm" title={isExpanded ? 'Sembunyikan bahan' : 'Lihat bahan'}
+                                onClick={() => toggleExpand(row.id)}>{isExpanded ? '▾' : '▸'}</button>
+                            )}
+                          </td>
+                          <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                            {row.namaBarang || <span style={{color:'var(--text-3)'}}>—</span>}
+                            {!row._deleted && (row.mesinDipilih || []).length === 0 && (
+                              <span title="Mesin belum diisi — klik Edit untuk menambahkan"
+                                style={{marginLeft:6, fontSize:10.5, fontWeight:700, padding:'1px 6px', borderRadius:999,
+                                  background:'var(--danger-soft, #fee2e2)', color:'var(--danger)'}}>
+                                ⚠ Mesin kosong
+                              </span>
+                            )}
+                          </td>
+                          <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}><span style={{color:'var(--primary)', fontWeight:500}}>{row.kodeBarang}</span></td>
                           <td style={{...tdS, textAlign:'right'}} className="mono">{row.qtySPK}</td>
                           <td style={{...tdS, textAlign:'center'}}>{row.satuan}</td>
-                          <td style={tdS}>{row.namaKelompokWarna || '—'}</td>
+                          <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{row.namaKelompokWarna || '—'}</td>
                           <td style={tdS}>{row.namaAz || '—'}</td>
-                          <td style={tdS}>{row.namaBrand || '—'}</td>
-                          <td style={tdS}>{row.namaMerkBarang || '—'}</td>
-                          <td style={tdS}>
-                            <div style={{display:'flex', flexWrap:'wrap', gap:3}}>
-                              {(row.mesinDipilih || []).slice(0,3).map(m => (
-                                <span key={m} style={{
-                                  display:'inline-block', padding:'1px 6px', borderRadius:4,
-                                  background:'var(--bg-sub)', fontSize:11, fontWeight:500,
-                                }}>{m}</span>
-                              ))}
-                              {(row.mesinDipilih || []).length > 3 && (
-                                <span style={{fontSize:11, color:'var(--text-3)'}}>+{row.mesinDipilih.length - 3}</span>
-                              )}
-                            </div>
-                          </td>
+                          <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{row.namaBrand || '—'}</td>
+                          <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{row.namaMerkBarang || '—'}</td>
                           <td style={{...tdS, textAlign:'center'}}>
                             {!isView && (
                               <div className="row-actions" style={{justifyContent:'center'}}>
@@ -475,78 +598,86 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
                             )}
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Section: Bahan */}
-              <div ref={bahanRef} className="inline-table">
-                <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
-                  <h3 style={{margin:0, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.07em', color:'var(--text-3)'}}>Bahan</h3>
-                  {!isView && (
-                    <button className="btn btn-primary btn-sm" onClick={() => setBahanPicker(true)}>{I.plus()} Tambah Bahan</button>
-                  )}
-                </div>
-                <div className="line-items" style={{overflowX:'auto'}}>
-                  <table style={{width:'100%', borderCollapse:'separate', borderSpacing:0, minWidth:700}}>
-                    <thead>
-                      <tr>
-                        <th style={thS('36px', true)}>No</th>
-                        <th style={thS('18%')}>Gd. Bahan</th>
-                        <th style={thS('22%')}>Kode Bahan</th>
-                        <th style={thS('16%')}>Merk Bahan</th>
-                        <th style={thS('10%', true)}>Jumlah SPK</th>
-                        <th style={thS('9%', true)}>Satuan</th>
-                        <th style={thS('50px', true)}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {bahanLines.length === 0 && (
-                        <tr><td colSpan={7} style={{padding:'32px 12px', textAlign:'center', color:'var(--text-3)', fontSize:13}}>
-                          Belum ada bahan. Klik "+ Tambah Bahan" untuk menambahkan.
-                        </td></tr>
-                      )}
-                      {bahanLines.map((row, idx) => (
-                        <tr key={row.id} className={`${row._deleted ? 'row-deleted' : ''} ${row._added ? 'row-added' : ''}`} title={row._deleted ? 'Bahan ini akan dihapus' : ''}>
-                          <td style={{...tdS, textAlign:'center', color:'var(--text-3)', fontSize:12}}>{idx + 1}</td>
-                          <td style={tdS}>
-                            <select className="select" style={{width:'100%', fontSize:12, padding:'3px 6px'}} disabled={isView || row._deleted}
-                              value={row.gudang} onChange={e => updateBahan(idx, 'gudang', e.target.value)}>
-                              <option value="">— Pilih —</option>
-                              {MF_GUDANG_LIST.map(g => <option key={g}>{g}</option>)}
-                            </select>
-                          </td>
-                          <td style={tdS}><span style={{color:'var(--primary)', fontWeight:500}}>{row.kodeBahan}</span></td>
-                          <td style={tdS}>{row.merkBahan || <span style={{color:'var(--text-3)'}}>—</span>}</td>
-                          <td style={tdS}>
-                            <input className="input" type="number" min="0" step="0.01" disabled={isView || row._deleted}
-                              style={{width:'100%', fontSize:12, padding:'3px 6px', textAlign:'right'}}
-                              placeholder="0.00" value={row.jumlah}
-                              onChange={e => updateBahan(idx, 'jumlah', e.target.value)} />
-                          </td>
-                          <td style={tdS}>
-                            <select className="select" style={{width:'100%', fontSize:12, padding:'3px 6px'}} disabled={isView || row._deleted}
-                              value={row.satuan} onChange={e => updateBahan(idx, 'satuan', e.target.value)}>
-                              {MF_SATUAN_SPK.map(s => <option key={s}>{s}</option>)}
-                            </select>
-                          </td>
-                          <td style={{...tdS, textAlign:'center'}}>
-                            {!isView && (
-                              <div className="row-actions" style={{justifyContent:'center'}}>
-                                {row._deleted ? (
-                                  <button className="btn btn-icon btn-sm" style={{color:'var(--realisasi)'}} title="Restore"
-                                    onClick={() => restoreBahan(idx)}>{I.refresh(14)}</button>
-                                ) : (
-                                  <button className="btn btn-icon btn-sm del" title="Hapus"
-                                    onClick={() => softDeleteBahan(idx)}>{I.trash()}</button>
-                                )}
+                        {isExpanded && !row._deleted && (
+                          <tr>
+                            <td colSpan={10} style={{padding:0, background:'var(--bg-sub)', borderBottom:'1px solid var(--border)', overflow:'hidden'}}>
+                              {/* 2 tabel berdampingan: Bahan (col-6) & Mesin (col-4), dari grid 12-kolom.
+                                  Kedua <table> di bawah WAJIB dikasih width:100%+minWidth:0 inline — tanpa
+                                  itu, selector global ".line-items table" (styles.css) ikut kena ke tabel
+                                  bersarang ini juga (bukan cuma tabel Barang Jadi induknya) dan memaksa
+                                  min-width:920px, yang bikin tabel Mesin tembus keluar dari kolom col-4-nya. */}
+                              <div style={{padding:'10px 16px 14px 44px', display:'grid', gridTemplateColumns:'repeat(12, 1fr)', gap:16, maxWidth:'100%'}}>
+                                <div style={{gridColumn:'span 6', minWidth:0}}>
+                                  <div style={{fontSize:10.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em', color:'var(--text-3)', marginBottom:6}}>Bahan</div>
+                                  {bahanForRow.length === 0 ? (
+                                    <div style={{fontSize:12.5, color:'var(--text-3)'}}>Belum ada bahan untuk barang ini. Klik ikon Edit untuk menambahkan.</div>
+                                  ) : (
+                                    <div style={{border:'1px solid var(--border)', borderRadius:'var(--radius)', overflow:'hidden', background:'var(--bg-elev)'}}>
+                                      {/* table-layout:fixed + lebar kolom total 100% — tanpa ini browser
+                                          mengabaikan hint lebar (%/px) di kolom NO dan melebarkannya sesuai
+                                          algoritma auto-layout, bukan proporsi yang diminta. */}
+                                      <table style={{width:'100%', minWidth:0, tableLayout:'fixed', borderCollapse:'separate', borderSpacing:0}}>
+                                        <thead>
+                                          <tr style={{background:'var(--bg-sub)'}}>
+                                            <th style={{...thS('34px', true), padding:'8px 4px', borderBottom:'1px solid var(--border)'}}>No</th>
+                                            <th style={{...thS('19%'), borderBottom:'1px solid var(--border)'}}>Gd. Bahan</th>
+                                            <th style={{...thS('23%'), borderBottom:'1px solid var(--border)'}}>Kode Bahan</th>
+                                            <th style={{...thS('21%'), borderBottom:'1px solid var(--border)'}}>Merk Bahan</th>
+                                            <th style={{...thS('19%', true), borderBottom:'1px solid var(--border)'}}>Jumlah</th>
+                                            <th style={{...thS('15%', true), borderBottom:'1px solid var(--border)'}}>Satuan</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {bahanForRow.map((b, i) => (
+                                            <tr key={b.id}>
+                                              <td style={{...tdS, textAlign:'center', color:'var(--text-3)', fontSize:12}}>{i + 1}</td>
+                                              <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{b.gudang || '—'}</td>
+                                              <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}><span style={{color:'var(--primary)', fontWeight:500}}>{b.kodeBahan}</span></td>
+                                              <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{b.merkBahan || '—'}</td>
+                                              <td style={{...tdS, textAlign:'center'}} className="mono">{b.jumlah}</td>
+                                              <td style={{...tdS, textAlign:'center'}}>{b.satuan}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  )}
+                                </div>
+                                <div style={{gridColumn:'span 4', minWidth:0}}>
+                                  <div style={{fontSize:10.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em', color:'var(--text-3)', marginBottom:6}}>Mesin</div>
+                                  {(row.mesinDipilih || []).length === 0 ? (
+                                    <div style={{fontSize:12.5, color:'var(--text-3)'}}>Belum ada mesin dipilih.</div>
+                                  ) : (
+                                    <div style={{border:'1px solid var(--border)', borderRadius:'var(--radius)', overflow:'hidden', background:'var(--bg-elev)'}}>
+                                      <table style={{width:'100%', minWidth:0, tableLayout:'fixed', borderCollapse:'separate', borderSpacing:0}}>
+                                        <thead>
+                                          <tr style={{background:'var(--bg-sub)'}}>
+                                            {/* No harus 34px sama kayak tabel Bahan — Nama Mesin dijadiin
+                                                sisa via calc() supaya totalnya pas 100%, kalau nggak No
+                                                ikut ke-stretch beda lebar dari punya tabel Bahan. */}
+                                            <th style={{...thS('34px', true), padding:'8px 4px', borderBottom:'1px solid var(--border)'}}>No</th>
+                                            <th style={{...thS('calc(100% - 34px)'), borderBottom:'1px solid var(--border)'}}>Nama Mesin</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {row.mesinDipilih.map((m, i) => (
+                                            <tr key={m}>
+                                              <td style={{...tdS, textAlign:'center', color:'var(--text-3)', fontSize:12}}>{i + 1}</td>
+                                              <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{m}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                          </tr>
+                        )}
+                        </React.Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -556,7 +687,11 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
           </div>
 
           <div className="modal-foot">
-            <div className="muted"><kbd>Esc</kbd> Untuk Batal</div>
+            {!isView && hasEmptyMesin ? (
+              <div style={{color:'var(--danger)', fontSize:12.5}}>Semua Barang Jadi harus punya Mesin sebelum SPK bisa disimpan.</div>
+            ) : (
+              <div className="muted"><kbd>Esc</kbd> Untuk Batal</div>
+            )}
             <div style={{display:'flex', gap:8}}>
               <button className="btn" onClick={onClose}>Tutup</button>
               {isView ? (
@@ -567,7 +702,7 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
                   {!isBatal && <button className="btn btn-primary" onClick={() => setMode('EDIT')}>{I.edit()} Edit</button>}
                 </>
               ) : (
-                <button className="btn btn-primary" onClick={handleSave}>{I.check()} Simpan</button>
+                <button className="btn btn-primary" onClick={handleSave} disabled={hasEmptyMesin}>{I.check()} Simpan</button>
               )}
             </div>
           </div>
@@ -577,212 +712,46 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
       {bjModal && (
         <MfBarangJadiEntryModal
           data={bjModal === 'add' ? null : bjModal.data}
+          bahanLines={bjModal === 'add' ? [] : bahanLines.filter(b => b.bjLineId === bjModal.data.id && !b._deleted)}
           onClose={() => setBjModal(null)}
-          onSave={(entry) => {
-            if (bjModal === 'add') setBjLines(ls => [...ls, {...entry, id: Date.now(), _added:true}]);
-            else setBjLines(ls => ls.map((l, i) => i === bjModal.idx ? {...entry, id: l.id, _added: l._added} : l));
+          onSave={({ bahanLines: newBahan, ...entry }) => {
+            if (bjModal === 'add') {
+              const newId = Date.now();
+              setBjLines(ls => [...ls, {...entry, id: newId, _added:true}]);
+              setBahanLines(ls => [...ls, ...newBahan.map(b => ({...b, bjLineId: newId, _added:true}))]);
+              setExpandedBjIds(prev => new Set(prev).add(newId)); // langsung expand supaya bahan yg baru diisi kelihatan
+            } else {
+              const rowId = bjModal.data.id;
+              setBjLines(ls => ls.map((l, i) => i === bjModal.idx ? {...entry, id: l.id, _added: l._added} : l));
+              // Bahan punya barang ini di-replace wholesale dgn hasil popup (editing bahan sekarang
+              // sepenuhnya terjadi di dalam MfBarangJadiEntryModal, bukan di tabel doc-level lagi).
+              setBahanLines(ls => [...ls.filter(b => b.bjLineId !== rowId), ...newBahan.map(b => ({...b, bjLineId: rowId}))]);
+            }
             setBjModal(null);
           }}
         />
       )}
-      {bahanPicker && (
-        <MfPilihBarangModal zIndex={300} onConfirm={onBahanPick} onCancel={() => setBahanPicker(false)} />
-      )}
       {soPicker && (
         <MfSoPickerModal
           onCancel={() => setSoPicker(false)}
-          onConfirm={(so) => { setNoSo(so.No_Bukti); setSoPicker(false); }}
+          onConfirm={(so) => {
+            setSoPicker(false);
+            const hasExisting = bjLines.some(r => !r._deleted);
+            if (hasExisting) setPendingSo(so); // tunda, nunggu konfirmasi (lihat dialog di bawah)
+            else applySoImport(so); // tabel masih kosong, tidak ada yang bisa hilang
+          }}
+        />
+      )}
+      {pendingSo && (
+        <ConfirmationModal
+          title="Ganti No. SO?"
+          message={`Data Barang Jadi & Bahan yang sudah ada akan diganti dengan data dari SO "${pendingSo.No_Bukti}". Tindakan ini tidak bisa dibatalkan setelah dilanjutkan.`}
+          requireReason={false} confirmLabel="Ya, Ganti" confirmKind="danger-solid" cancelLabel="Batal"
+          onConfirm={() => { applySoImport(pendingSo); setPendingSo(null); }}
+          onCancel={() => setPendingSo(null)}
         />
       )}
     </>
   );
 }
 
-// ─── SPK Entry Modal (referensi SPK dipakai di Hasil Produksi) ────────────────
-
-function MfSpkEntryModal({ data, onClose, onSave }) {
-  const [noSpk,       setNoSpk]       = React.useState(data?.noSpk       || '');
-  const [sisaStok,    setSisaStok]    = React.useState(data?.sisaStok    || '0.00');
-  // Bahan, Gudang, Merk SPK — pasangan kode+nama, auto-terisi dari data SPK yang dipilih
-  // (pola sama seperti Kode_X/Nama_X di Penjualan), bukan diketik manual lagi.
-  const [kodeBahan,     setKodeBahan]     = React.useState(data?.kodeBahan     || '');
-  const [namaBahan,     setNamaBahan]     = React.useState(data?.namaBahan     || '');
-  const [kodeGudang,    setKodeGudang]    = React.useState(data?.kodeGudang    || '');
-  const [gudang,        setGudang]        = React.useState(data?.gudang        || '');
-  const [kodeMerkSpk,   setKodeMerkSpk]   = React.useState(data?.kodeMerkSpk   || '');
-  const [merkSpk,       setMerkSpk]       = React.useState(data?.merkSpk       || '');
-  const [noCoil,     setNoCoil]     = React.useState(data?.noCoil     || '');
-  const [pembelian,  setPembelian]  = React.useState(data?.pembelian  || '');
-  const [tgl,        setTgl]        = React.useState(data?.tgl        || '2026-06-24');
-  // Jumlah & Satuan sekarang auto-fill dari data SPK yang dipilih (bukan diketik manual).
-  const [jumlah,     setJumlah]     = React.useState(data?.jumlah     || '');
-  const [satuanJ,    setSatuanJ]    = React.useState(data?.satuanJ    || 'MTR');
-  const [kondisi,    setKondisi]    = React.useState(data?.kondisi    || 'Normal');
-  const [lapisanPu,  setLapisanPu]  = React.useState(data?.lapisanPu || 'Atas');
-
-  const [showSpkPicker,  setShowSpkPicker]  = React.useState(false);
-  const [showCoilPicker, setShowCoilPicker] = React.useState(false);
-
-  React.useEffect(() => {
-    const h = e => { if (e.key === 'Escape' && !showSpkPicker && !showCoilPicker) onClose(); };
-    document.addEventListener('keydown', h);
-    return () => document.removeEventListener('keydown', h);
-  }, [showSpkPicker, showCoilPicker, onClose]);
-
-  const onSpkPick = (spk) => {
-    setNoSpk(spk.no);
-    const bahan = MF_BARANG.find(b => b.code === spk.kodeBahan);
-    setKodeBahan(spk.kodeBahan || '');
-    setNamaBahan(bahan ? bahan.nama : '');
-    const gudangEntry = GUDANG_DATA.find(g => g.nama === spk.gudang);
-    setGudang(spk.gudang || '');
-    setKodeGudang(gudangEntry ? gudangEntry.kode : '');
-    const firstBj = (spk.bjLines || [])[0];
-    setMerkSpk(firstBj?.namaMerkBarang || spk.produk || '');
-    setKodeMerkSpk(firstBj?.merkBarang || '');
-    setSisaStok(String(spk.qty || '0.00'));
-    setJumlah(firstBj?.qtySPK ?? spk.qty ?? '');
-    setSatuanJ(firstBj?.satuan || 'MTR');
-    setShowSpkPicker(false);
-  };
-
-  const onCoilPick = (coil) => {
-    setNoCoil(coil.no);
-    if (!sisaStok || sisaStok === '0.00') setSisaStok(String(coil.sisa));
-    setShowCoilPicker(false);
-  };
-
-  const handleSave = () => {
-    onSave({ noSpk, sisaStok, kodeBahan, namaBahan, gudang, kodeGudang, merkSpk, kodeMerkSpk, noCoil, pembelian, tgl, jumlah, satuanJ, kondisi, lapisanPu });
-  };
-
-  return (
-    <>
-      <div className="modal-backdrop" style={{zIndex:200}}>
-        <div className="modal" style={{maxWidth:860}} onClick={e => e.stopPropagation()}>
-          <div className="modal-head">
-            <div>
-              <h2>{data ? 'Edit SPK' : 'Tambah SPK'}</h2>
-              <div className="sub">Pilih SPK — field lain otomatis terisi sesuai data SPK tsb.</div>
-            </div>
-            <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
-          </div>
-
-          <div className="modal-body">
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:12}}>
-
-              {/* No. SPK — field klik-untuk-pilih, gaya sama seperti Nama Customer/No. SO di SO/SPK */}
-              <div className="field" style={{gridColumn:'span 2'}}>
-                <label>No. SPK *</label>
-                <input className="input" style={{cursor:'pointer', background:'var(--bg-elev)'}} readOnly
-                  placeholder="— Pilih SPK —" value={noSpk}
-                  onClick={() => setShowSpkPicker(true)} />
-              </div>
-              <div className="field">
-                <label>Sisa Stock Sebelumnya</label>
-                <input className="input" value={sisaStok} readOnly style={{textAlign:'right'}} />
-              </div>
-
-              {/* Bahan (kode+nama, auto) */}
-              <div className="field" style={{gridColumn:'span 2'}}>
-                <label>Nama Bahan</label>
-                <input className="input" value={namaBahan} readOnly placeholder="Otomatis dari SPK" />
-              </div>
-              <div className="field">
-                <label>Kode Bahan</label>
-                <input className="input mono" value={kodeBahan} readOnly placeholder="Otomatis" />
-              </div>
-
-              {/* Gudang (kode+nama, auto) */}
-              <div className="field" style={{gridColumn:'span 2'}}>
-                <label>Nama Gudang</label>
-                <input className="input" value={gudang} readOnly placeholder="Otomatis dari SPK" />
-              </div>
-              <div className="field">
-                <label>Kode Gudang</label>
-                <input className="input mono" value={kodeGudang} readOnly placeholder="Otomatis" />
-              </div>
-
-              {/* Merk SPK (kode+nama, auto) */}
-              <div className="field" style={{gridColumn:'span 2'}}>
-                <label>Nama Merk SPK</label>
-                <input className="input" value={merkSpk} readOnly placeholder="Otomatis dari SPK" />
-              </div>
-              <div className="field">
-                <label>Kode Merk SPK</label>
-                <input className="input mono" value={kodeMerkSpk} readOnly placeholder="Otomatis" />
-              </div>
-
-              {/* No. COIL — klik-untuk-pilih, hanya 1 (single) */}
-              <div className="field" style={{gridColumn:'span 2'}}>
-                <label>No. COIL</label>
-                <input className="input mono" style={{cursor:'pointer', background:'var(--bg-elev)'}} readOnly
-                  placeholder="— Pilih Coil —" value={noCoil}
-                  onClick={() => setShowCoilPicker(true)} />
-              </div>
-              <div className="field">
-                <label>Pembelian</label>
-                <input className="input" placeholder="No. Pembelian…" value={pembelian} onChange={e => setPembelian(e.target.value)} />
-              </div>
-
-              <div className="field">
-                <label>Tgl</label>
-                <input className="input" type="date" value={tgl} onChange={e => setTgl(e.target.value)} />
-              </div>
-              <div className="field">
-                <label>Jumlah</label>
-                <input className="input" value={jumlah} readOnly style={{textAlign:'right'}} placeholder="Otomatis dari SPK" />
-              </div>
-              <div className="field">
-                <label>Satuan</label>
-                <input className="input" value={satuanJ} readOnly placeholder="Otomatis dari SPK" />
-              </div>
-
-              <div className="field">
-                <label>Kondisi COIL</label>
-                <select className="select" value={kondisi} onChange={e => setKondisi(e.target.value)}>
-                  <option>Normal</option>
-                  <option>Termasuk Tong Coil</option>
-                  <option>Sisa Slitting PU</option>
-                  <option>Tong Coil &amp; Sisa Slitting PU</option>
-                </select>
-              </div>
-              <div className="field" style={{gridColumn:'span 2'}}>
-                <label>Lapisan PU</label>
-                <div style={{display:'flex', gap:8, height:32, alignItems:'center'}}>
-                  {['Atas','Bawah'].map(v => (
-                    <label key={v} style={{
-                      display:'inline-flex', alignItems:'center', gap:6,
-                      cursor:'pointer', fontWeight:500, fontSize:13,
-                      padding:'4px 12px', borderRadius:6,
-                      background: lapisanPu === v ? 'var(--primary)' : 'var(--bg-sub)',
-                      color: lapisanPu === v ? '#fff' : 'var(--text)',
-                      transition:'background .12s, color .12s',
-                    }}>
-                      <input type="radio" name="lpSPK" value={v}
-                        checked={lapisanPu === v} onChange={() => setLapisanPu(v)}
-                        style={{display:'none'}} />
-                      {v}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <div className="modal-foot">
-            <div className="muted"><kbd>Esc</kbd> Untuk Batal</div>
-            <div style={{display:'flex', gap:8}}>
-              <button className="btn" onClick={onClose}>Tutup</button>
-              <button className="btn btn-primary" onClick={handleSave}>{I.check()} Simpan</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {showSpkPicker  && <MfSpkPickerModal  onPick={onSpkPick}  onClose={() => setShowSpkPicker(false)}  />}
-      {showCoilPicker && <MfCoilPickerModal onPick={onCoilPick} onClose={() => setShowCoilPicker(false)} />}
-    </>
-  );
-}

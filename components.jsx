@@ -42,14 +42,10 @@ const I = {
   fileX:   (s=14)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8.5"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="13" y2="13"/><line x1="16.5" y1="17.5" x2="21.5" y2="22.5"/><line x1="21.5" y1="17.5" x2="16.5" y2="22.5"/></svg>,
 };
 
-// PDJ logo mark — abstract geometric (no Ford)
-function BrandMark({ size = 18, color = '#fff' }) {
+// PDJ logo mark — uses uploaded New_logo.png
+function BrandMark({ size = 32, color = '#fff' }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <path d="M6 8 L14 8 L20 16 L14 24 L6 24 L12 16 Z" fill={color} opacity=".95" />
-      <path d="M16 8 L24 8 L26 12 L20 16 L18 12 Z" fill={color} opacity=".55" />
-      <path d="M20 16 L26 20 L24 24 L18 24 Z" fill={color} opacity=".75" />
-    </svg>
+    <img src="assets/New_logo.png" alt="PDJ ERP" style={{ width: size, height: size, borderRadius: 7, objectFit: 'cover' }} />
   );
 }
 
@@ -182,7 +178,7 @@ function TopBar({ onHome, onNavigate }) {
         )}
 
         <button className="brand-mark" onClick={onHome} title="PDJ ERP — Home">
-          <span className="brand-mark-glyph"><BrandMark size={18} /></span>
+          <span className="brand-mark-glyph"><BrandMark size={32} /></span>
           <span className="brand-name">PDJ ERP<small>PT. Pacific Data Jaya</small></span>
         </button>
       </div>
@@ -306,11 +302,7 @@ const MODULES = [
   { id: 'barang',      label: 'Barang',       icon: I.box },
   { id: 'kataloglain', label: 'Katalog Lain', icon: I.layers },
   { id: 'manufaktur',  label: 'Manufaktur',   icon: I.list },
-  { id: 'finance',     label: 'Akuntan',      icon: I.bank },
-  { id: 'cashbank',    label: 'Keuangan',     icon: I.bank },
-  { id: 'reports',     label: 'Reports',      icon: I.chart },
-  { id: 'master',      label: 'Master Data',  icon: I.users },
-  { id: 'admin',       label: 'System Admin', icon: I.shield },
+  { id: 'keuangan',    label: 'Keuangan',     icon: I.bank },
   { id: 'pengaturan',  label: 'Pengaturan',   icon: I.settings },
 ];
 
@@ -347,13 +339,12 @@ const MODULE_SUBS = {
   inventory: [{ id:'barang', label:'Katalog Barang' }, { id:'kategori', label:'Kategori Produk' },
                { id:'mutasi', label:'Mutasi Barang' }, { id:'penyesuaian', label:'Penyesuaian' },
                { id:'opname', label:'Stock Opname' }],
-  // 3 entry terakhir (labarugi/aruskas/neraca) juga harus sinkron dengan AK_SUBS di
-  // modules/akuntan/data/master.data.jsx dan AK_LAPORAN_LIST di modules/akuntan/data/laporan.data.jsx —
-  // tidak bisa disatukan karena components.jsx dieksekusi lebih dulu dari data file modul manapun.
-  finance:   [{ id:'akun', label:'Katalog Akun' }, { id:'aktiva', label:'Aktiva Tetap' },
-               { id:'jurnal', label:'Jurnal Memorial' }, { id:'labarugi', label:'Laba Rugi' },
-               { id:'aruskas', label:'Laporan Arus Kas' }, { id:'neraca', label:'Neraca' }],
-  cashbank:  [
+  keuangan:  [
+    // Accounting (dari Akuntan)
+    { id:'akun', label:'Katalog Akun' }, { id:'aktiva', label:'Aktiva Tetap' },
+    { id:'jurnal', label:'Jurnal Memorial' }, { id:'labarugi', label:'Laba Rugi' },
+    { id:'aruskas', label:'Laporan Arus Kas' }, { id:'neraca', label:'Neraca' },
+    // Cash & Bank
     { id:'kbg', label:'Kas, Bank & Giro' },
     { id:'km',  label:'Kas Masuk' },
     { id:'kk',  label:'Kas Keluar' },
@@ -366,16 +357,11 @@ const MODULE_SUBS = {
     { id:'pp',  label:'Pelunasan Piutang' },
     { id:'ph',  label:'Pelunasan Hutang' },
   ],
-  reports: [
-    { id:'persediaan', label:'Laporan Persediaan' },
-    { id:'spk',        label:'Surat Perintah Kerja' },
-    { id:'produksi',   label:'Hasil Produksi & Pemakaian Barang' },
-    { id:'pemakaian',  label:'Pemakaian Bahan' },
-  ],
   barang: [
     { id:'baranglain',   label:'Barang Lain' },
     { id:'bahankaku',    label:'Bahan Baku' },
     { id:'barangjadi',   label:'Barang Jadi Umum & PU' },
+    { id:'bom',          label:'BOM / Resep Produksi' },
     { id:'mutasi',       label:'Mutasi Barang & Konsinyasi' },
     { id:'penyesuaian',  label:'Penyesuaian Barang' },
     { id:'opname',       label:'Stock Opname' },
@@ -391,41 +377,31 @@ const MODULE_SUBS = {
     { id:'user',         label:'Katalog User' },
     { id:'grupuser',     label:'Katalog Grup User' },
   ],
-  master: [
-    { id:'salesman', label:'Katalog Salesman' },
-    { id:'gudang',   label:'Katalog Gudang' },
-    { id:'satuan',   label:'Katalog Satuan Produk' },
-    { id:'user',     label:'Katalog User' },
-    { id:'grup',     label:'Katalog Grup User' },
-    { id:'menu',     label:'Katalog Menu' },
-  ],
   pengaturan: [
+    //原有的 Pengaturan subs
     { id:'akses',      label:'Akses User' },
     { id:'menu',       label:'Menu' },
     { id:'grupmenu',   label:'Grup Menu' },
     { id:'sistem',     label:'Konfigurasi Sistem' },
     { id:'organisasi', label:'Konfigurasi Organisasi' },
     { id:'penjualan',  label:'Konfigurasi Penjualan' },
-  ],
-  admin: [
-    { id:'profil',    label:'Profil Perusahaan' },
-    { id:'default',   label:'Nilai Default' },
-    { id:'cetakan',   label:'Keterangan Cetakan' },
-    { id:'fitur',     label:'Fitur Administrator' },
-    { id:'sesi',      label:'Login Pengguna' },
-    { id:'tampilan',  label:'Tampilan & Tema' },
+    // Admin subs (digabung ke Pengaturan)
+    { id:'profil',     label:'Profil Perusahaan' },
+    { id:'default',    label:'Nilai Default' },
+    { id:'cetakan',    label:'Keterangan Cetakan' },
+    { id:'fitur',      label:'Fitur Administrator' },
+    { id:'sesi',       label:'Login Pengguna' },
+    { id:'tampilan',   label:'Tampilan & Tema' },
   ],
 };
 
 const GROUP_COLORS = {
   home:'#6366f1', pembelian:'#0ea5e9', sales:'#10b981', inventory:'#f59e0b',
   barang:'#f59e0b', kataloglain:'#0d9488', manufaktur:'#f97316',
-  finance:'#8b5cf6', cashbank:'#ec4899', reports:'#14b8a6', master:'#64748b', admin:'#ef4444',
-  pengaturan:'#6b7280',
+  keuangan:'#8b5cf6', pengaturan:'#6b7280',
 };
 
 function MultiTabNav({ tabGroups, activeGroup, onGroupClick, onTabClick, onTabClose, onToggleCollapse, moduleOrder, onReorderGroups, onReorderSubTabs }) {
-  const dragGroupRef = React.useRef(null);
   const dragSubRef   = React.useRef(null);
 
   const orderedModules = moduleOrder

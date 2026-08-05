@@ -1,14 +1,18 @@
 // Manufaktur — Hasil Produksi & Pemakaian Bahan: list dan dialog (create/edit).
 // Dipindah dari manufaktur.jsx, identifier diprefix Mf/MF_.
 //
-// State-lifting fix: MfHasilProduksiDialog tidak punya field header "No. HP" (dialog aslinya
-// juga tidak menampilkannya), jadi nomor dokumen dibuat otomatis dari MF_PRODUKSI_SEED.length
-// saat Simpan, sama seperti pola no-otomatis yang sudah dipakai SPK. Data dirakit dan dikirim
-// ke onSave, bukan dibiarkan kosong seperti sebelumnya.
+// Root-cause fix (merge SPK <-> Hasil Produksi): sebelumnya dialog ini punya tabel "Daftar SPK"
+// sendiri yang MENIRU ULANG field Barang Jadi/Bahan milik SPK dengan nama beda (merkSpk/kodeMerkSpk
+// dsb "double field") dan cuma ambil SATU barang jadi representatif per SPK (bjLines[0]) — barang
+// jadi ke-2/3 sebuah SPK nggak pernah bisa direkam di sini. Sekarang aturannya: 1 No. Bukti = 1
+// Barang Jadi. Field Barang Jadi disalin APA ADANYA dari spk.bjLines[] (nama field sama persis),
+// Bahan-nya (bahanLines) juga dari spk.bahanLines[] tapi bisa ditambah/diubah/dihapus di sini kalau
+// pemakaian aktual beda dari rencana SPK — dan field pemakaian (No. Coil/Kondisi/Lapisan PU/
+// Pembelian/Sisa Stok) sekarang per-Bahan (bukan per-SPK lagi), sesuai nama modul ini sendiri.
 
 // ─── Hasil Produksi Dialog ────────────────────────────────────────────────────
 
-function MfHasilProduksiDialog({ data, onClose, onSave }) {
+function MfHasilProduksiDialog({ data, spkRows, onClose, onSave }) {
   const isCreate = !data;
 
   // No. Bukti: gerbang F/K sama pola dengan KO/SO/DO/SPK — user ketik F atau K, field lain
@@ -29,38 +33,103 @@ function MfHasilProduksiDialog({ data, onClose, onSave }) {
   const [tgl,    setTgl]    = React.useState(data?.tgl    || '2026-06-24');
   const [gudang, setGudang] = React.useState(data?.gudang || '');
 
-  const [spkLines, setSpkLines] = React.useState(data?.spkLines || []);
-  const [spkModal, setSpkModal] = React.useState(null);  // null | 'add' | {idx, data}
+  // SPK + Barang Jadi — hanya bisa dipilih sekali saat CREATE (mengunci konsisten dgn pola gerbang
+  // No. Bukti); di EDIT, field ini murni tampilan dari data yang sudah tersimpan.
+  const [noSpk, setNoSpk] = React.useState(data?.noSpk || '');
+  const [bj, setBj] = React.useState(() => data ? {
+    bjLineId: data.bjLineId, kodeBarang: data.kodeBarang, namaBarang: data.namaBarang,
+    qtySPK: data.qtySPK, satuan: data.satuan,
+    namaKelompokWarna: data.namaKelompokWarna, namaAz: data.namaAz, namaBrand: data.namaBrand,
+    namaMerkBarang: data.namaMerkBarang, stempel: data.stempel, mesinDipilih: data.mesinDipilih || [],
+  } : null);
+  const [bahanLines, setBahanLines] = React.useState(() => (data?.bahanLines || []).map(r => ({...r})));
+
+  const [showSpkPicker, setShowSpkPicker] = React.useState(false);
+  const [pendingSpk, setPendingSpk] = React.useState(null); // SPK sudah dipilih, nunggu pilih Barang Jadi (kalau >1)
+  const [showBahanPicker, setShowBahanPicker] = React.useState(false);
+  const [coilPickerForRowId, setCoilPickerForRowId] = React.useState(null);
 
   const modalBodyRef = React.useRef(null);
 
   React.useEffect(() => {
-    const h = e => { if (e.key === 'Escape' && !spkModal) onClose(); };
+    const h = e => { if (e.key === 'Escape' && !showSpkPicker && !pendingSpk && !showBahanPicker && !coilPickerForRowId) onClose(); };
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
-  }, [spkModal, onClose]);
+  }, [showSpkPicker, pendingSpk, showBahanPicker, coilPickerForRowId, onClose]);
 
-  // Soft-delete/restore — sama pola dengan tabel item Pembelian/Penjualan/SPK: baris ditandai
-  // _deleted (bisa di-Restore sebelum Simpan), bukan langsung hilang.
-  const softDeleteSpk = (idx) => setSpkLines(ls => ls.map((r,i) => i===idx ? {...r, _deleted:true}  : r));
-  const restoreSpk    = (idx) => setSpkLines(ls => ls.map((r,i) => i===idx ? {...r, _deleted:false} : r));
+  const applyBjPick = (spk, bjLine) => {
+    setNoSpk(spk.no);
+    setBj({
+      bjLineId: bjLine.id, kodeBarang: bjLine.kodeBarang, namaBarang: bjLine.namaBarang,
+      qtySPK: bjLine.qtySPK, satuan: bjLine.satuan,
+      namaKelompokWarna: bjLine.namaKelompokWarna, namaAz: bjLine.namaAz, namaBrand: bjLine.namaBrand,
+      namaMerkBarang: bjLine.namaMerkBarang, stempel: bjLine.stempel, mesinDipilih: bjLine.mesinDipilih || [],
+    });
+    setBahanLines((spk.bahanLines || []).filter(b => b.bjLineId === bjLine.id).map(b => ({
+      id: Date.now() + Math.random(), gudang: b.gudang, kodeBahan: b.kodeBahan, merkBahan: b.merkBahan,
+      jumlah: b.jumlah, satuan: b.satuan,
+      noCoil: '', kondisi: 'Normal', lapisanPu: 'Atas', pembelian: '', sisaStok: '',
+    })));
+  };
+
+  const onSpkPick = (spk) => {
+    setShowSpkPicker(false);
+    const bjLines = (spk.bjLines || []).filter(b => !b._deleted);
+    if (bjLines.length <= 1) {
+      if (bjLines[0]) applyBjPick(spk, bjLines[0]);
+    } else {
+      setPendingSpk(spk);
+    }
+  };
+
+  // Bahan sekarang dari BAHAN_BAKU/BARANG_LAIN (modul Barang), bukan MF_BARANG lagi.
+  const bahanPickerItems = React.useMemo(() => [
+    ...BAHAN_BAKU.map(b => ({ kode:b.kodeProduk, nama:b.namaProduk })),
+    ...BARANG_LAIN.map(b => ({ kode:b.kodeProduk, nama:b.namaProduk })),
+  ], []);
+  const onBahanPick = (picked) => {
+    setBahanLines(ls => [...ls, ...picked.map((b, i) => {
+      const resolved = brgBomResolveKomponen(b.kode);
+      return {
+        id: Date.now() + i, gudang:'', kodeBahan:b.kode, merkBahan: resolved?.keterangan || '', jumlah:b._qty || '', satuan: resolved?.satuan || '',
+        noCoil:'', kondisi:'Normal', lapisanPu:'Atas', pembelian:'', sisaStok:'',
+      };
+    })]);
+    setShowBahanPicker(false);
+  };
+  const updateBahan = (id, field, val) =>
+    setBahanLines(ls => ls.map(r => r.id === id ? {...r, [field]: val} : r));
+  const removeBahan = (id) => setBahanLines(ls => ls.filter(r => r.id !== id));
+  const onCoilPick = (coil) => {
+    setBahanLines(ls => ls.map(r => r.id === coilPickerForRowId
+      ? {...r, noCoil: coil.no, sisaStok: r.sisaStok || String(coil.sisa)} : r));
+    setCoilPickerForRowId(null);
+  };
 
   const handleSave = () => {
-    const cleanSpk = spkLines.filter(r => !r._deleted).map(({_deleted, _added, ...r}) => r);
     const finalNo = isCreate
       ? (noBuktiRaw[0] || '') + 'HP' + new Date().toISOString().slice(2,4) + new Date().toISOString().slice(5,7) + String(Math.floor(Math.random()*9000)+1000)
       : data.no;
     onSave({
       no: finalNo, tgl, gudang,
-      noSpk: cleanSpk[0]?.noSpk || data?.noSpk || '',
-      noCoil: cleanSpk[0]?.noCoil || data?.noCoil || '',
-      kondisi: cleanSpk[0]?.kondisi || data?.kondisi || '',
-      spkLines: cleanSpk,
-      totalBarang: cleanSpk.length,
+      dibuatOleh: data?.dibuatOleh || 'Admin', dibuatTgl: data?.dibuatTgl || `${tgl} 09:00`,
+      noSpk, bjLineId: bj?.bjLineId ?? null,
+      kodeBarang: bj?.kodeBarang || '', namaBarang: bj?.namaBarang || '',
+      qtySPK: bj?.qtySPK ?? '', satuan: bj?.satuan || '',
+      namaKelompokWarna: bj?.namaKelompokWarna || '', namaAz: bj?.namaAz || '',
+      namaBrand: bj?.namaBrand || '', namaMerkBarang: bj?.namaMerkBarang || '',
+      stempel: bj?.stempel || '', mesinDipilih: bj?.mesinDipilih || [],
+      bahanLines,
     });
   };
 
   const tdS = { padding:'5px 6px', borderBottom:'1px solid var(--border)', verticalAlign:'middle' };
+  const thS = (w, center) => ({
+    padding:'10px 10px', fontWeight:500, fontSize:'11.5px', letterSpacing:'.04em', textTransform:'uppercase',
+    textAlign: center ? 'center' : 'left', width: w || undefined,
+  });
+
+  const canEditBj = isCreate; // SPK/Barang Jadi terkunci begitu tersimpan (mode Edit)
 
   return (
     <>
@@ -110,69 +179,165 @@ function MfHasilProduksiDialog({ data, onClose, onSave }) {
             </div>
 
             {/* ── Content ────────────────────────────────────── */}
-            <div style={{paddingTop:20}}>
+            <div style={{paddingTop:20, display:'flex', flexDirection:'column', gap:24}}>
 
-              <div style={{display:'flex', flexDirection:'column', gap:28}}>
-
-                {/* Section: Daftar SPK */}
-                <div className="inline-table">
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
-                    <h3 style={{margin:0, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.07em', color:'var(--text-3)'}}>Daftar SPK</h3>
-                    <button className="btn btn-primary btn-sm" onClick={() => setSpkModal('add')}>{I.plus()} Tambah SPK</button>
+              {/* Section: SPK + Barang Jadi (1 No. Bukti = 1 Barang Jadi) */}
+              <div>
+                <h3 style={{margin:'0 0 8px', fontSize:14, fontWeight:700, textTransform:'uppercase', letterSpacing:'.07em', color:'var(--text)'}}>
+                  Barang Jadi
+                </h3>
+                <div style={{display:'grid', gridTemplateColumns:'repeat(12, minmax(0,1fr))', gap:16}}>
+                  <div className="field" style={{gridColumn:'span 4', marginBottom:0}}>
+                    <label>No. SPK *</label>
+                    <input className="input" readOnly
+                      style={{cursor: canEditBj ? 'pointer' : 'default', background:'var(--bg-elev)'}}
+                      placeholder="— Pilih SPK —" value={noSpk}
+                      onClick={() => { if (canEditBj) setShowSpkPicker(true); }} />
                   </div>
-                  <div className="line-items" style={{overflowX:'auto'}}>
-                    <table style={{width:'100%', borderCollapse:'separate', borderSpacing:0, minWidth:900}}>
-                      <thead>
-                        <tr>
-                          {[
-                            ['No. SPK',    '16%'], ['Kode Bahan','12%'], ['Merk SPK','12%'],
-                            ['Gudang','13%'], ['No. Coil','12%'], ['Kondisi', '17%'],
-                            ['Jumlah','12%'], ['', '60px'],
-                          ].map(([label, w]) => (
-                            <th key={label||'aksi'} style={{
-                              padding:'10px 10px', fontWeight:500, fontSize:'11.5px', letterSpacing:'.04em', textTransform:'uppercase',
-                              width: w || undefined,
-                            }}>{label}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {spkLines.length === 0 && (
-                          <tr><td colSpan={8} style={{padding:'32px 12px', textAlign:'center', color:'var(--text-3)', fontSize:13}}>
-                            Belum ada SPK. Klik "+ Tambah SPK" untuk menambahkan.
-                          </td></tr>
-                        )}
-                        {spkLines.map((row, idx) => (
-                          <tr key={row.id} className={`${row._deleted ? 'row-deleted' : ''} ${row._added ? 'row-added' : ''}`} title={row._deleted ? 'Baris ini akan dihapus' : ''}>
-                            <td style={tdS}><span style={{color:'var(--primary)',fontWeight:500}}>{row.noSpk}</span></td>
-                            <td style={tdS}>{row.kodeBahan}</td>
-                            <td style={tdS}>{row.merkSpk}</td>
-                            <td style={tdS}>{row.gudang}</td>
-                            <td style={tdS}><span className="mono">{row.noCoil}</span></td>
-                            <td style={tdS}><span style={{fontSize:11.5}}>{row.kondisi}</span></td>
-                            <td style={{...tdS, textAlign:'right'}} className="mono">{row.jumlah} {row.satuanJ}</td>
-                            <td style={{...tdS, textAlign:'center'}}>
-                              <div className="row-actions" style={{justifyContent:'center'}}>
-                                {row._deleted ? (
-                                  <button className="btn btn-icon btn-sm" style={{color:'var(--realisasi)'}} title="Restore"
-                                    onClick={() => restoreSpk(idx)}>{I.refresh(14)}</button>
-                                ) : (
-                                  <>
-                                    <button className="btn btn-icon btn-sm" title="Edit"
-                                      onClick={() => setSpkModal({idx, data: row})}>{I.edit()}</button>
-                                    <button className="btn btn-icon btn-sm del" title="Hapus"
-                                      onClick={() => softDeleteSpk(idx)}>{I.trash()}</button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="field" style={{gridColumn:'span 4', marginBottom:0}}>
+                    <label>Nama Barang</label>
+                    <input className="input" value={bj?.namaBarang || ''} readOnly placeholder="Otomatis dari SPK" />
+                  </div>
+                  <div className="field" style={{gridColumn:'span 2', marginBottom:0}}>
+                    <label>Qty SPK</label>
+                    <input className="input mono" value={bj ? `${bj.qtySPK} ${bj.satuan}` : ''} readOnly placeholder="Otomatis" />
+                  </div>
+                  <div className="field" style={{gridColumn:'span 2', marginBottom:0}}>
+                    <label>Kode Barang</label>
+                    <input className="input mono" value={bj?.kodeBarang || ''} readOnly placeholder="Otomatis" />
+                  </div>
+
+                  <div className="field" style={{gridColumn:'span 3', marginBottom:0}}>
+                    <label>Kelompok Warna</label>
+                    <input className="input" value={bj?.namaKelompokWarna || ''} readOnly placeholder="Otomatis dari SPK" />
+                  </div>
+                  <div className="field" style={{gridColumn:'span 3', marginBottom:0}}>
+                    <label>AZ</label>
+                    <input className="input" value={bj?.namaAz || ''} readOnly placeholder="Otomatis dari SPK" />
+                  </div>
+                  <div className="field" style={{gridColumn:'span 3', marginBottom:0}}>
+                    <label>Brand</label>
+                    <input className="input" value={bj?.namaBrand || ''} readOnly placeholder="Otomatis dari SPK" />
+                  </div>
+                  <div className="field" style={{gridColumn:'span 3', marginBottom:0}}>
+                    <label>Merk Barang</label>
+                    <input className="input" value={bj?.namaMerkBarang || ''} readOnly placeholder="Otomatis dari SPK" />
+                  </div>
+
+                  <div className="field" style={{gridColumn:'span 12', marginBottom:0}}>
+                    <label>Mesin (dari SPK)</label>
+                    <div style={{display:'flex', flexWrap:'wrap', gap:6, minHeight:32, alignItems:'center'}}>
+                      {(bj?.mesinDipilih || []).length === 0 ? (
+                        <span style={{color:'var(--text-3)', fontSize:13}}>—</span>
+                      ) : bj.mesinDipilih.map(m => (
+                        <span key={m} style={{display:'inline-block', padding:'3px 10px', borderRadius:999,
+                          fontSize:12, fontWeight:500, background:'var(--bg-sub)', border:'1px solid var(--border)',
+                          color:'var(--text-2)'}}>{m}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
+              </div>
 
+              {/* Section: Bahan — default dari SPK, bisa ditambah/diubah/dihapus kalau pemakaian
+                  aktual beda dari rencana. No. Coil/Kondisi/Lapisan PU/Pembelian/Sisa Stok di sini
+                  per-Bahan (bukan per-SPK lagi) — cocok sama nama modul "Pemakaian Bahan". */}
+              <div className="inline-table">
+                <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
+                  <h3 style={{margin:0, fontSize:14, fontWeight:700, textTransform:'uppercase', letterSpacing:'.07em', color:'var(--text)'}}>Bahan</h3>
+                  <button className="btn btn-primary btn-sm" disabled={!bj} onClick={() => setShowBahanPicker(true)}>{I.plus()} Tambah Bahan</button>
+                </div>
+                <div className="line-items" style={{overflowX:'auto'}}>
+                  {/* Kolom fixed-px (No/Aksi) + % HARUS pas 100% total, sama kayak tabel Barang Jadi
+                      di SpkPage.jsx — kalau kurang, table-layout:fixed nge-stretch SEMUA kolom
+                      (termasuk yg px) buat nutup sisanya. Merk Bahan dijadiin sisa via calc(). */}
+                  <table style={{width:'100%', tableLayout:'fixed', borderCollapse:'separate', borderSpacing:0, minWidth:1300}}>
+                    <thead>
+                      <tr>
+                        <th style={thS('30px', true)}>No</th>
+                        <th style={thS('11%')}>Gudang</th>
+                        <th style={thS('11%')}>Kode Bahan</th>
+                        <th style={thS('calc(100% - 80px - 86%)')}>Merk Bahan</th>
+                        <th style={thS('7%', true)}>Jumlah</th>
+                        <th style={thS('6%', true)}>Satuan</th>
+                        <th style={thS('12%')}>No. Coil</th>
+                        <th style={thS('13%')}>Kondisi COIL</th>
+                        <th style={thS('8%')}>Lapisan PU</th>
+                        <th style={thS('10%')}>Pembelian</th>
+                        <th style={thS('8%', true)}>Sisa Stok</th>
+                        <th style={thS('50px', true)}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bahanLines.length === 0 && (
+                        <tr><td colSpan={12} style={{padding:'32px 12px', textAlign:'center', color:'var(--text-3)', fontSize:13}}>
+                          {bj ? 'Belum ada bahan. Klik "+ Tambah Bahan" untuk menambahkan.' : 'Pilih SPK terlebih dahulu untuk melihat bahan.'}
+                        </td></tr>
+                      )}
+                      {bahanLines.map((row, idx) => (
+                        <tr key={row.id}>
+                          <td style={{...tdS, textAlign:'center', color:'var(--text-3)', fontSize:12}}>{idx + 1}</td>
+                          <td style={tdS}>
+                            <select className="select" style={{width:'100%', fontSize:12, padding:'3px 6px'}}
+                              value={row.gudang} onChange={e => updateBahan(row.id, 'gudang', e.target.value)}>
+                              <option value="">— Pilih —</option>
+                              {MF_GUDANG_LIST.map(g => <option key={g}>{g}</option>)}
+                            </select>
+                          </td>
+                          <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                            <span style={{color:'var(--primary)', fontWeight:500}}>{row.kodeBahan}</span>
+                          </td>
+                          <td style={{...tdS, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                            {row.merkBahan || <span style={{color:'var(--text-3)'}}>—</span>}
+                          </td>
+                          <td style={tdS}>
+                            <input className="input" type="number" min="0" step="0.01"
+                              style={{width:'100%', fontSize:12, padding:'3px 6px', textAlign:'right'}}
+                              placeholder="0.00" value={row.jumlah}
+                              onChange={e => updateBahan(row.id, 'jumlah', e.target.value)} />
+                          </td>
+                          <td style={tdS}>
+                            <select className="select" style={{width:'100%', fontSize:12, padding:'3px 6px'}}
+                              value={row.satuan} onChange={e => updateBahan(row.id, 'satuan', e.target.value)}>
+                              {MF_SATUAN_SPK.map(s => <option key={s}>{s}</option>)}
+                            </select>
+                          </td>
+                          <td style={tdS}>
+                            <input className="input mono" readOnly style={{width:'100%', fontSize:12, padding:'3px 6px', cursor:'pointer', background:'var(--bg-elev)'}}
+                              placeholder="— Pilih —" value={row.noCoil}
+                              onClick={() => setCoilPickerForRowId(row.id)} />
+                          </td>
+                          <td style={tdS}>
+                            <select className="select" style={{width:'100%', fontSize:12, padding:'3px 6px'}}
+                              value={row.kondisi} onChange={e => updateBahan(row.id, 'kondisi', e.target.value)}>
+                              {HP_KONDISI.map(k => <option key={k}>{k}</option>)}
+                            </select>
+                          </td>
+                          <td style={tdS}>
+                            <select className="select" style={{width:'100%', fontSize:12, padding:'3px 6px'}}
+                              value={row.lapisanPu} onChange={e => updateBahan(row.id, 'lapisanPu', e.target.value)}>
+                              <option>Atas</option>
+                              <option>Bawah</option>
+                            </select>
+                          </td>
+                          <td style={tdS}>
+                            <input className="input" style={{width:'100%', fontSize:12, padding:'3px 6px'}}
+                              placeholder="No. Pembelian…" value={row.pembelian}
+                              onChange={e => updateBahan(row.id, 'pembelian', e.target.value)} />
+                          </td>
+                          <td style={tdS}>
+                            <input className="input" style={{width:'100%', fontSize:12, padding:'3px 6px', textAlign:'right'}}
+                              placeholder="0.00" value={row.sisaStok}
+                              onChange={e => updateBahan(row.id, 'sisaStok', e.target.value)} />
+                          </td>
+                          <td style={{...tdS, textAlign:'center'}}>
+                            <button className="btn btn-icon btn-sm del" title="Hapus" onClick={() => removeBahan(row.id)}>{I.trash()}</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
             </div>
@@ -182,22 +347,26 @@ function MfHasilProduksiDialog({ data, onClose, onSave }) {
             <div className="muted"><kbd>Esc</kbd> Untuk Batal</div>
             <div style={{display:'flex', gap:8}}>
               <button className="btn" onClick={onClose}>Tutup</button>
-              <button className="btn btn-primary" onClick={handleSave}>{I.check()} Simpan</button>
+              <button className="btn btn-primary" disabled={!bj} onClick={handleSave}>{I.check()} Simpan</button>
             </div>
           </div>
         </div>
       </div>
 
-      {spkModal && (
-        <MfSpkEntryModal
-          data={spkModal === 'add' ? null : spkModal.data}
-          onClose={() => setSpkModal(null)}
-          onSave={(entry) => {
-            if (spkModal === 'add') setSpkLines(ls => [...ls, {...entry, id: Date.now()}]);
-            else setSpkLines(ls => ls.map((l, i) => i === spkModal.idx ? {...entry, id: l.id} : l));
-            setSpkModal(null);
-          }}
-        />
+      {showSpkPicker && (
+        <MfSpkPickerModal rows={spkRows} filter={s => s.status === 'Approved'}
+          onPick={onSpkPick} onClose={() => setShowSpkPicker(false)} />
+      )}
+      {pendingSpk && (
+        <MfSpkBjPickerModal spk={pendingSpk}
+          onPick={(bjLine) => { applyBjPick(pendingSpk, bjLine); setPendingSpk(null); }}
+          onClose={() => setPendingSpk(null)} />
+      )}
+      {showBahanPicker && (
+        <MfPilihBarangModal zIndex={300} items={bahanPickerItems} onConfirm={onBahanPick} onCancel={() => setShowBahanPicker(false)} />
+      )}
+      {coilPickerForRowId && (
+        <MfCoilPickerModal onPick={onCoilPick} onClose={() => setCoilPickerForRowId(null)} />
       )}
     </>
   );
@@ -211,6 +380,8 @@ function MfHasilProduksiList({ rows, onAdd, onEdit }) {
   const [spkF, setSpkF]       = React.useState('');
   const [page, setPage]       = React.useState(1);
   const perPage = 10;
+  const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow]   = React.useState(null);
 
   const filtered = rows.filter(r => {
     if (spkF && !r.noSpk.toLowerCase().includes(spkF.toLowerCase())) return false;
@@ -258,7 +429,7 @@ function MfHasilProduksiList({ rows, onAdd, onEdit }) {
           <div className="table-toolbar-right">
             <button className="btn btn-primary btn-sm" onClick={onAdd}>{I.plus()} Tambah Data</button>
             <button className="btn btn-sm btn-icon" title="Refresh">{I.refresh()}</button>
-            <button className="btn btn-sm btn-icon" title="Print">{I.print()}</button>
+            <button className="btn btn-sm btn-icon" title="Cetak" onClick={() => { setCetakRow(null); setShowCetak(true); }}>{I.print()}</button>
             <button className="btn btn-sm btn-icon btn-danger" title="Hapus">{I.trash()}</button>
           </div>
         </div>
@@ -270,27 +441,41 @@ function MfHasilProduksiList({ rows, onAdd, onEdit }) {
                 <th style={{width:32}}><input type="checkbox" className="cb" /></th>
                 <th>No. Bukti</th>
                 <th>No. SPK</th>
+                <th>Barang Jadi</th>
+                <th className="num">Qty Produksi</th>
                 <th>Tanggal</th>
                 <th>Gudang</th>
-                <th className="num">Jml SPK</th>
+                <th>Stempel</th>
+                <th className="num">Jml Bahan</th>
                 <th className="center" style={{width:60}}>Aksi</th>
               </tr>
             </thead>
             <tbody>
               {pageRows.length === 0 && (
-                <tr><td colSpan={7} style={{textAlign:'center', padding:32, color:'var(--text-3)'}}>Tidak ada data</td></tr>
+                <tr><td colSpan={10} style={{textAlign:'center', padding:32, color:'var(--text-3)'}}>Tidak ada data</td></tr>
               )}
               {pageRows.map(r => (
                 <tr key={r.no}>
-                  <td><input type="checkbox" className="cb" /></td>
-                  <td><span className="cell-link">{r.no}</span></td>
+                  <td onClick={e => e.stopPropagation()}><input type="checkbox" className="cb" /></td>
+                  <td><span className="cell-link" style={{cursor:'pointer'}} onClick={() => onEdit(r)}>{r.no}</span></td>
                   <td className="muted">{r.noSpk}</td>
+                  <td>{r.namaBarang}</td>
+                  <td className="num mono">{r.qtySPK} {r.satuan}</td>
                   <td>{r.tgl}</td>
                   <td>{r.gudang}</td>
-                  <td className="num mono">{(r.spkLines || []).length}</td>
+                  <td>
+                    {r.stempel
+                      ? <span style={{display:'inline-block', padding:'2px 8px', borderRadius:999,
+                          fontSize:11.5, fontWeight:600, background:'var(--primary)', color:'#fff'}}>
+                          {r.stempel}
+                        </span>
+                      : <span style={{color:'var(--text-3)'}}>—</span>}
+                  </td>
+                  <td className="num mono">{(r.bahanLines || []).length}</td>
                   <td className="center">
                     <div className="row-actions">
                       <button className="btn btn-icon btn-sm" title="Edit" onClick={() => onEdit(r)}>{I.edit()}</button>
+                      <button className="btn btn-icon btn-sm" title="Cetak" onClick={() => { setCetakRow(r); setShowCetak(true); }}>{I.print()}</button>
                     </div>
                   </td>
                 </tr>
@@ -310,6 +495,12 @@ function MfHasilProduksiList({ rows, onAdd, onEdit }) {
           </div>
         </div>
       </div>
+
+      {showCetak && (
+        <MfCetakModal docLabel="Hasil Produksi" rows={rows}
+          initialSelected={cetakRow ? [cetakRow.no] : null}
+          onClose={() => { setShowCetak(false); setCetakRow(null); }} />
+      )}
     </>
   );
 }

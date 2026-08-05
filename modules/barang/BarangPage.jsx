@@ -22,11 +22,12 @@ function BarangDashboard({ onOpenSub }) {
   const sections = [
     {
       title:'Barang & Kelengkapan',
-      count:'3',
+      count:'4',
       tiles:[
         { id:'baranglain', title:'Barang Lain',          badge:`${lainAktif} dari ${BARANG_LAIN.length} aktif`, icon:I.box(20) },
         { id:'bahankaku',  title:'Bahan Baku',           badge:`${bakuAktif} dari ${BAHAN_BAKU.length} aktif`, icon:I.box(20) },
         { id:'barangjadi', title:'Barang Jadi Umum & PU', badge:`${jadiAktif} dari ${BARANG_JADI.length} aktif`, icon:I.box(20) },
+        { id:'bom',        title:'BOM / Resep Produksi', badge:`${BRG_BOM_SEED.length} resep`, icon:I.list(20) },
       ]
     },
     {
@@ -42,7 +43,7 @@ function BarangDashboard({ onOpenSub }) {
   return (
     <ModuleDashboard
       title="Dashboard Barang"
-      subtitle="Halaman ini digunakan untuk mengelola data barang, tersedia 6 menu pendukung."
+      subtitle="Halaman ini digunakan untuk mengelola data barang, tersedia 7 menu pendukung."
       kpis={kpis}
       sections={sections}
       activityLog={ACTIVITY_LOG_BARANG}
@@ -66,6 +67,7 @@ function BarangPage({ activeSub, onSubChange, onNavigate }) {
       {activeSub === 'baranglain'   && <BarangLainPage />}
       {activeSub === 'bahankaku'    && <BahanBakuPage />}
       {activeSub === 'barangjadi'   && <BarangJadiPage />}
+      {activeSub === 'bom'          && <BomPage />}
       {activeSub === 'mutasi'       && <MutasiBarangPage />}
       {activeSub === 'penyesuaian'  && <PenyesuaianBarangPage />}
       {activeSub === 'opname'       && <StockOpnamePage />}

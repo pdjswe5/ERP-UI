@@ -40,11 +40,12 @@ function MfPickerTable({ columns, rows, onClose, emptyMsg }) {
 // ─── Pilih Barang Modal ───────────────────────────────────────────────────────
 
 // Salinan ItemPickerModal (components.jsx, dipakai Penjualan/Pembelian) supaya UI-nya sama persis
-// — checkbox multi-select + qty per baris. Sumber default MF_BARANG, bisa dioverride via `items`.
+// — checkbox multi-select + qty per baris. `items` WAJIB diisi pemanggil (BARANG_JADI/BAHAN_BAKU/
+// BARANG_LAIN dari modul Barang, tergantung konteks) — tidak ada lagi katalog default ad-hoc.
 // Prop `single` (dipakai field Kode Barang di Tambah Barang Jadi SPK — cuma boleh 1 barang per
 // baris): sembunyikan checkbox + kolom Jumlah, klik baris langsung memilih & menutup picker.
 function MfPilihBarangModal({ title, items, onConfirm, onCancel, zIndex, single }) {
-  const data = items || MF_BARANG;
+  const data = items || [];
   const [q, setQ] = React.useState('');
   const [selected, setSelected] = React.useState({});
   const [qtyMap, setQtyMap] = React.useState({});
@@ -149,7 +150,10 @@ function MfPilihBarangModal({ title, items, onConfirm, onCancel, zIndex, single 
 
 // ─── SPK Picker Modal ─────────────────────────────────────────────────────────
 
-function MfSpkPickerModal({ onPick, onClose }) {
+// `rows` — live spkRows state dari ManufakturPage (fallback ke MF_SPK_SEED statis kalau tidak
+// dikasih, buat caller lama yang belum di-update, mis. MfBarangPakaiEntryModal di BPBL/RPBL) —
+// tanpa ini, SPK yang baru dibuat/diubah user dalam sesi berjalan nggak pernah muncul di sini.
+function MfSpkPickerModal({ rows, onPick, onClose, filter }) {
   const [q, setQ] = React.useState('');
   const inputRef = React.useRef(null);
   React.useEffect(() => {
@@ -158,7 +162,9 @@ function MfSpkPickerModal({ onPick, onClose }) {
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
   }, [onClose]);
-  const filtered = MF_SPK_SEED.filter(s => {
+  const data = rows || MF_SPK_SEED;
+  const filtered = data.filter(s => {
+    if (filter && !filter(s)) return false;
     if (!q) return true;
     const ql = q.toLowerCase();
     return s.no.toLowerCase().includes(ql) || s.produk.toLowerCase().includes(ql);
@@ -196,6 +202,46 @@ function MfSpkPickerModal({ onPick, onClose }) {
   );
 }
 
+// ─── Barang Jadi (per-SPK) Picker Modal ───────────────────────────────────────
+
+// Dipakai setelah 1 SPK sudah dipilih (Planning "Pilih SPK", Hasil Produksi "+ Tambah Data") —
+// SPK bisa punya lebih dari 1 Barang Jadi, jadi user harus milih yang mana. Kalau `spk.bjLines`
+// cuma 1 baris, caller nggak perlu buka modal ini sama sekali (auto-resolve).
+function MfSpkBjPickerModal({ spk, onPick, onClose }) {
+  React.useEffect(() => {
+    const h = e => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [onClose]);
+  const bjLines = (spk?.bjLines || []).filter(b => !b._deleted);
+  return (
+    <MfPickerShell title={`Pilih Barang Jadi — ${spk?.no || ''}`} zIndex={310} width={800} onClose={onClose}>
+      <MfPickerTable
+        columns={[
+          {key:'kd', label:'KODE BARANG', style:{width:'18%'}},
+          {key:'nm', label:'NAMA BARANG'},
+          {key:'qt', label:'QTY SPK',     style:{width:'12%', textAlign:'right'}},
+          {key:'st', label:'SATUAN',      style:{width:'10%', textAlign:'center'}},
+          {key:'mk', label:'MERK BARANG', style:{width:'16%'}},
+        ]}
+        rows={bjLines.map(bj => (
+          <tr key={bj.id} style={{cursor:'pointer'}} onClick={() => onPick(bj)}>
+            <td style={{color:'var(--primary)', fontWeight:500}}>{bj.kodeBarang}</td>
+            <td>{bj.namaBarang}</td>
+            <td style={{textAlign:'right'}} className="mono">{bj.qtySPK}</td>
+            <td style={{textAlign:'center'}}>{bj.satuan}</td>
+            <td>{bj.namaMerkBarang || '—'}</td>
+          </tr>
+        ))}
+        emptyMsg="SPK ini belum punya Barang Jadi."
+      />
+      <div className="modal-foot" style={{justifyContent:'flex-end', padding:'12px 32px'}}>
+        <button className="btn" onClick={onClose}>Batal</button>
+      </div>
+    </MfPickerShell>
+  );
+}
+
 // ─── SO Picker Modal ──────────────────────────────────────────────────────────
 // Salinan pola picker dokumen milik SO (lihat KoDocPickerModal di salesorder.data.jsx, dipakai
 // "Buat SO dari KO") — di sini dipakai SPK untuk mengambil referensi Sales Order (bukan KO).
@@ -203,11 +249,19 @@ function MfSpkPickerModal({ onPick, onClose }) {
 
 function MfSoPickerModal({ onCancel, onConfirm }) {
   const [q, setQ] = React.useState('');
+  // Cuma SO yang masih punya sisa qty belum diproduksi yang boleh jadi SPK — Belum Realisasi (semua
+  // qty masih 0) atau Selesai Sebagian (sebagian sudah). SO yang Selesai/Selesai Manual/Batal sudah
+  // tidak relevan lagi (baik karena tuntas maupun sudah tidak jadi diproses), jadi disaring di sini
+  // sebelum sampai ke pencarian teks.
+  const eligible = React.useMemo(() => SALES_ORDER_SEED.filter(s => {
+    const st = soComputeStatus(s);
+    return st === 'BELUM_REALISASI' || st === 'SELESAI_SEBAGIAN';
+  }), []);
   const filtered = React.useMemo(() => {
-    if (!q) return SALES_ORDER_SEED;
+    if (!q) return eligible;
     const ql = q.toLowerCase();
-    return SALES_ORDER_SEED.filter(s => s.No_Bukti.toLowerCase().includes(ql) || (s.Nama_Cust||'').toLowerCase().includes(ql));
-  }, [q]);
+    return eligible.filter(s => s.No_Bukti.toLowerCase().includes(ql) || (s.Nama_Cust||'').toLowerCase().includes(ql));
+  }, [q, eligible]);
   return (
     <div className="modal-backdrop" style={{zIndex:300}}>
       <div className="modal item-picker-modal" onClick={e=>e.stopPropagation()}>
@@ -353,7 +407,12 @@ function MfBarangJadiPickerModal({ onPick, onClose }) {
 
 // ─── Barang Jadi Entry Modal (for SPK) ───────────────────────────────────────
 
-function MfBarangJadiEntryModal({ data, onClose, onSave }) {
+// `bahanLines` (opsional): bahan yang sudah dimiliki barang jadi ini (mode Edit) — dikelola LOKAL
+// di dalam popup ini (tambah/hapus/ubah langsung, tanpa soft-delete — beda dari pola bjLines di
+// MfSpkDialog karena di sini "Simpan" popup ini sekaligus jadi titik commit-nya) dan dikirim balik
+// lewat onSave (field `bahanLines`); MfSpkDialog yang gabungkan ke bahanLines top-level miliknya
+// (assign bjLineId, replace bahan lama punya barang ini dengan hasil popup).
+function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
   const [kodeBarang,    setKodeBarang]    = React.useState(data?.kodeBarang    || '');
   const [namaBarang,    setNamaBarang]    = React.useState(data?.namaBarang    || '');
   const [qtySPK,        setQtySPK]        = React.useState(data?.qtySPK        || '');
@@ -369,30 +428,92 @@ function MfBarangJadiEntryModal({ data, onClose, onSave }) {
   const [stempel,       setStempel]       = React.useState(data?.stempel       || '');
   const [mesinDipilih,  setMesinDipilih]  = React.useState(data?.mesinDipilih  || []);
   const [showBarangPicker, setShowBarangPicker] = React.useState(false);
+  const [localBahan,    setLocalBahan]    = React.useState(() => (bahanLines || []).map(r => ({...r})));
+  const [showBahanPicker, setShowBahanPicker] = React.useState(false);
 
   React.useEffect(() => {
-    const h = e => { if (e.key === 'Escape' && !showBarangPicker) onClose(); };
+    const h = e => { if (e.key === 'Escape' && !showBarangPicker && !showBahanPicker) onClose(); };
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
-  }, [showBarangPicker, onClose]);
+  }, [showBarangPicker, showBahanPicker, onClose]);
 
+  // Barang Jadi & Bahan sekarang dari katalog modul Barang (BARANG_JADI/BAHAN_BAKU/BARANG_LAIN),
+  // BUKAN MF_BARANG lagi — SPK & modul Barang jadi 1 katalog yang sama, jadi BOM (BRG_BOM_SEED,
+  // data/bom.data.jsx di modul Barang) otomatis nyambung ke sini. BOM di modul Barang cuma soal
+  // Bahan Baku/Penolong/Lain (bukan mesin) — mesin tetap dipilih manual seperti sebelumnya.
+  const bahanPickerItems = React.useMemo(() => [
+    ...BAHAN_BAKU.map(b => ({ kode:b.kodeProduk, nama:b.namaProduk })),
+    ...BARANG_LAIN.map(b => ({ kode:b.kodeProduk, nama:b.namaProduk })),
+  ], []);
+
+  // BOM auto-fill: kalau barang jadi yang dipilih punya resep di BRG_BOM_SEED DAN tabel Bahan masih
+  // kosong (belum diisi manual), langsung terapkan bahan standarnya — user tinggal isi/koreksi Qty
+  // SPK. Kalau localBahan sudah terisi (mis. user ganti pilihan barang jadi setelah sempat isi
+  // bahan sendiri), tidak ditimpa — hormati apa yang sudah diketik user.
   const onBarangPick = (picked) => {
     const b = picked[0];
-    if (b) { setKodeBarang(b.code); setNamaBarang(b.nama); }
+    if (b) {
+      setKodeBarang(b.kode); setNamaBarang(b.nama);
+      const bom = brgBomFor(b.kode);
+      if (bom && localBahan.length === 0) {
+        setLocalBahan(brgBomBuildBahanLines(b.kode, qtySPK));
+      }
+    }
     setShowBarangPicker(false);
+  };
+
+  // Qty SPK berubah: kalau bahan yang lagi ada di tabel PERSIS sama komposisinya (kode bahan) dgn
+  // resep BOM barang ini, berarti masih bahan hasil auto-fill (belum diubah komposisinya secara
+  // manual) — jumlahnya di-recompute mengikuti qty baru. Kalau user sudah tambah/hapus/ganti bahan
+  // sendiri, komposisinya beda dari BOM sehingga tidak disentuh lagi di sini.
+  const handleQtySpkChange = (val) => {
+    setQtySPK(val);
+    const bom = brgBomFor(kodeBarang);
+    if (!bom) return;
+    const bomCodes = bom.komponen.map(k => k.kodeKomponen).slice().sort().join(',');
+    const curCodes = localBahan.map(b => b.kodeBahan).slice().sort().join(',');
+    if (bomCodes === curCodes) setLocalBahan(brgBomBuildBahanLines(kodeBarang, val));
   };
 
   const toggleMesin = (nama) => {
     setMesinDipilih(ls => ls.includes(nama) ? ls.filter(m => m !== nama) : [...ls, nama]);
   };
 
+  const onBahanPick = (picked) => {
+    setLocalBahan(ls => [...ls, ...picked.map((b, i) => {
+      const resolved = brgBomResolveKomponen(b.kode);
+      return {
+        id: Date.now() + i, gudang:'', kodeBahan: b.kode,
+        merkBahan: resolved?.keterangan || '', jumlah: b._qty || '', satuan: resolved?.satuan || '',
+      };
+    })]);
+    setShowBahanPicker(false);
+  };
+  const updateLocalBahan = (id, field, val) =>
+    setLocalBahan(ls => ls.map(r => {
+      if (r.id !== id) return r;
+      if (field === 'kodeBahan') {
+        const resolved = brgBomResolveKomponen(val);
+        return {...r, kodeBahan: val, merkBahan: resolved?.keterangan || ''};
+      }
+      return {...r, [field]: val};
+    }));
+  const removeLocalBahan = (id) => setLocalBahan(ls => ls.filter(r => r.id !== id));
+
   const handleSave = () => {
     onSave({
       kodeBarang, namaBarang, qtySPK, satuan,
       kelompokWarna, namaKelompokWarna, az, namaAz, brand, namaBrand, merkBarang, namaMerkBarang,
       stempel, mesinDipilih,
+      bahanLines: localBahan,
     });
   };
+
+  const tdBahanS = { padding:'5px 6px', borderBottom:'1px solid var(--border)', verticalAlign:'middle' };
+  const thBahanS = (w, center) => ({
+    padding:'10px 10px', fontWeight:500, fontSize:'11.5px', letterSpacing:'.04em', textTransform:'uppercase',
+    textAlign: center ? 'center' : 'left', width: w || undefined,
+  });
 
   const panelStyle = {
     border:'1px solid var(--border)', borderRadius:'var(--radius)',
@@ -403,6 +524,14 @@ function MfBarangJadiEntryModal({ data, onClose, onSave }) {
     fontSize:11.5, fontWeight:600, letterSpacing:'.04em', textTransform:'uppercase',
     borderBottom:'1px solid var(--border)',
   };
+
+  // Nested grid dalam tiap zona 4-kolom: pairGrid buat pasangan Nama+Kode (field utama 2x lebih
+  // lebar drpd Kode-nya yang cuma readonly "Otomatis"); shortGrid buat field pendek (dropdown/angka)
+  // yang nggak punya pasangan Kode, dibagi rata 3 kolom.
+  // alignItems:'end' — field Kode nggak punya <label> lagi, jadi tanpa ini inputnya nempel ke atas
+  // sementara input Nama (yang masih punya label di atasnya) turun lebih rendah, bikin tinggi beda.
+  const pairGrid  = { display:'grid', gridTemplateColumns:'2fr 1fr', gap:8, alignItems:'end' };
+  const shortGrid = { display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:8 };
 
   return (
     <>
@@ -417,98 +546,112 @@ function MfBarangJadiEntryModal({ data, onClose, onSave }) {
           </div>
 
           <div className="modal-body">
-            <div style={{display:'grid', gridTemplateColumns:'repeat(4, minmax(0,1fr))', gap:12}}>
+            {/* Grid 3 kolom (4/4/4) — tiap kolom 1 "zona" field yang berdiri sendiri, isinya
+                di-stack lewat nested grid: pairGrid (2fr/1fr) buat pasangan Nama+Kode, shortGrid
+                (3 kolom rata) buat field pendek (dropdown/angka) yg nggak punya pasangan Kode. */}
+            <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:16}}>
 
-              {/* Baris 1: Nama Barang, Kode Barang, Satuan, Qty SPK */}
-              <div className="field">
-                <label>Nama Barang *</label>
-                <input className="input" style={{cursor:'pointer', background:'var(--bg-elev)'}} readOnly
-                  placeholder="— Pilih Barang —" value={namaBarang}
-                  onClick={() => setShowBarangPicker(true)} />
-              </div>
-              <div className="field">
-                <label>Kode Barang</label>
-                <input className="input mono" value={kodeBarang} readOnly placeholder="Otomatis" />
-              </div>
-              <div className="field">
-                <label>Satuan</label>
-                <select className="select" value={satuan} disabled={!kodeBarang} onChange={e => setSatuan(e.target.value)}>
-                  {MF_SATUAN_SPK.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-              <div className="field">
-                <label>Qty SPK *</label>
-                <input className="input" type="number" min="0" step="0.01" placeholder="0.00" disabled={!kodeBarang}
-                  value={qtySPK} onChange={e => setQtySPK(e.target.value)} />
-              </div>
-
-              {/* Baris 2: Kelompok Warna, Kode Kelompok Warna, AZ, Kode AZ */}
-              <div className="field">
-                <label>Kelompok Warna</label>
-                <select className="select" value={namaKelompokWarna} disabled={!kodeBarang}
-                  onChange={e => { const w = MF_KELOMPOK_WARNA_LIST.find(x => x.nama === e.target.value); setNamaKelompokWarna(e.target.value); setKelompokWarna(w ? w.kode : ''); }}>
-                  <option value="">— Pilih —</option>
-                  {MF_KELOMPOK_WARNA_LIST.map(v => <option key={v.kode} value={v.nama}>{v.nama}</option>)}
-                </select>
-              </div>
-              <div className="field">
-                <label>Kode Kelompok Warna</label>
-                <input className="input mono" value={kelompokWarna} readOnly placeholder="Otomatis" />
-              </div>
-              <div className="field">
-                <label>AZ</label>
-                <select className="select" value={namaAz} disabled={!kodeBarang}
-                  onChange={e => { const w = MF_AZ_LIST.find(x => x.nama === e.target.value); setNamaAz(e.target.value); setAz(w ? w.kode : ''); }}>
-                  <option value="">— Pilih —</option>
-                  {MF_AZ_LIST.map(v => <option key={v.kode} value={v.nama}>{v.nama}</option>)}
-                </select>
-              </div>
-              <div className="field">
-                <label>Kode AZ</label>
-                <input className="input mono" value={az} readOnly placeholder="Otomatis" />
+              {/* Zona 1: Barang — Nama/Kode Barang, lalu Satuan/Qty SPK/Stempel */}
+              <div style={{display:'flex', flexDirection:'column', gap:12}}>
+                <div style={pairGrid}>
+                  <div className="field">
+                    <label>Nama Barang *</label>
+                    <input className="input" style={{cursor:'pointer', background:'var(--bg-elev)'}} readOnly
+                      placeholder="— Pilih Barang —" value={namaBarang}
+                      onClick={() => setShowBarangPicker(true)} />
+                  </div>
+                  <div className="field">
+                    <input className="input mono" value={kodeBarang} readOnly placeholder="Kode..." />
+                  </div>
+                </div>
+                <div style={shortGrid}>
+                  <div className="field">
+                    <label>Satuan</label>
+                    <select className="select" value={satuan} disabled={!kodeBarang} onChange={e => setSatuan(e.target.value)}>
+                      {MF_SATUAN_SPK.map(s => <option key={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label>Qty SPK *</label>
+                    <input className="input" type="number" min="0" step="0.01" placeholder="0.00" disabled={!kodeBarang}
+                      value={qtySPK} onChange={e => handleQtySpkChange(e.target.value)} />
+                  </div>
+                  <div className="field">
+                    <label>Stempel</label>
+                    <select className="select" value={stempel} disabled={!kodeBarang} onChange={e => setStempel(e.target.value)}>
+                      <option value="">— Pilih —</option>
+                      {MF_STEMPEL_LIST.map(v => <option key={v}>{v}</option>)}
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              {/* Baris 3: Brand, Kode Brand, Merk Barang, Kode Merk Barang */}
-              <div className="field">
-                <label>Brand</label>
-                <select className="select" value={namaBrand} disabled={!kodeBarang}
-                  onChange={e => { const w = MF_BRAND_LIST.find(x => x.nama === e.target.value); setNamaBrand(e.target.value); setBrand(w ? w.kode : ''); }}>
-                  <option value="">— Pilih —</option>
-                  {MF_BRAND_LIST.map(v => <option key={v.kode} value={v.nama}>{v.nama}</option>)}
-                </select>
-              </div>
-              <div className="field">
-                <label>Kode Brand</label>
-                <input className="input mono" value={brand} readOnly placeholder="Otomatis" />
-              </div>
-              <div className="field">
-                <label>Merk Barang</label>
-                <select className="select" value={namaMerkBarang} disabled={!kodeBarang}
-                  onChange={e => { const w = MF_MERK_BARANG_LIST.find(x => x.nama === e.target.value); setNamaMerkBarang(e.target.value); setMerkBarang(w ? w.kode : ''); }}>
-                  <option value="">— Pilih —</option>
-                  {MF_MERK_BARANG_LIST.map(v => <option key={v.kode} value={v.nama}>{v.nama}</option>)}
-                </select>
-              </div>
-              <div className="field">
-                <label>Kode Merk Barang</label>
-                <input className="input mono" value={merkBarang} readOnly placeholder="Otomatis" />
+              {/* Zona 2: Kelompok Warna/Kode Kelompok Warna, lalu AZ/Kode AZ */}
+              <div style={{display:'flex', flexDirection:'column', gap:12}}>
+                <div style={pairGrid}>
+                  <div className="field">
+                    <label>Kelompok Warna</label>
+                    <select className="select" value={namaKelompokWarna} disabled={!kodeBarang}
+                      onChange={e => { const w = MF_KELOMPOK_WARNA_LIST.find(x => x.nama === e.target.value); setNamaKelompokWarna(e.target.value); setKelompokWarna(w ? w.kode : ''); }}>
+                      <option value="">— Pilih —</option>
+                      {MF_KELOMPOK_WARNA_LIST.map(v => <option key={v.kode} value={v.nama}>{v.nama}</option>)}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <input className="input mono" value={kelompokWarna} readOnly placeholder="Kode..." />
+                  </div>
+                </div>
+                <div style={pairGrid}>
+                  <div className="field">
+                    <label>AZ</label>
+                    <select className="select" value={namaAz} disabled={!kodeBarang}
+                      onChange={e => { const w = MF_AZ_LIST.find(x => x.nama === e.target.value); setNamaAz(e.target.value); setAz(w ? w.kode : ''); }}>
+                      <option value="">— Pilih —</option>
+                      {MF_AZ_LIST.map(v => <option key={v.kode} value={v.nama}>{v.nama}</option>)}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <input className="input mono" value={az} readOnly placeholder="Kode..." />
+                  </div>
+                </div>
               </div>
 
-              {/* Baris 4: Stempel */}
-              <div className="field">
-                <label>Stempel</label>
-                <select className="select" value={stempel} disabled={!kodeBarang} onChange={e => setStempel(e.target.value)}>
-                  <option value="">— Pilih —</option>
-                  {MF_STEMPEL_LIST.map(v => <option key={v}>{v}</option>)}
-                </select>
+              {/* Zona 3: Brand/Kode Brand, lalu Merk Barang/Kode Merk Barang */}
+              <div style={{display:'flex', flexDirection:'column', gap:12}}>
+                <div style={pairGrid}>
+                  <div className="field">
+                    <label>Brand</label>
+                    <select className="select" value={namaBrand} disabled={!kodeBarang}
+                      onChange={e => { const w = MF_BRAND_LIST.find(x => x.nama === e.target.value); setNamaBrand(e.target.value); setBrand(w ? w.kode : ''); }}>
+                      <option value="">— Pilih —</option>
+                      {MF_BRAND_LIST.map(v => <option key={v.kode} value={v.nama}>{v.nama}</option>)}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <input className="input mono" value={brand} readOnly placeholder="Kode..." />
+                  </div>
+                </div>
+                <div style={pairGrid}>
+                  <div className="field">
+                    <label>Merk Barang</label>
+                    <select className="select" value={namaMerkBarang} disabled={!kodeBarang}
+                      onChange={e => { const w = MF_MERK_BARANG_LIST.find(x => x.nama === e.target.value); setNamaMerkBarang(e.target.value); setMerkBarang(w ? w.kode : ''); }}>
+                      <option value="">— Pilih —</option>
+                      {MF_MERK_BARANG_LIST.map(v => <option key={v.kode} value={v.nama}>{v.nama}</option>)}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <input className="input mono" value={merkBarang} readOnly placeholder="Kode..." />
+                  </div>
+                </div>
               </div>
 
             </div>
 
             {/* Machine picker dual-panel */}
-            <div style={{marginTop:8}}>
-              <div style={{fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em',
-                color:'var(--text-3)', marginBottom:8}}>Daftar Mesin</div>
+            <div style={{marginTop:20}}>
+              <div style={{fontSize:14, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em',
+                color:'var(--text)', marginBottom:8}}>Daftar Mesin</div>
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
                 {/* Left: all machines */}
                 <div style={{opacity: kodeBarang ? 1 : .5}}>
@@ -543,7 +686,7 @@ function MfBarangJadiEntryModal({ data, onClose, onSave }) {
                 </div>
                 {/* Right: selected machines */}
                 <div>
-                  <div style={panelHeadStyle}>Mesin YG Dipakai — klik untuk hapus</div>
+                  <div style={panelHeadStyle}>Mesin yang Dipakai — klik untuk hapus</div>
                   <div style={panelStyle}>
                     <table style={{width:'100%', borderCollapse:'collapse'}}>
                       <thead>
@@ -576,6 +719,73 @@ function MfBarangJadiEntryModal({ data, onClose, onSave }) {
               </div>
             </div>
 
+            {/* Bahan — dikelola langsung di sini (bukan di tabel Barang Jadi lagi), supaya jelas
+                bahan mana punya barang mana tanpa harus pindah section. */}
+            <div style={{marginTop:20}} className="inline-table">
+              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
+                <div style={{display:'flex', alignItems:'center', gap:8}}>
+                  <div style={{fontSize:14, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em', color:'var(--text)'}}>Bahan</div>
+                  {brgBomFor(kodeBarang) && (
+                    <span style={{fontSize:11, fontWeight:600, padding:'2px 8px', borderRadius:999, background:'var(--realisasi-soft, #dcfce7)', color:'var(--realisasi)'}}>
+                      Otomatis dari BOM
+                    </span>
+                  )}
+                </div>
+                <button className="btn btn-primary btn-sm" onClick={() => setShowBahanPicker(true)}>{I.plus()} Tambah Bahan</button>
+              </div>
+              <div className="line-items" style={{overflowX:'auto'}}>
+                <table style={{width:'100%', borderCollapse:'separate', borderSpacing:0, minWidth:640}}>
+                  <thead>
+                    <tr>
+                      <th style={thBahanS('26px', true)}>No</th>
+                      <th style={thBahanS('18%')}>Gd. Bahan</th>
+                      <th style={thBahanS('22%')}>Kode Bahan</th>
+                      <th style={thBahanS('16%')}>Merk Bahan</th>
+                      <th style={thBahanS('12%', true)}>Jumlah SPK</th>
+                      <th style={thBahanS('10%', true)}>Satuan</th>
+                      <th style={thBahanS('50px', true)}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {localBahan.length === 0 && (
+                      <tr><td colSpan={7} style={{padding:'20px 12px', textAlign:'center', color:'var(--text-3)', fontSize:13}}>
+                        Belum ada bahan. Klik "+ Tambah Bahan" untuk menambahkan.
+                      </td></tr>
+                    )}
+                    {localBahan.map((row, idx) => (
+                      <tr key={row.id}>
+                        <td style={{...tdBahanS, textAlign:'center', color:'var(--text-3)', fontSize:12}}>{idx + 1}</td>
+                        <td style={tdBahanS}>
+                          <select className="select" style={{width:'100%', fontSize:12, padding:'3px 6px'}}
+                            value={row.gudang} onChange={e => updateLocalBahan(row.id, 'gudang', e.target.value)}>
+                            <option value="">— Pilih —</option>
+                            {MF_GUDANG_LIST.map(g => <option key={g}>{g}</option>)}
+                          </select>
+                        </td>
+                        <td style={tdBahanS}><span style={{color:'var(--primary)', fontWeight:500}}>{row.kodeBahan}</span></td>
+                        <td style={tdBahanS}>{row.merkBahan || <span style={{color:'var(--text-3)'}}>—</span>}</td>
+                        <td style={tdBahanS}>
+                          <input className="input" type="number" min="0" step="0.01"
+                            style={{width:'100%', fontSize:12, padding:'3px 6px', textAlign:'right'}}
+                            placeholder="0.00" value={row.jumlah}
+                            onChange={e => updateLocalBahan(row.id, 'jumlah', e.target.value)} />
+                        </td>
+                        <td style={tdBahanS}>
+                          <select className="select" style={{width:'100%', fontSize:12, padding:'3px 6px'}}
+                            value={row.satuan} onChange={e => updateLocalBahan(row.id, 'satuan', e.target.value)}>
+                            {MF_SATUAN_SPK.map(s => <option key={s}>{s}</option>)}
+                          </select>
+                        </td>
+                        <td style={{...tdBahanS, textAlign:'center'}}>
+                          <button className="btn btn-icon btn-sm del" title="Hapus" onClick={() => removeLocalBahan(row.id)}>{I.trash()}</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
 
           <div className="modal-foot">
@@ -588,7 +798,12 @@ function MfBarangJadiEntryModal({ data, onClose, onSave }) {
         </div>
       </div>
       {showBarangPicker && (
-        <MfPilihBarangModal single zIndex={300} onConfirm={onBarangPick} onCancel={() => setShowBarangPicker(false)} />
+        <MfPilihBarangModal single zIndex={300}
+          items={BARANG_JADI.map(b => ({ kode:b.kodeProduk, nama:b.namaProduk }))}
+          onConfirm={onBarangPick} onCancel={() => setShowBarangPicker(false)} />
+      )}
+      {showBahanPicker && (
+        <MfPilihBarangModal zIndex={300} items={bahanPickerItems} onConfirm={onBahanPick} onCancel={() => setShowBahanPicker(false)} />
       )}
     </>
   );
@@ -596,7 +811,7 @@ function MfBarangJadiEntryModal({ data, onClose, onSave }) {
 
 // ─── Barang Pakai Entry Modal ─────────────────────────────────────────────────
 
-function MfBarangPakaiEntryModal({ data, onClose, onSave }) {
+function MfBarangPakaiEntryModal({ data, spkRows, onClose, onSave }) {
   const [kodeBarang,     setKodeBarang]     = React.useState(data?.kodeBarang     || '');
   const [namaBarang,     setNamaBarang]     = React.useState(data?.namaBarang     || '');
   const [jumlah,         setJumlah]         = React.useState(data?.jumlah         || '');
@@ -612,7 +827,18 @@ function MfBarangPakaiEntryModal({ data, onClose, onSave }) {
     return () => document.removeEventListener('keydown', h);
   }, [showBarangPicker, showSpkPicker, onClose]);
 
-  const onBarangPick = (picked) => { const b = picked[0]; if (b) { setKodeBarang(b.code); setNamaBarang(b.nama); } setShowBarangPicker(false); };
+  // Barang di sini = Barang Lain (BARANG_LAIN, modul Barang) — bahan penolong/lain yang dipakai
+  // habis di produksi, bukan MF_BARANG lagi. Satuan ikut auto-fill dari satuanKonversi pertama
+  // barang itu (brgBomResolveKomponen, sama resolver dipakai BOM) — user masih bisa mengubahnya.
+  const onBarangPick = (picked) => {
+    const b = picked[0];
+    if (b) {
+      setKodeBarang(b.kode); setNamaBarang(b.nama);
+      const resolved = brgBomResolveKomponen(b.kode);
+      if (resolved?.satuan) setSatuan(resolved.satuan);
+    }
+    setShowBarangPicker(false);
+  };
   const onSpkPick    = (s) => { setNoSpk(s.no); setShowSpkPicker(false); };
 
   return (
@@ -682,10 +908,12 @@ function MfBarangPakaiEntryModal({ data, onClose, onSave }) {
         </div>
       </div>
       {showBarangPicker && (
-        <MfPilihBarangModal single zIndex={300} onConfirm={onBarangPick} onCancel={() => setShowBarangPicker(false)} />
+        <MfPilihBarangModal single zIndex={300}
+          items={BARANG_LAIN.map(b => ({ kode:b.kodeProduk, nama:b.namaProduk }))}
+          onConfirm={onBarangPick} onCancel={() => setShowBarangPicker(false)} />
       )}
       {showSpkPicker && (
-        <MfSpkPickerModal onPick={onSpkPick} onClose={() => setShowSpkPicker(false)} />
+        <MfSpkPickerModal rows={spkRows} onPick={onSpkPick} onClose={() => setShowSpkPicker(false)} />
       )}
     </>
   );
