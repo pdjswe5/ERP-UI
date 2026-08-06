@@ -614,11 +614,11 @@ function Toast({ msg, kind = 'success' }) {
 }
 
 // ---------- Confirmation Modal (Batalkan / Selesaikan Manual / dll) ----------
-function ConfirmationModal({ title, message, onConfirm, onCancel, confirmLabel='Konfirmasi', cancelLabel='Batal', confirmKind='danger', requireReason=true }) {
+function ConfirmationModal({ title, message, onConfirm, onCancel, confirmLabel='Konfirmasi', cancelLabel='Batal', confirmKind='danger', requireReason=true, zIndex=110 }) {
   const [reason, setReason] = React.useState('');
   const canConfirm = !requireReason || reason.trim();
   return (
-    <div className="modal-backdrop" style={{zIndex:110}}>
+    <div className="modal-backdrop" style={{zIndex}}>
       <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:480}}>
         <div className="modal-head"><h2>{title}</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
         <div className="modal-body">

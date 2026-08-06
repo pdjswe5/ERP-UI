@@ -36,6 +36,21 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
 
   const [modal, setModal] = React.useState(null);
   const close = () => setModal(null);
+  // Root-cause fix: 9 halaman transaksi Keuangan (Kas/Bank/Transfer/Giro Masuk-Keluar, Pelunasan
+  // Piutang/Hutang) sebelumnya tidak punya aksi batal sama sekali di TxPage — beda dari Pembelian/
+  // Penjualan/Manufaktur yang semua sudah punya "Batalkan Transaksi". Pola & field (Status:'Batal',
+  // Batal:true, Alasan_Status) ditiru persis dari PoPage.jsx/InvoicePage.jsx.
+  const [confirmCancel, setConfirmCancel] = React.useState(null);
+  // txMap (di bawah) cuma terisi saat activeSub truthy — aman, karena confirmCancel/tombol Batalkan
+  // cuma bisa dipicu dari baris TxPage, yang hanya ter-render saat activeSub adalah salah satu kind
+  // transaksi ini.
+  const cancelFromList = (reason) => {
+    txMap[activeSub].setRows(prev => prev.map(r => r.no === confirmCancel.no
+      ? { ...r, status:'Batal', Batal:true, Alasan_Status: reason || 'Dibatalkan oleh operator' }
+      : r));
+    window.__erpToast && window.__erpToast('Transaksi dibatalkan.');
+    setConfirmCancel(null);
+  };
 
   // Upsert-by-key generik — pola sama saveToRows di ManufakturPage.jsx/AkuntanPage.jsx (lama).
   // keyField default 'no' (semua dokumen transaksi), KbgModal pakai 'kode' (master akun).
@@ -81,6 +96,12 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
     setModal(null);
     window.__erpToast && window.__erpToast('Pelunasan berhasil disimpan.');
   };
+
+  // Cetak Pelunasan Piutang/Hutang — AkCetakModal variant="pelunasan" (lihat AkCetakModal.jsx),
+  // dokumennya beda bentuk dari Jurnal (items[]/penerimaan[] terpisah, bukan 1 ledger debit/kredit).
+  // cetakDoc null = modal tertutup; row null (dipicu tombol "Cetak" header) = semua dokumen
+  // ke-select default; row terisi (dipicu icon Cetak per baris) = cuma baris itu yang ke-select.
+  const [cetakDoc, setCetakDoc] = React.useState(null);
 
   if (!activeSub) return (
     <KeuanganDashboard onOpenSub={onSubChange} onNavigate={onNavigate}
@@ -141,6 +162,9 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
           totalKey={['pp','ph'].includes(activeSub)?'total':'nominal'}
           onAdd={()=>setModal({kind: txMap[activeSub].modalKind})}
           onEdit={(d)=>setModal({kind: txMap[activeSub].modalKind, data:d})}
+          onCancelDoc={(r)=>setConfirmCancel(r)}
+          onCetak={['pp','ph'].includes(activeSub) ? ()=>setCetakDoc({kind:activeSub, row:null}) : undefined}
+          onCetakRow={['pp','ph'].includes(activeSub) ? (r)=>setCetakDoc({kind:activeSub, row:r}) : undefined}
         />
       )}
 
@@ -159,6 +183,26 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
           saldoItems={modal.kind==='pp' ? saldoPiutangItems : saldoHutangItems}
           partnerList={modal.kind==='pp' ? PJ_PELANGGAN : PB_SUPPLIER}
           onClose={close} onSave={savePelunasan(modal.kind)}/>
+      )}
+
+      {confirmCancel && (
+        <ConfirmationModal
+          title="Batalkan Transaksi"
+          message={`Transaksi "${confirmCancel.no}" akan dibatalkan. Transaksi yang sudah dibatalkan tidak bisa diaktifkan kembali.`}
+          confirmLabel="Batalkan" confirmKind="danger"
+          onCancel={()=>setConfirmCancel(null)}
+          onConfirm={cancelFromList}
+        />
+      )}
+
+      {cetakDoc && (
+        <AkCetakModal variant="pelunasan"
+          docLabel={cetakDoc.kind==='pp' ? 'Pelunasan Piutang' : 'Pelunasan Hutang'}
+          rows={cetakDoc.kind==='pp' ? pelunasanPiutangRows : pelunasanHutangRows}
+          noKey="no" tglKey="tgl" isPiutang={cetakDoc.kind==='pp'}
+          initialSelected={cetakDoc.row ? [cetakDoc.row.no] : null}
+          onClose={()=>setCetakDoc(null)}
+        />
       )}
     </div>
   );

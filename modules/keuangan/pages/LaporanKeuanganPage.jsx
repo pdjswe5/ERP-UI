@@ -26,7 +26,7 @@ function LaporanKeuanganList({ report, rows, onAdd, onEdit, onCetak, onCetakRow 
               {AK_STATUS_LAPORAN_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div className="filter-actions"><button className="btn" onClick={reset}>Reset</button><button className="btn btn-primary">{I.filter()} Cari</button></div>
+          <div className="filter-actions"><button className="btn" onClick={reset}>Reset</button><button className="btn">{I.filter()} Cari</button></div>
         </div>
       </div>
 

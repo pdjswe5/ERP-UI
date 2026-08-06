@@ -99,7 +99,7 @@ function KonfirmasiPenjualan({ rows, onAdd, onView, onEdit, onCancel, onCetak, o
           </div>
           <div className="filter-actions" style={{alignSelf:'flex-end'}}>
             <button className="btn" onClick={reset}>Reset</button>
-            <button className="btn btn-primary">{I.filter()} Cari</button>
+            <button className="btn">{I.filter()} Cari</button>
           </div>
         </div>
       </div>

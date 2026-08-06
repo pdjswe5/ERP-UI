@@ -11,10 +11,15 @@
 
 // ─── Generic Transaction Page Builder ───────────────────────────────────────
 
-function TxPage({ title, sub, rows, columns, onAdd, onEdit, totalKey, totalLabel='Total', extraTotals=[] }) {
+function TxPage({ title, sub, rows, columns, onAdd, onEdit, onCancelDoc, onCetak, onCetakRow, totalKey, totalLabel='Total', extraTotals=[] }) {
   const [q, setQ] = React.useState('');
   const filtered = rows.filter(r => !q || JSON.stringify(r).toLowerCase().includes(q.toLowerCase()));
   const totalAmt = filtered.reduce((s,r)=>s+(+r[totalKey]||0),0);
+  // Root-cause fix: sebelumnya row-action cuma Edit+Print, tidak ada delete/cancel sama sekali di
+  // 9 halaman transaksi Keuangan — beda dari modul transaksi lain (Pembelian/Penjualan/Manufaktur)
+  // yang semua sudah punya "Batalkan Transaksi" soft-cancel. Pola ditiru persis dari
+  // PbDocList.jsx (isCancelled + tombol I.fileX disabled kalau sudah batal).
+  const isCancelled = (r) => !!(r.Batal || r.status === 'Batal');
   return (
     <>
       <div className="page-head">
@@ -22,7 +27,8 @@ function TxPage({ title, sub, rows, columns, onAdd, onEdit, totalKey, totalLabel
         <div style={{display:'flex', gap:8}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
           <button className="btn btn-sm">{I.download()} Export</button>
-          {onAdd && <button className="btn btn-primary" onClick={onAdd}>{I.plus()} Tambah</button>}
+          {onCetak && <button className="btn btn-sm" onClick={onCetak}>{I.print()} Cetak</button>}
+          {onAdd && <button className="btn btn-primary" onClick={onAdd}>{I.plus()} {title} Baru</button>}
         </div>
       </div>
 
@@ -31,7 +37,7 @@ function TxPage({ title, sub, rows, columns, onAdd, onEdit, totalKey, totalLabel
           <div className="field"><label>Periode</label><input className="input" type="month" defaultValue="2026-04"/></div>
           <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="No., nama, atau deskripsi…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
           <div className="field"><label>Status</label><select className="select"><option>Semua</option><option>Posted</option><option>Pending</option><option>Draft</option></select></div>
-          <div className="filter-actions"><button className="btn">Reset</button><button className="btn btn-primary">{I.filter()} Cari</button></div>
+          <div className="filter-actions"><button className="btn">Reset</button><button className="btn">{I.filter()} Cari</button></div>
         </div>
       </div>
 
@@ -54,8 +60,11 @@ function TxPage({ title, sub, rows, columns, onAdd, onEdit, totalKey, totalLabel
                   ))}
                   <td onClick={e=>e.stopPropagation()}>
                     <div className="row-actions">
-                      <button className="btn btn-icon btn-sm" onClick={()=>onEdit && onEdit(r)}>{I.edit()}</button>
-                      <button className="btn btn-icon btn-sm">{I.print()}</button>
+                      <button className="btn btn-icon btn-sm" title="Edit" onClick={()=>onEdit && onEdit(r)}>{I.edit()}</button>
+                      {onCancelDoc && (
+                        <button className="btn btn-icon btn-sm del" title={isCancelled(r) ? 'Sudah dibatalkan' : 'Batalkan Transaksi'} disabled={isCancelled(r)} onClick={()=>onCancelDoc(r)}>{I.fileX(14)}</button>
+                      )}
+                      <button className="btn btn-icon btn-sm" title="Cetak" onClick={()=>onCetakRow ? onCetakRow(r) : (window.__erpToast && window.__erpToast('Fitur cetak belum tersedia pada prototipe ini.'))}>{I.print()}</button>
                     </div>
                   </td>
                 </tr>
@@ -69,8 +78,12 @@ function TxPage({ title, sub, rows, columns, onAdd, onEdit, totalKey, totalLabel
 }
 
 // Status pill helper
+// Root-cause fix: 'Tolak' dulu di-map ke class 'cancel', tapi styles.css cuma punya .pill.cancelled
+// (bukan .pill.cancel) — jadi "Tolak" render tanpa styling sama sekali. 'Batal' ditambahkan di sini
+// juga (dipakai tombol "Batalkan Transaksi" baru di TxPage) supaya baris yang dibatalkan langsung
+// dapat pill merah yang benar, bukan fallback abu-abu 'draft'.
 const stPill = (s) => {
-  const map = { Posted:'realisasi', Lunas:'realisasi', Cair:'realisasi', Pending:'pending', Outstanding:'pending', Sebagian:'pending', Draft:'draft', Tolak:'cancel' };
+  const map = { Posted:'realisasi', Lunas:'realisasi', Cair:'realisasi', Pending:'pending', Outstanding:'pending', Sebagian:'pending', Draft:'draft', Tolak:'cancelled', Batal:'cancelled' };
   return <span className={`pill ${map[s] || 'draft'}`}>{s}</span>;
 };
 
@@ -606,8 +619,10 @@ function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partner
               <h4 style={{margin:0}}>Tabel Pelunasan</h4>
               {!isEdit && (
                 <div style={{display:'flex', gap:6}}>
-                  <button className="btn btn-sm btn-primary" disabled={!kodePartner} onClick={()=>setShowPicker(true)}>{I.plus()} Pilih Nota/Uang Muka</button>
-                  <button className="btn btn-sm" disabled={!kodePartner} onClick={()=>setShowTambahUm(true)}>{I.plus()} Tambah Uang Muka</button>
+                  <button className="btn btn-sm btn-primary" disabled={!kodePartner} title={!kodePartner ? 'Pilih Pelanggan/Supplier terlebih dahulu.' : undefined}
+                    onClick={()=>{ if (!kodePartner) { window.__erpToast && window.__erpToast('Pilih Pelanggan/Supplier terlebih dahulu.'); return; } setShowPicker(true); }}>{I.plus()} Pilih Nota/Uang Muka</button>
+                  <button className="btn btn-sm" disabled={!kodePartner} title={!kodePartner ? 'Pilih Pelanggan/Supplier terlebih dahulu.' : undefined}
+                    onClick={()=>{ if (!kodePartner) { window.__erpToast && window.__erpToast('Pilih Pelanggan/Supplier terlebih dahulu.'); return; } setShowTambahUm(true); }}>{I.plus()} Tambah Uang Muka</button>
                 </div>
               )}
             </div>
@@ -633,7 +648,7 @@ function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partner
                       <td style={{...tdS, textAlign:'right'}}>{isEdit ? <span className="mono">{fmtRp(it.kredit)}</span> : (
                         <NumInput className="input" value={it.kredit} onChange={val=>updateItem(it.id,'kredit',val)} style={{width:100, textAlign:'right', padding:'3px 6px'}}/>
                       )}</td>
-                      {!isEdit && <td style={{...tdS, textAlign:'center'}}><button className="btn btn-icon btn-sm del" onClick={()=>removeItem(it.id)}>{I.trash()}</button></td>}
+                      {!isEdit && <td style={{...tdS, textAlign:'center'}}><button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>removeItem(it.id)}>{I.trash()}</button></td>}
                     </tr>
                   ))}
                 </tbody>
@@ -681,7 +696,7 @@ function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partner
                       <td style={{...tdS, textAlign:'right'}}>{isEdit ? <span className="mono">{fmtRp(p.keluar)}</span> : (
                         <NumInput className="input" value={p.keluar} onChange={val=>updatePenerimaan(p.id, {keluar:+val||0})} style={{width:100, textAlign:'right', padding:'3px 6px'}}/>
                       )}</td>
-                      {!isEdit && <td style={{...tdS, textAlign:'center'}}><button className="btn btn-icon btn-sm del" onClick={()=>removePenerimaan(p.id)}>{I.trash()}</button></td>}
+                      {!isEdit && <td style={{...tdS, textAlign:'center'}}><button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>removePenerimaan(p.id)}>{I.trash()}</button></td>}
                     </tr>
                   ))}
                   {!isEdit && penerimaan.some(p=>p.metode==='Giro') && penerimaan.filter(p=>p.metode==='Giro').map(p => (

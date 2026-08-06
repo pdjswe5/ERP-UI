@@ -27,7 +27,7 @@ function PemasokList({ rows, onAdd, onView, onEdit, onDeactivate, onActivate }) 
             <option value="nonaktif">Non-aktif</option>
           </select>
         </div>
-        <div className="filter-actions"><button className="btn btn-primary">{I.filter()} Cari</button></div>
+        <div className="filter-actions"><button className="btn">{I.filter()} Cari</button></div>
       </div></div>
       <div className="table-card">
         <div className="table-toolbar"><div className="table-toolbar-left"><b>Jumlah: {filtered.length}</b></div></div>

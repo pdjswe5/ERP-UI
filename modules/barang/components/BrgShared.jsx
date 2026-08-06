@@ -40,7 +40,7 @@ function BrgHeader({ title, sub, onAdd, addLabel='Tambah', extra }) {
   );
 }
 
-function BrgModalShell({ title, sub, onClose, onSave, children, saveLabel='Simpan', wide=false, maxWidth, footerExtra }) {
+function BrgModalShell({ title, sub, onClose, onSave, children, saveLabel='Simpan', wide=false, maxWidth, footerExtra, saveDisabled=false }) {
   return (
     <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={wide ? {maxWidth: maxWidth || 1100, maxHeight:'92vh'} : {maxWidth:700}}>
@@ -54,7 +54,7 @@ function BrgModalShell({ title, sub, onClose, onSave, children, saveLabel='Simpa
           <div className="right" style={{display:'flex', gap:8}}>
             {footerExtra}
             <button className="btn" onClick={onClose}>Batal</button>
-            <button className="btn btn-primary" onClick={onSave}>{I.check()} {saveLabel}</button>
+            <button className="btn btn-primary" onClick={onSave} disabled={saveDisabled}>{I.check()} {saveLabel}</button>
           </div>
         </div>
       </div>
@@ -135,7 +135,7 @@ function BrgInlineTable({ title, columns, rows, setRows, addLabel, shortcut, sof
                   {softDelete && r._deleted ? (
                     <button className="btn btn-icon btn-sm" style={{color:'var(--realisasi)'}} onClick={() => restore(idx)} title="Restore">{I.refresh(14)}</button>
                   ) : (
-                    <button className="btn btn-icon btn-sm del" onClick={() => remove(idx)}>{I.trash()}</button>
+                    <button className="btn btn-icon btn-sm del" title="Hapus" onClick={() => remove(idx)}>{I.trash()}</button>
                   )}
                 </td>
               </tr>

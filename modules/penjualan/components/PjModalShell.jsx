@@ -239,13 +239,15 @@ function PjDocModal({ title, data, tabs, showTotals, showRealisasi, prefix, xwid
     return { id:t.id, label:t.label, content: (
       <div className="panel">
         {t.produk
-          ? <PjItemTable title={t.label} rows={form[t.itemsKey]} setRows={v=>set(t.itemsKey,v)} showRealisasi={showRealisasi && !isCreate} lockItems={t.lockItems} disabled={isView} onPickItems={!isView ? ()=>setPicker(t) : null} />
+          ? <PjItemTable title={t.label} rows={form[t.itemsKey]} setRows={v=>set(t.itemsKey,v)} showRealisasi={showRealisasi && !isCreate} lockItems={t.lockItems} disabled={isView} onPickItems={!isView ? ()=>setPicker(t) : null}
+              addLocked={noBuktiLocked} addLockedMsg="Pilih No. Bukti (Tunai/Kredit) terlebih dahulu." />
           : <InlineTable
               title={t.label}
               columns={isCreate ? (t.columns||[]).filter(c => !c.hideOnCreate) : (t.columns||[])}
               rows={form[t.itemsKey]} setRows={v=>set(t.itemsKey,v)} addLabel={`Tambah ${t.label}`}
               disabled={isView} itemSource={t.itemSource} lockItems={t.lockItems} showTotal={t.showTotal}
               onPickItems={!isView && (t.itemSource || t.PickerComponent) ? ()=>setPicker(t) : null}
+              addLocked={noBuktiLocked} addLockedMsg="Pilih No. Bukti (Tunai/Kredit) terlebih dahulu."
             />}
       </div>
     )};

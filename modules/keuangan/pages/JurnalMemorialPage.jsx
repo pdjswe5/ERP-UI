@@ -32,7 +32,7 @@ function JurnalMemorial({ rows, onAdd, onEdit, onCetak, onCetakRow }) {
               {AK_STATUS_JURNAL_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div className="filter-actions"><button className="btn" onClick={reset}>Reset</button><button className="btn btn-primary">{I.filter()} Cari</button></div>
+          <div className="filter-actions"><button className="btn" onClick={reset}>Reset</button><button className="btn">{I.filter()} Cari</button></div>
         </div>
       </div>
 
@@ -146,7 +146,7 @@ function JurnalModal({ data, akunRows, onClose, onSave }) {
                   <td><input className="cell" placeholder="Deskripsi…" value={l.desc} onChange={e=>updLine(l.id, {desc:e.target.value})} style={{padding:'0 8px'}}/></td>
                   <td><input className="cell num" type="number" value={l.d} onChange={e=>updLine(l.id, {d:+e.target.value, k:0})}/></td>
                   <td><input className="cell num" type="number" value={l.k} onChange={e=>updLine(l.id, {k:+e.target.value, d:0})}/></td>
-                  <td><button className="btn btn-icon btn-sm del" onClick={()=>remLine(l.id)} style={{color:'var(--text-3)'}}>{I.trash()}</button></td>
+                  <td><button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>remLine(l.id)} style={{color:'var(--text-3)'}}>{I.trash()}</button></td>
                 </tr>
               ))}
             </tbody>

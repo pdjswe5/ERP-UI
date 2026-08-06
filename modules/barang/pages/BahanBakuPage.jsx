@@ -8,7 +8,7 @@ function BahanBakuList({ rows, onAdd, onEdit, onDelete }) {
       <BrgHeader title="Bahan Baku" sub={`Jumlah: ${filtered.length} bahan baku`} onAdd={onAdd} addLabel="Tambah Bahan Baku" />
       <div className="filter-bar"><div className="filter-grid">
         <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="Kode atau nama bahan…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
-        <div className="filter-actions"><button className="btn btn-primary">{I.filter()} Cari</button></div>
+        <div className="filter-actions"><button className="btn">{I.filter()} Cari</button></div>
       </div></div>
       <div className="table-card">
         <div className="table-toolbar"><div className="table-toolbar-left"><b>Jumlah: {filtered.length}</b></div></div>
@@ -26,7 +26,7 @@ function BahanBakuList({ rows, onAdd, onEdit, onDelete }) {
                   <td className="mono">{r.satuan}</td>
                   <td className="mono">{fmtRp(r.hppStandar)}</td>
                   <td>{brgAktifPill(r.aktif)}</td>
-                  <td onClick={e=>e.stopPropagation()}><div className="row-actions"><button className="btn btn-icon btn-sm" onClick={()=>onEdit(r)}>{I.edit()}</button><button className="btn btn-icon btn-sm del" onClick={()=>onDelete(r)}>{I.trash()}</button></div></td>
+                  <td onClick={e=>e.stopPropagation()}><div className="row-actions"><button className="btn btn-icon btn-sm" title="Edit" onClick={()=>onEdit(r)}>{I.edit()}</button><button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>onDelete(r)}>{I.trash()}</button></div></td>
                 </tr>
               ))}
             </tbody>

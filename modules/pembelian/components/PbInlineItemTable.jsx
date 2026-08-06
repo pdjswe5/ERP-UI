@@ -1,6 +1,6 @@
 // Pembelian — tabel item editable (produk & biaya), dengan picker & soft-delete baris
 
-function PbInlineItemTable({ title, columns, rows, setRows, addLabel='Tambah Baris', shortcut, itemSource, showTotal, disabled, onPickItems, lockItems }) {
+function PbInlineItemTable({ title, columns, rows, setRows, addLabel='Tambah Baris', shortcut, itemSource, showTotal, disabled, onPickItems, lockItems, addLocked, addLockedMsg='Lengkapi data utama terlebih dahulu.' }) {
   const update = (idx, key, value) => {
     let row = { ...rows[idx], [key]: value };
     if (itemSource && key === itemSource.codeKey && !lockItems) {
@@ -83,11 +83,14 @@ function PbInlineItemTable({ title, columns, rows, setRows, addLabel='Tambah Bar
           <div style={{display:'flex', gap:8}}>
             {lockItems && onPickItems ? (
               // Kode/Nama item terkunci -> satu tombol saja, pakai alur picker supaya kode+nama selalu terisi bersamaan
-              <button className="btn btn-primary btn-sm" onClick={onPickItems}>{I.plus()} {addLabel}</button>
+              <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+                onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } onPickItems(); }}>{I.plus()} {addLabel}</button>
             ) : (
               <>
-                {onPickItems && <button className="btn btn-primary btn-sm" onClick={onPickItems}>{I.plus()} Pilih Barang</button>}
-                {!lockItems && <button className="btn btn-primary btn-sm" onClick={add}>{I.plus()} {addLabel}</button>}
+                {onPickItems && <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+                  onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } onPickItems(); }}>{I.plus()} Pilih Barang</button>}
+                {!lockItems && <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+                  onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } add(); }}>{I.plus()} {addLabel}</button>}
               </>
             )}
           </div>
@@ -109,7 +112,7 @@ function PbInlineItemTable({ title, columns, rows, setRows, addLabel='Tambah Bar
                     {r._deleted ? (
                       <button className="btn btn-icon btn-sm" style={{color:'var(--realisasi)'}} onClick={() => restore(idx)} title="Restore">{I.refresh(14)}</button>
                     ) : (
-                      <button className="btn btn-icon btn-sm del" onClick={() => softDelete(idx)}>{I.trash()}</button>
+                      <button className="btn btn-icon btn-sm del" title="Hapus" onClick={() => softDelete(idx)}>{I.trash()}</button>
                     )}
                   </td>
                 )}

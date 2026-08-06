@@ -552,7 +552,18 @@ table.data tbody tr:last-child td { border-bottom: 0; }
 .row-actions .btn-icon:disabled,
 .row-actions .btn-icon:disabled:hover { color: var(--text-3); background: transparent; cursor: not-allowed; }
 
-.btn:disabled { cursor: not-allowed; }
+/* Root-cause fix: sebelumnya cuma cursor yang berubah, jadi .btn-primary/.btn-danger dst tetap
+   tampil warna solid saat disabled — kelihatan seperti masih bisa diklik. Selector class+pseudo-
+   class ini otomatis lebih spesifik dari .btn-primary dkk (satu class saja), jadi menang di
+   urutan manapun tanpa perlu override per-varian. */
+.btn:disabled,
+.btn:disabled:hover {
+  background: var(--bg-sub);
+  color: var(--text);
+  border-color: var(--border);
+  opacity: 1;
+  cursor: not-allowed;
+}
 .btn-danger-outline:disabled,
 .btn-danger-outline:disabled:hover { background: var(--bg-sub); border-color: var(--border); color: var(--text-3); }
 

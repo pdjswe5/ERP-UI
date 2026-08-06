@@ -17,7 +17,7 @@ function BarangJadiList({ rows, onAddUmum, onAddPu, onEdit, onDelete }) {
         </>} />
       <div className="filter-bar"><div className="filter-grid">
         <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="Kode atau nama barang…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
-        <div className="filter-actions"><button className="btn btn-primary">{I.filter()} Cari</button></div>
+        <div className="filter-actions"><button className="btn">{I.filter()} Cari</button></div>
       </div></div>
       <div className="table-card">
         <div className="table-toolbar"><div className="table-toolbar-left"><b>Jumlah: {filtered.length}</b></div></div>
@@ -33,7 +33,7 @@ function BarangJadiList({ rows, onAddUmum, onAddPu, onEdit, onDelete }) {
                   <td><span className={`pill ${r.status==='AKTIF' ? 'approved' : 'cancelled'}`}>{r.status}</span></td>
                   <td className="mono">{fmtRp(r.hppStandar)}</td>
                   <td className="mono">{(r.detailsPU || []).length}</td>
-                  <td onClick={e=>e.stopPropagation()}><div className="row-actions"><button className="btn btn-icon btn-sm" onClick={()=>onEdit(r)}>{I.edit()}</button><button className="btn btn-icon btn-sm del" onClick={()=>onDelete(r)}>{I.trash()}</button></div></td>
+                  <td onClick={e=>e.stopPropagation()}><div className="row-actions"><button className="btn btn-icon btn-sm" title="Edit" onClick={()=>onEdit(r)}>{I.edit()}</button><button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>onDelete(r)}>{I.trash()}</button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -183,7 +183,7 @@ function LapisPuTable({ rows, setRows, productOptions }) {
                       <>
                         <button className="btn btn-icon btn-sm" disabled={idx===0} onClick={()=>move(idx,-1)} title="Naik">{I.chev(12,'up')}</button>
                         <button className="btn btn-icon btn-sm" disabled={idx===rows.length-1} onClick={()=>move(idx,1)} title="Turun">{I.chev(12,'down')}</button>
-                        <button className="btn btn-icon btn-sm del" onClick={()=>remove(idx)}>{I.trash()}</button>
+                        <button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>remove(idx)}>{I.trash()}</button>
                       </>
                     )}
                   </div>

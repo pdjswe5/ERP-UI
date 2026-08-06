@@ -23,7 +23,7 @@ function BomList({ rows, onAdd, onEdit, onDelete }) {
       <BrgHeader title="BOM / Resep Produksi" sub={`Jumlah: ${filtered.length} resep`} onAdd={onAdd} addLabel="Tambah BOM" />
       <div className="filter-bar"><div className="filter-grid">
         <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="Kode atau nama barang jadi…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
-        <div className="filter-actions"><button className="btn btn-primary">{I.filter()} Cari</button></div>
+        <div className="filter-actions"><button className="btn">{I.filter()} Cari</button></div>
       </div></div>
       <div className="table-card">
         <div className="table-toolbar"><div className="table-toolbar-left"><b>Jumlah: {filtered.length}</b></div></div>
@@ -43,8 +43,8 @@ function BomList({ rows, onAdd, onEdit, onDelete }) {
                     <td className="num mono">{r.komponen.length}</td>
                     <td onClick={e=>e.stopPropagation()}>
                       <div className="row-actions">
-                        <button className="btn btn-icon btn-sm" onClick={()=>onEdit(r)}>{I.edit()}</button>
-                        <button className="btn btn-icon btn-sm del" onClick={()=>onDelete(r)}>{I.trash()}</button>
+                        <button className="btn btn-icon btn-sm" title="Edit" onClick={()=>onEdit(r)}>{I.edit()}</button>
+                        <button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>onDelete(r)}>{I.trash()}</button>
                       </div>
                     </td>
                   </tr>
@@ -178,7 +178,8 @@ function BomDialog({ data, onClose, onSave }) {
     <>
       <BrgModalShell title={isCreate ? 'Tambah BOM' : `Edit BOM — ${kodeBarangJadi}`}
         sub="Hubungkan Barang Jadi dengan komponen Bahan Baku/Penolong/Lain."
-        onClose={onClose} onSave={handleSave} wide maxWidth={1120}>
+        onClose={onClose} onSave={handleSave} wide maxWidth={1120}
+        saveDisabled={!kodeBarangJadi || komponen.length === 0}>
         <div className="field">
           <label>Barang Jadi *</label>
           <input className="input" readOnly disabled={!isCreate}
@@ -217,7 +218,7 @@ function BomDialog({ data, onClose, onSave }) {
                           value={k.qtyPerUnit} onChange={e=>updateQty(k.kodeKomponen, e.target.value)} />
                       </td>
                       <td>{resolved?.satuan || '—'}</td>
-                      <td><button className="btn btn-icon btn-sm del" onClick={()=>removeKomponen(k.kodeKomponen)}>{I.trash()}</button></td>
+                      <td><button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>removeKomponen(k.kodeKomponen)}>{I.trash()}</button></td>
                     </tr>
                   );
                 })}

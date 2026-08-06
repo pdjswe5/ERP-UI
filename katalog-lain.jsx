@@ -303,6 +303,9 @@ function KLSimpleCatalog({ moduleTitle, addLabel='Tambah Data', initialRows, key
   const [modal, setModal] = React.useState(null);
   const [showModal, setShowModal] = React.useState(false);
   const [q, setQ] = React.useState('');
+  // Root-cause fix: tombol Hapus di bawah dulu tidak punya onClick sama sekali (no-op). Data master
+  // di sini bukan dokumen berstatus, jadi hard delete (hapus baris sungguhan) lewat konfirmasi.
+  const [pendingDelete, setPendingDelete] = React.useState(null);
   const filtered = rows.filter(r => !q || listColumns.some(c => String(r[c.key] ?? '').toLowerCase().includes(q.toLowerCase())));
   const openAdd = () => { setModal(null); setShowModal(1); };
   const openEdit = (r) => { setModal(r); setShowModal(2); };
@@ -316,7 +319,7 @@ function KLSimpleCatalog({ moduleTitle, addLabel='Tambah Data', initialRows, key
       <KLHeader title={moduleTitle} sub={`Jumlah: ${filtered.length} data${note ? ' · ' + note : ''}`} onAdd={openAdd} addLabel={addLabel} />
       <div className="filter-bar"><div className="filter-grid">
         <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="Cari…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
-        <div className="filter-actions"><button className="btn btn-primary">{I.filter()} Cari</button></div>
+        <div className="filter-actions"><button className="btn">{I.filter()} Cari</button></div>
       </div></div>
       <div className="table-card">
         <div className="table-toolbar"><div className="table-toolbar-left"><b>Jumlah: {filtered.length}</b></div></div>
@@ -334,7 +337,7 @@ function KLSimpleCatalog({ moduleTitle, addLabel='Tambah Data', initialRows, key
                   <td onClick={e=>e.stopPropagation()}>
                     <div className="row-actions">
                       <button className="btn btn-icon btn-sm" title="Edit" onClick={()=>openEdit(r)}>{I.edit()}</button>
-                      <button className="btn btn-icon btn-sm del" title="Hapus">{I.trash()}</button>
+                      <button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>setPendingDelete(r)}>{I.trash()}</button>
                     </div>
                   </td>
                 </tr>
@@ -345,6 +348,17 @@ function KLSimpleCatalog({ moduleTitle, addLabel='Tambah Data', initialRows, key
         <div className="pager"><div>Menampilkan <b>1</b>–<b>{filtered.length}</b> dari <b>{filtered.length}</b></div></div>
       </div>
       {showModal && <KLGenericModal moduleTitle={moduleTitle} data={modal} fields={fields} formCols={formCols} onClose={()=>setShowModal(false)} onSave={save} />}
+      {pendingDelete && (
+        <ConfirmationModal
+          title="Hapus Data?" message={`Data "${pendingDelete[keyField]}" akan dihapus permanen dari ${moduleTitle}.`}
+          confirmLabel="Hapus" confirmKind="danger" requireReason={false}
+          onCancel={()=>setPendingDelete(null)}
+          onConfirm={()=>{
+            setRows(prev => prev.filter(x => x[keyField] !== pendingDelete[keyField]));
+            window.__erpToast && window.__erpToast(`${moduleTitle} berhasil dihapus.`);
+            setPendingDelete(null);
+          }} />
+      )}
     </>
   );
 }
@@ -754,8 +768,7 @@ function KLAkunBukuBesarPage() {
 function KLAktivaPage() {
   return (
     <KLSimpleCatalog
-      moduleTitle="Katalog Aktiva" addLabel="Tambah Aktiva (Prototype)" keyField="noAktiva" initialRows={KL_AKTIVA}
-      note="API sumber hanya menyediakan READ/UPDATE — tambah data bersifat prototype-only"
+      moduleTitle="Katalog Aktiva" addLabel="Tambah Aktiva" keyField="noAktiva" initialRows={KL_AKTIVA}
       listColumns={[
         { key:'noAktiva', label:'No. Aktiva', mono:true },
         { key:'namaAktiva', label:'Nama' },

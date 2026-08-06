@@ -260,6 +260,8 @@ function PbModalShell({ title, data, tabs, docKind, showTotals, prefix, initialF
             disabled={isView}
             onPickItems={!isView && t.itemSource ? () => setPicker(t) : null}
             lockItems={t.lockItems}
+            addLocked={noBuktiLocked}
+            addLockedMsg="Pilih No. Bukti (Tunai/Kredit) terlebih dahulu."
           />
         </div>
       ),

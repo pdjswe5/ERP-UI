@@ -151,6 +151,8 @@ function PgSimpleCatalog({ moduleTitle, addLabel='Tambah Data', initialRows, key
   const [modal, setModal] = React.useState(null);
   const [showModal, setShowModal] = React.useState(false);
   const [q, setQ] = React.useState('');
+  // Root-cause fix: tombol Hapus di bawah dulu tidak punya onClick sama sekali (no-op).
+  const [pendingDelete, setPendingDelete] = React.useState(null);
   const filtered = rows.filter(r => !q || listColumns.some(c => String(r[c.key] ?? '').toLowerCase().includes(q.toLowerCase())));
   const openAdd = () => { setModal(null); setShowModal(1); };
   const openEdit = (r) => { setModal(r); setShowModal(2); };
@@ -164,7 +166,7 @@ function PgSimpleCatalog({ moduleTitle, addLabel='Tambah Data', initialRows, key
       <PgHeader title={moduleTitle} sub={`Jumlah: ${filtered.length} data`} onAdd={openAdd} addLabel={addLabel} />
       <div className="filter-bar"><div className="filter-grid">
         <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="Cari…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
-        <div className="filter-actions"><button className="btn btn-primary">{I.filter()} Cari</button></div>
+        <div className="filter-actions"><button className="btn">{I.filter()} Cari</button></div>
       </div></div>
       <div className="table-card">
         <div className="table-toolbar"><div className="table-toolbar-left"><b>Jumlah: {filtered.length}</b></div></div>
@@ -182,7 +184,7 @@ function PgSimpleCatalog({ moduleTitle, addLabel='Tambah Data', initialRows, key
                   <td onClick={e=>e.stopPropagation()}>
                     <div className="row-actions">
                       <button className="btn btn-icon btn-sm" title="Edit" onClick={()=>openEdit(r)}>{I.edit()}</button>
-                      <button className="btn btn-icon btn-sm del" title="Hapus">{I.trash()}</button>
+                      <button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>setPendingDelete(r)}>{I.trash()}</button>
                     </div>
                   </td>
                 </tr>
@@ -193,6 +195,17 @@ function PgSimpleCatalog({ moduleTitle, addLabel='Tambah Data', initialRows, key
         <div className="pager"><div>Menampilkan <b>1</b>–<b>{filtered.length}</b> dari <b>{filtered.length}</b></div></div>
       </div>
       {showModal && <PgGenericModal moduleTitle={moduleTitle} data={modal} fields={fields} formCols={formCols} onClose={()=>setShowModal(false)} onSave={save} />}
+      {pendingDelete && (
+        <ConfirmationModal
+          title="Hapus Data?" message={`Data "${pendingDelete[keyField]}" akan dihapus permanen dari ${moduleTitle}.`}
+          confirmLabel="Hapus" confirmKind="danger" requireReason={false}
+          onCancel={()=>setPendingDelete(null)}
+          onConfirm={()=>{
+            setRows(prev => prev.filter(x => x[keyField] !== pendingDelete[keyField]));
+            window.__erpToast && window.__erpToast(`${moduleTitle} berhasil dihapus.`);
+            setPendingDelete(null);
+          }} />
+      )}
     </>
   );
 }
@@ -253,6 +266,8 @@ function AksesUserList() {
   const [modal, setModal] = React.useState(null);
   const [showModal, setShowModal] = React.useState(false);
   const [q, setQ] = React.useState('');
+  // Root-cause fix: tombol Hapus di bawah dulu tidak punya onClick sama sekali (no-op).
+  const [pendingDelete, setPendingDelete] = React.useState(null);
   const filtered = rows.filter(r => !q || r.namaUser.toLowerCase().includes(q.toLowerCase()) || r.kodeUser.toLowerCase().includes(q.toLowerCase()));
   const save = (form) => {
     setRows(prev => showModal === 2 ? prev.map(r => r.kodeUser === modal.kodeUser ? form : r) : [...prev, form]);
@@ -264,7 +279,7 @@ function AksesUserList() {
       <PgHeader title="Akses User" sub={`Jumlah: ${filtered.length} user`} onAdd={()=>{setModal(null); setShowModal(1);}} addLabel="Tambah Akses" />
       <div className="filter-bar"><div className="filter-grid">
         <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="Kode atau nama user…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
-        <div className="filter-actions"><button className="btn btn-primary">{I.filter()} Cari</button></div>
+        <div className="filter-actions"><button className="btn">{I.filter()} Cari</button></div>
       </div></div>
       <div className="table-card">
         <div className="table-toolbar"><div className="table-toolbar-left"><b>Jumlah: {filtered.length}</b></div></div>
@@ -279,7 +294,7 @@ function AksesUserList() {
                   <td>{r.grupUser}</td>
                   <td className="mono">{r.menus.filter(m => m.view || m.add || m.edit || m.del || m.print || m.exportData).length} / {r.menus.length}</td>
                   <td>{pgAktifPill(r.aktif)}</td>
-                  <td onClick={e=>e.stopPropagation()}><div className="row-actions"><button className="btn btn-icon btn-sm" onClick={()=>{setModal(r); setShowModal(2);}}>{I.edit()}</button><button className="btn btn-icon btn-sm del">{I.trash()}</button></div></td>
+                  <td onClick={e=>e.stopPropagation()}><div className="row-actions"><button className="btn btn-icon btn-sm" title="Edit" onClick={()=>{setModal(r); setShowModal(2);}}>{I.edit()}</button><button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>setPendingDelete(r)}>{I.trash()}</button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -288,6 +303,17 @@ function AksesUserList() {
         <div className="pager"><div>Menampilkan <b>1</b>–<b>{filtered.length}</b> dari <b>{filtered.length}</b></div></div>
       </div>
       {showModal && <AksesUserModal data={modal} onClose={()=>setShowModal(false)} onSave={save} />}
+      {pendingDelete && (
+        <ConfirmationModal
+          title="Hapus Data?" message={`Akses user "${pendingDelete.namaUser}" akan dihapus permanen.`}
+          confirmLabel="Hapus" confirmKind="danger" requireReason={false}
+          onCancel={()=>setPendingDelete(null)}
+          onConfirm={()=>{
+            setRows(prev => prev.filter(x => x.kodeUser !== pendingDelete.kodeUser));
+            window.__erpToast && window.__erpToast('Akses user berhasil dihapus.');
+            setPendingDelete(null);
+          }} />
+      )}
     </>
   );
 }

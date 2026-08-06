@@ -12,6 +12,10 @@
 //   <AkCetakModal variant="jurnal" docLabel="Jurnal Memorial" rows={jurnalRows} noKey="no" tglKey="tgl"
 //     akunRows={akunRows} statusFilter={{options:AK_STATUS_JURNAL_OPTS.map(s=>({value:s,label:s})), match:(r,v)=>r.status===v}}
 //     initialSelected={cetakRow?[cetakRow.no]:null} onClose={...} />
+//   <AkCetakModal variant="pelunasan" docLabel="Pelunasan Piutang" rows={pelunasanPiutangRows} noKey="no" tglKey="tgl"
+//     isPiutang initialSelected={cetakRow?[cetakRow.no]:null} onClose={...} /> — Pelunasan Piutang/Hutang
+//     (KuShared.jsx PelunasanModal): beda bentuk lagi dari Jurnal/Aktiva — 1 dokumen py 2 tabel
+//     terpisah (`items` yang dilunasi + `penerimaan` metode bayar), bukan 1 ledger debit/kredit.
 // Tidak pakai backdrop onClick (klik luar popup tidak boleh menutup modal — fix repo-wide sesi ini).
 
 function akFmtTgl(dmy) { return dmy || '—'; }
@@ -269,7 +273,133 @@ function akChunkFlat(rows, size) {
   return out.length ? out : [[]];
 }
 
-function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, statusFilter, getGroupLabel, pdfPath, initialSelected, onClose }) {
+// ── Pelunasan Piutang/Hutang: Bukti = 1 dokumen (header partner + tabel item yang dilunasi +
+// tabel penerimaan/metode bayar) — beda dari Jurnal (1 tabel debit/kredit) karena PelunasanModal
+// (KuShared.jsx) memang menyimpan dua tabel terpisah (`items`/`penerimaan`), bukan satu ledger.
+function AkCetakPelunasanBuktiBody({ row, orgInfo, isPiutang, docLabel }) {
+  const items = row.items || [];
+  const penerimaan = row.penerimaan || [];
+  const totalDebet = items.reduce((s,it)=>s+(+it.debet||0),0);
+  const totalKredit = items.reduce((s,it)=>s+(+it.kredit||0),0);
+  const partnerLabel = isPiutang ? 'Pelanggan' : 'Supplier';
+  const partnerKode = isPiutang ? row.kodeCust : row.kodeSupp;
+  const partnerNama = isPiutang ? row.namaCust : row.namaSupp;
+  return (
+    <div className="cetak-doc">
+      {row.status === 'Batal' && <div className="cetak-watermark">BATAL</div>}
+      <div className="cetak-letterhead">
+        <b>{orgInfo.nama}</b>
+        <div>{orgInfo.alamat}</div>
+        <div>{orgInfo.kota}{orgInfo.kodePos ? `, ${orgInfo.kodePos}` : ''}</div>
+        {orgInfo.telpon && <div>Tel. {orgInfo.telpon}</div>}
+      </div>
+      <div className="cetak-title-block">
+        <div className="cetak-title-spaced">BUKTI {docLabel.toUpperCase()}</div>
+        <div className="cetak-title-no">No. {row.no}</div>
+      </div>
+      <div className="cetak-info-grid">
+        <div>
+          <div>{partnerLabel}</div>
+          <b>{partnerKode} — {partnerNama}</b>
+          {row.noReferensi && <div style={{marginTop:6}}>No. Referensi: {row.noReferensi}</div>}
+          {row.catatan && <div style={{marginTop:6}}>{row.catatan}</div>}
+        </div>
+        <div className="cetak-meta-col">
+          <div className="cetak-meta-row"><span>Tanggal</span><span>: {akFmtTgl(row.tgl)}</span></div>
+          <div className="cetak-meta-row"><span>Status</span><span>: {row.status}</span></div>
+        </div>
+      </div>
+      <table className="cetak-table">
+        <thead><tr><th style={{width:90}}>Jenis</th><th>No. Bukti</th><th className="num" style={{width:110}}>Sisa</th><th className="num" style={{width:110}}>Debet</th><th className="num" style={{width:110}}>Kredit</th></tr></thead>
+        <tbody>
+          {items.length === 0 && <tr><td colSpan={5} className="empty">Tidak ada item.</td></tr>}
+          {items.map((it,i) => (
+            <tr key={i}>
+              <td>{it.jenis}</td>
+              <td className="mono">{it.noBukti}</td>
+              <td className="num">{fmtRp(it.sisaSaatItu)}</td>
+              <td className="num">{it.debet ? fmtRp(it.debet) : ''}</td>
+              <td className="num">{it.kredit ? fmtRp(it.kredit) : ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <table className="cetak-table" style={{marginTop:10}}>
+        <thead><tr><th style={{width:100}}>Metode</th><th>Akun</th><th className="num" style={{width:110}}>Masuk</th><th className="num" style={{width:110}}>Keluar</th></tr></thead>
+        <tbody>
+          {penerimaan.length === 0 && <tr><td colSpan={4} className="empty">Tidak ada penerimaan.</td></tr>}
+          {penerimaan.map((p,i) => (
+            <tr key={i}>
+              <td>{p.metode}</td>
+              <td>{p.namaAkun}{p.metode==='Giro' && p.noGiro ? ` — ${p.noGiro}` : ''}</td>
+              <td className="num">{p.masuk ? fmtRp(p.masuk) : ''}</td>
+              <td className="num">{p.keluar ? fmtRp(p.keluar) : ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="cetak-foot">
+        <div className="cetak-sign">
+          <div className="cetak-sign-box"><div className="line" /><div>Diterima oleh</div></div>
+          <div className="cetak-sign-box"><div className="line" /><div>Dibuat oleh</div></div>
+        </div>
+        <div className="cetak-summary">
+          <div>Total Debet<span>{fmtRp(totalDebet)}</span></div>
+          <div>Total Kredit<span>{fmtRp(totalKredit)}</span></div>
+          <div className="grand">Total Pelunasan<span>{fmtRp(row.total)}</span></div>
+        </div>
+      </div>
+      <div className="cetak-timestamp">Dicetak pada {akFmtTglNow()} {new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator</div>
+    </div>
+  );
+}
+
+// Register Pelunasan: flat (1 baris tabel = 1 dokumen pelunasan), sama pola dgn Register Aktiva —
+// tidak ada drill-down item/penerimaan di sini, cuma ringkasan per dokumen.
+function AkCetakPelunasanRegisterBody({ rows, docLabel, orgInfo, tglRangeLabel, pageInfo, summary, isLastPage, isPiutang }) {
+  return (
+    <div className="cetak-doc">
+      <div className="cetak-kop">
+        <div className="cetak-kop-left">
+          <b>{orgInfo.nama}</b>
+          <div>{orgInfo.alamat}</div>
+          <div>{orgInfo.kota}{orgInfo.kodePos ? `, ${orgInfo.kodePos}` : ''}</div>
+        </div>
+        <div className="cetak-kop-center">{docLabel}</div>
+        <div className="cetak-kop-right">Tanggal<br/>{tglRangeLabel}</div>
+      </div>
+      <table className="cetak-table">
+        <thead><tr><th style={{width:120}}>No.</th><th style={{width:90}}>Tanggal</th><th>{isPiutang ? 'Pelanggan' : 'Supplier'}</th><th className="num" style={{width:130}}>Total</th><th style={{width:90}}>Status</th></tr></thead>
+        <tbody>
+          {rows.length === 0 && <tr><td colSpan={5} className="empty">Tidak ada dokumen dipilih.</td></tr>}
+          {rows.map((r,i) => (
+            <tr key={i}>
+              <td className="mono">{r.no}</td>
+              <td>{akFmtTgl(r.tgl)}</td>
+              <td>{isPiutang ? r.namaCust : r.namaSupp}</td>
+              <td className="num">{fmtRp(r.total)}</td>
+              <td>{r.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {isLastPage && (
+        <div className="cetak-foot" style={{justifyContent:'flex-end'}}>
+          <div className="cetak-summary">
+            <div>Jumlah Dokumen<span>{summary.count}</span></div>
+            <div className="grand">Total Pelunasan<span>{fmtRp(summary.total)}</span></div>
+          </div>
+        </div>
+      )}
+      <div className="cetak-timestamp">
+        Halaman {pageInfo.current} dari {pageInfo.total}
+        {isLastPage && ` — Dicetak pada ${akFmtTglNow()} ${new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator`}
+      </div>
+    </div>
+  );
+}
+
+function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, statusFilter, getGroupLabel, pdfPath, initialSelected, isPiutang, onClose }) {
   const orgInfo = (typeof PG_ORGANISASI !== 'undefined' && PG_ORGANISASI) || { nama:'PT. Pacific Data Jaya', alamat:'', kota:'', telpon:'', email:'', noNpwp:'' };
   const [tglAwal, setTglAwal] = React.useState('');
   const [tglAkhir, setTglAkhir] = React.useState('');
@@ -316,6 +446,10 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
     count: selectedRows.length,
     totalD: selectedRows.reduce((s,r)=>s+(r.lines||[]).reduce((t,l)=>t+(+l.d||0),0),0),
     totalK: selectedRows.reduce((s,r)=>s+(r.lines||[]).reduce((t,l)=>t+(+l.k||0),0),0),
+  }), [selectedRows]);
+  const pelunasanSummary = React.useMemo(() => ({
+    count: selectedRows.length,
+    total: selectedRows.reduce((s,r)=>s+(+r.total||0),0),
   }), [selectedRows]);
 
   const tglRangeLabel = tglAwal || tglAkhir
@@ -416,6 +550,13 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
                         pageInfo={{current:idx+1, total:totalPages}} summary={jurnalSummary} isLastPage={idx === totalPages-1} />
                     </div>
                   ))
+                ) : variant === 'pelunasan' ? (
+                  registerPages.map((pageRows, idx) => (
+                    <div className="cetak-page" key={idx} style={{transform:`scale(${zoom/100})`}}>
+                      <AkCetakPelunasanRegisterBody rows={pageRows} docLabel={docLabel} orgInfo={orgInfo} tglRangeLabel={tglRangeLabel}
+                        pageInfo={{current:idx+1, total:totalPages}} summary={pelunasanSummary} isLastPage={idx === totalPages-1} isPiutang={isPiutang} />
+                    </div>
+                  ))
                 ) : (
                   registerPages.map((pageRows, idx) => (
                     <div className="cetak-page" key={idx} style={{transform:`scale(${zoom/100})`}}>
@@ -429,6 +570,8 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
                   <div className="cetak-page" key={row[noKey] || idx} style={{transform:`scale(${zoom/100})`}}>
                     {variant === 'jurnal'
                       ? <AkCetakJurnalBuktiBody row={row} orgInfo={orgInfo} akunRows={akunRows} groupLabel={getGroupLabel ? getGroupLabel(row) : row.pembuat} />
+                      : variant === 'pelunasan'
+                      ? <AkCetakPelunasanBuktiBody row={row} orgInfo={orgInfo} isPiutang={isPiutang} docLabel={docLabel} />
                       : <AkCetakAktivaBuktiBody row={row} orgInfo={orgInfo} />}
                   </div>
                 ))

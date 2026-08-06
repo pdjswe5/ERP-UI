@@ -430,12 +430,18 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
   const [showBarangPicker, setShowBarangPicker] = React.useState(false);
   const [localBahan,    setLocalBahan]    = React.useState(() => (bahanLines || []).map(r => ({...r})));
   const [showBahanPicker, setShowBahanPicker] = React.useState(false);
+  // Root-cause fix: ganti Barang Jadi (baik saat Tambah maupun Edit) dulu tidak pernah memperbarui
+  // tabel Bahan begitu localBahan sudah terisi (lihat komentar lama di onBarangPick) — bahan dari
+  // barang SEBELUMNYA tetap nyangkut walau barangnya sudah diganti. Sekarang: kalau ganti ke barang
+  // lain DAN tabel Bahan sudah ada isinya, minta konfirmasi dulu (pola sama seperti "Ganti No. SO?"
+  // di SpkPage.jsx) sebelum bahan di-replace wholesale mengikuti resep BOM barang yang baru.
+  const [pendingBarangPick, setPendingBarangPick] = React.useState(null);
 
   React.useEffect(() => {
-    const h = e => { if (e.key === 'Escape' && !showBarangPicker && !showBahanPicker) onClose(); };
+    const h = e => { if (e.key === 'Escape' && !showBarangPicker && !showBahanPicker && !pendingBarangPick) onClose(); };
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
-  }, [showBarangPicker, showBahanPicker, onClose]);
+  }, [showBarangPicker, showBahanPicker, pendingBarangPick, onClose]);
 
   // Barang Jadi & Bahan sekarang dari katalog modul Barang (BARANG_JADI/BAHAN_BAKU/BARANG_LAIN),
   // BUKAN MF_BARANG lagi — SPK & modul Barang jadi 1 katalog yang sama, jadi BOM (BRG_BOM_SEED,
@@ -447,19 +453,22 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
   ], []);
 
   // BOM auto-fill: kalau barang jadi yang dipilih punya resep di BRG_BOM_SEED DAN tabel Bahan masih
-  // kosong (belum diisi manual), langsung terapkan bahan standarnya — user tinggal isi/koreksi Qty
-  // SPK. Kalau localBahan sudah terisi (mis. user ganti pilihan barang jadi setelah sempat isi
-  // bahan sendiri), tidak ditimpa — hormati apa yang sudah diketik user.
+  // kosong, langsung terapkan bahan standarnya — user tinggal isi/koreksi Qty SPK. Kalau localBahan
+  // sudah terisi (baik dari auto-fill sebelumnya, isian manual, atau data Edit yang sudah ada) DAN
+  // barang yang dipilih benar-benar beda dari sebelumnya, jangan langsung ditimpa — tampilkan
+  // konfirmasi "Ganti Barang Jadi?" dulu (pendingBarangPick), baru replace wholesale kalau user
+  // setuju. Pilih ulang barang yang SAMA (kode tidak berubah) no-op total, tidak menyentuh bahan.
+  const applyBarangPick = (b) => {
+    setKodeBarang(b.kode); setNamaBarang(b.nama);
+    const bom = brgBomFor(b.kode);
+    setLocalBahan(bom ? brgBomBuildBahanLines(b.kode, qtySPK) : []);
+  };
   const onBarangPick = (picked) => {
     const b = picked[0];
-    if (b) {
-      setKodeBarang(b.kode); setNamaBarang(b.nama);
-      const bom = brgBomFor(b.kode);
-      if (bom && localBahan.length === 0) {
-        setLocalBahan(brgBomBuildBahanLines(b.kode, qtySPK));
-      }
-    }
     setShowBarangPicker(false);
+    if (!b || b.kode === kodeBarang) return;
+    if (localBahan.length > 0) { setPendingBarangPick(b); return; }
+    applyBarangPick(b);
   };
 
   // Qty SPK berubah: kalau bahan yang lagi ada di tabel PERSIS sama komposisinya (kode bahan) dgn
@@ -804,6 +813,15 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
       )}
       {showBahanPicker && (
         <MfPilihBarangModal zIndex={300} items={bahanPickerItems} onConfirm={onBahanPick} onCancel={() => setShowBahanPicker(false)} />
+      )}
+      {pendingBarangPick && (
+        <ConfirmationModal zIndex={300}
+          title="Ganti Barang Jadi?"
+          message={`Bahan yang sudah ada akan diganti mengikuti resep BOM "${pendingBarangPick.nama}". Tindakan ini tidak bisa dibatalkan setelah dilanjutkan.`}
+          requireReason={false} confirmLabel="Ya, Ganti" confirmKind="danger-solid" cancelLabel="Batal"
+          onConfirm={() => { applyBarangPick(pendingBarangPick); setPendingBarangPick(null); }}
+          onCancel={() => setPendingBarangPick(null)}
+        />
       )}
     </>
   );

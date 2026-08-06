@@ -30,7 +30,7 @@ function BrgTransList({ title, rows, onAdd, addLabel='Transaksi Baru', addExtra,
         extra={<>{onCetak && <button className="btn btn-sm" onClick={onCetak}>{I.print()} Cetak</button>}{addExtra}</>} />
       <div className="filter-bar"><div className="filter-grid">
         <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="No. Bukti…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
-        <div className="filter-actions"><button className="btn btn-primary">{I.filter()} Cari</button></div>
+        <div className="filter-actions"><button className="btn">{I.filter()} Cari</button></div>
       </div></div>
       <div className="table-card">
         <div className="table-toolbar"><div className="table-toolbar-left"><b>Jumlah: {filtered.length}</b></div></div>
@@ -160,7 +160,7 @@ function MutasiItemPickerModal({ onConfirm, onCancel }) {
 // `_deleted:true` (baris pudar + tombol Restore), baru benar-benar dibuang saat form disimpan
 // (lihat handleSave di MutasiBuatModal). Satuan Terkecil selalu dihitung ulang (konversi × jumlah),
 // tidak disimpan sebagai state terpisah supaya tidak pernah desync dari Konversi/Jumlah.
-function MutasiBarangTable({ rows, setRows, onAddClick, viewMode }) {
+function MutasiBarangTable({ rows, setRows, onAddClick, viewMode, addLocked, addLockedMsg='Lengkapi Tanggal, Kategori, dan Gudang terlebih dahulu.' }) {
   const updateSatuan = (idx, satuan) => setRows(rows.map((r,i) => {
     if (i !== idx) return r;
     const unit = (r.units || []).find(u => u.satuan === satuan) || { satuan, konversi:1 };
@@ -174,7 +174,10 @@ function MutasiBarangTable({ rows, setRows, onAddClick, viewMode }) {
     <div className="inline-table">
       <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
         <h3 style={{margin:0}}>Barang Mutasi {!viewMode && <span style={{color:'var(--danger)'}}>*</span>}</h3>
-        {!viewMode && <button className="btn btn-primary btn-sm" onClick={onAddClick}>{I.plus()} Tambah Item</button>}
+        {!viewMode && (
+          <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+            onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } onAddClick(); }}>{I.plus()} Tambah Item</button>
+        )}
       </div>
       <div className={`line-items ${viewMode ? 'view-only' : ''}`} style={{height:240, overflowY:'auto'}}>
         <table style={{width:'100%', minWidth:0, tableLayout:'fixed'}}>
@@ -206,7 +209,7 @@ function MutasiBarangTable({ rows, setRows, onAddClick, viewMode }) {
                     {r._deleted ? (
                       <button className="btn btn-icon btn-sm" style={{color:'var(--realisasi)'}} onClick={()=>restore(idx)} title="Restore">{I.refresh(14)}</button>
                     ) : (
-                      <button className="btn btn-icon btn-sm del" onClick={()=>remove(idx)}>{I.trash()}</button>
+                      <button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>remove(idx)}>{I.trash()}</button>
                     )}
                   </td>
                 )}
@@ -343,7 +346,7 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
             </div>
           </div>
           <div className="panel" style={{marginTop:16}}>
-            <MutasiBarangTable rows={form.details} setRows={v=>set('details', v)} onAddClick={()=>setPicker(true)} viewMode={isView} />
+            <MutasiBarangTable rows={form.details} setRows={v=>set('details', v)} onAddClick={()=>setPicker(true)} viewMode={isView} addLocked={noBuktiLocked} />
           </div>
         </div>
         <div className="modal-foot">
@@ -518,7 +521,7 @@ function KoreksiItemPickerModal({ onConfirm, onCancel }) {
 
 // Tabel "Barang Koreksi" — soft-delete sama pola Mutasi. Satuan selalu dropdown aktif (bukan teks
 // statis meski cuma 1 opsi), Jumlah & Harga Total input bebas, cuma Konversi yang readonly.
-function KoreksiBarangTable({ rows, setRows, onAddClick, viewMode }) {
+function KoreksiBarangTable({ rows, setRows, onAddClick, viewMode, addLocked, addLockedMsg='Lengkapi Tanggal, Kategori, dan Gudang terlebih dahulu.' }) {
   const updateSatuan = (idx, satuan) => setRows(rows.map((r,i) => {
     if (i !== idx) return r;
     const unit = (r.units || []).find(u => u.satuan === satuan) || { satuan, konversi:1 };
@@ -532,7 +535,10 @@ function KoreksiBarangTable({ rows, setRows, onAddClick, viewMode }) {
     <div className="inline-table">
       <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
         <h3 style={{margin:0}}>Barang Koreksi {!viewMode && <span style={{color:'var(--danger)'}}>*</span>}</h3>
-        {!viewMode && <button className="btn btn-primary btn-sm" onClick={onAddClick}>{I.plus()} Tambah Item</button>}
+        {!viewMode && (
+          <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+            onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } onAddClick(); }}>{I.plus()} Tambah Item</button>
+        )}
       </div>
       <div className={`line-items ${viewMode ? 'view-only' : ''}`} style={{height:240, overflowY:'auto'}}>
         <table style={{width:'100%', minWidth:0, tableLayout:'fixed'}}>
@@ -564,7 +570,7 @@ function KoreksiBarangTable({ rows, setRows, onAddClick, viewMode }) {
                     {r._deleted ? (
                       <button className="btn btn-icon btn-sm" style={{color:'var(--realisasi)'}} onClick={()=>restore(idx)} title="Restore">{I.refresh(14)}</button>
                     ) : (
-                      <button className="btn btn-icon btn-sm del" onClick={()=>remove(idx)}>{I.trash()}</button>
+                      <button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>remove(idx)}>{I.trash()}</button>
                     )}
                   </td>
                 )}
@@ -673,7 +679,7 @@ function PenyesuaianKoreksiModal({ data, initialMode, onClose, onSave, onRequest
             </div>
           </div>
           <div className="panel" style={{marginTop:16}}>
-            <KoreksiBarangTable rows={form.details} setRows={v=>set('details', v)} onAddClick={()=>setPicker(true)} viewMode={isView} />
+            <KoreksiBarangTable rows={form.details} setRows={v=>set('details', v)} onAddClick={()=>setPicker(true)} viewMode={isView} addLocked={noBuktiLocked} />
           </div>
         </div>
         <div className="modal-foot">
@@ -841,7 +847,7 @@ function OpnameItemPickerModal({ onConfirm, onCancel }) {
 
 // Tabel "Barang Opname" — soft-delete sama pola Mutasi/Koreksi. Satuan & Konversi & Saldo semua
 // readonly (nilai tetap dari sistem), cuma Fisik yang bisa diedit user.
-function OpnameBarangTable({ rows, setRows, onAddClick, viewMode }) {
+function OpnameBarangTable({ rows, setRows, onAddClick, viewMode, addLocked, addLockedMsg='Lengkapi Tanggal, Kategori, dan Gudang terlebih dahulu.' }) {
   const updateFisik = (idx, fisik) => setRows(rows.map((r,i) => i===idx ? {...r, fisik} : r));
   const remove = (idx) => setRows(rows.map((r,i) => i===idx ? {...r, _deleted:true} : r));
   const restore = (idx) => setRows(rows.map((r,i) => i===idx ? {...r, _deleted:false} : r));
@@ -850,7 +856,10 @@ function OpnameBarangTable({ rows, setRows, onAddClick, viewMode }) {
     <div className="inline-table">
       <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
         <h3 style={{margin:0}}>Barang Opname {!viewMode && <span style={{color:'var(--danger)'}}>*</span>}</h3>
-        {!viewMode && <button className="btn btn-primary btn-sm" onClick={onAddClick}>{I.plus()} Tambah Item</button>}
+        {!viewMode && (
+          <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+            onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } onAddClick(); }}>{I.plus()} Tambah Item</button>
+        )}
       </div>
       <div className={`line-items ${viewMode ? 'view-only' : ''}`} style={{height:240, overflowY:'auto'}}>
         <table style={{width:'100%', minWidth:0, tableLayout:'fixed'}}>
@@ -874,7 +883,7 @@ function OpnameBarangTable({ rows, setRows, onAddClick, viewMode }) {
                     {r._deleted ? (
                       <button className="btn btn-icon btn-sm" style={{color:'var(--realisasi)'}} onClick={()=>restore(idx)} title="Restore">{I.refresh(14)}</button>
                     ) : (
-                      <button className="btn btn-icon btn-sm del" onClick={()=>remove(idx)}>{I.trash()}</button>
+                      <button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>remove(idx)}>{I.trash()}</button>
                     )}
                   </td>
                 )}
@@ -983,7 +992,7 @@ function StockOpnameModal({ data, initialMode, onClose, onSave, onRequestCancel 
             </div>
           </div>
           <div className="panel" style={{marginTop:16}}>
-            <OpnameBarangTable rows={form.details} setRows={v=>set('details', v)} onAddClick={()=>setPicker(true)} viewMode={isView} />
+            <OpnameBarangTable rows={form.details} setRows={v=>set('details', v)} onAddClick={()=>setPicker(true)} viewMode={isView} addLocked={noBuktiLocked} />
           </div>
         </div>
         <div className="modal-foot">

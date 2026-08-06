@@ -1,7 +1,7 @@
 // Penjualan — tabel item inline: InlineTable (generik, dipakai form master pelanggan & non-produk/jasa)
 // dan PjItemTable (khusus barang produk, dengan picker dari BARANG root data.jsx)
 
-function InlineTable({ title, columns, rows, setRows, addLabel, shortcut, disabled, itemSource, onPickItems, lockItems, showTotal }) {
+function InlineTable({ title, columns, rows, setRows, addLabel, shortcut, disabled, itemSource, onPickItems, lockItems, showTotal, addLocked, addLockedMsg='Lengkapi data utama terlebih dahulu.' }) {
   const update = (idx, key, value) => {
     let row = { ...rows[idx], [key]: value };
     if (itemSource && key === itemSource.codeKey && !lockItems) {
@@ -70,11 +70,14 @@ function InlineTable({ title, columns, rows, setRows, addLabel, shortcut, disabl
           <div style={{display:'flex', gap:8}}>
             {lockItems && onPickItems ? (
               // Kode/Nama item terkunci -> satu tombol saja, pakai alur picker supaya kode+nama selalu terisi bersamaan
-              <button className="btn btn-primary btn-sm" onClick={onPickItems}>{I.plus()} {addLabel}</button>
+              <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+                onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } onPickItems(); }}>{I.plus()} {addLabel}</button>
             ) : (
               <>
-                {onPickItems && <button className="btn btn-primary btn-sm" onClick={onPickItems}>{I.plus()} Pilih</button>}
-                {!lockItems && <button className="btn btn-primary btn-sm" onClick={add}>{I.plus()} {addLabel}</button>}
+                {onPickItems && <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+                  onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } onPickItems(); }}>{I.plus()} Pilih</button>}
+                {!lockItems && <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+                  onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } add(); }}>{I.plus()} {addLabel}</button>}
               </>
             )}
           </div>
@@ -105,7 +108,7 @@ function InlineTable({ title, columns, rows, setRows, addLabel, shortcut, disabl
                     {r._deleted ? (
                       <button className="btn btn-icon btn-sm" style={{color:'var(--realisasi)'}} onClick={()=>restore(idx)} title="Restore">{I.refresh(14)}</button>
                     ) : (
-                      <button className="btn btn-icon btn-sm del" onClick={()=>softDelete(idx)}>{I.trash()}</button>
+                      <button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>softDelete(idx)}>{I.trash()}</button>
                     )}
                   </td>
                 )}
@@ -127,7 +130,7 @@ function pjBarangCatalog() {
   return [...BARANG, ...BARANG_JADI.map(b => ({ code:b.kodeProduk, name:b.namaProduk, hpp:b.hppStandar }))];
 }
 
-function PjItemTable({ title, rows, setRows, showRealisasi, disabled, onPickItems, lockItems }) {
+function PjItemTable({ title, rows, setRows, showRealisasi, disabled, onPickItems, lockItems, addLocked, addLockedMsg='Lengkapi data utama terlebih dahulu.' }) {
   const update = (idx, key, value) => {
     let row = { ...rows[idx], [key]: value };
     if (key === 'Kode_Item' && !row._deleted) {
@@ -149,11 +152,14 @@ function PjItemTable({ title, rows, setRows, showRealisasi, disabled, onPickItem
           <div style={{display:'flex', gap:8}}>
             {lockItems && onPickItems ? (
               // Kode/Nama item terkunci -> satu tombol saja, pakai alur picker supaya kode+nama selalu terisi bersamaan
-              <button className="btn btn-primary btn-sm" onClick={onPickItems}>{I.plus()} Tambah Barang</button>
+              <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+                onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } onPickItems(); }}>{I.plus()} Tambah Barang</button>
             ) : (
               <>
-                {onPickItems && <button className="btn btn-primary btn-sm" onClick={onPickItems}>{I.plus()} Pilih Barang</button>}
-                <button className="btn btn-primary btn-sm" onClick={add}>{I.plus()} Tambah Item</button>
+                {onPickItems && <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+                  onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } onPickItems(); }}>{I.plus()} Pilih Barang</button>}
+                <button className="btn btn-primary btn-sm" disabled={addLocked} title={addLocked ? addLockedMsg : undefined}
+                  onClick={()=>{ if (addLocked) { window.__erpToast && window.__erpToast(addLockedMsg); return; } add(); }}>{I.plus()} Tambah Item</button>
               </>
             )}
           </div>
@@ -201,7 +207,7 @@ function PjItemTable({ title, rows, setRows, showRealisasi, disabled, onPickItem
                     {r._deleted ? (
                       <button className="btn btn-icon btn-sm" style={{color:'var(--realisasi)'}} onClick={()=>restore(idx)} title="Restore">{I.refresh(14)}</button>
                     ) : (
-                      <button className="btn btn-icon btn-sm del" onClick={()=>softDelete(idx)}>{I.trash()}</button>
+                      <button className="btn btn-icon btn-sm del" title="Hapus" onClick={()=>softDelete(idx)}>{I.trash()}</button>
                     )}
                   </td>
                 )}

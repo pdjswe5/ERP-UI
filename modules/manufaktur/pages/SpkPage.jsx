@@ -507,7 +507,8 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
                 <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
                   <h3 style={{margin:0, fontSize:14, fontWeight:700, textTransform:'uppercase', letterSpacing:'.07em', color:'var(--text)'}}>Barang Jadi</h3>
                   {!isView && (
-                    <button className="btn btn-primary btn-sm" onClick={() => setBjModal('add')}>{I.plus()} Tambah Barang</button>
+                    <button className="btn btn-primary btn-sm" disabled={noBuktiLocked} title={noBuktiLocked ? 'Pilih No. SPK (Tunai/Kredit) terlebih dahulu.' : undefined}
+                      onClick={() => { if (noBuktiLocked) { window.__erpToast && window.__erpToast('Pilih No. SPK (Tunai/Kredit) terlebih dahulu.'); return; } setBjModal('add'); }}>{I.plus()} Tambah Barang</button>
                   )}
                 </div>
                 {bjLines.some(r => !r._deleted) && (
