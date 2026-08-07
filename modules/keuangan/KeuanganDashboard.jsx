@@ -35,6 +35,26 @@ function KeuanganDashboard({ onOpenSub, onNavigate, akunRows, aktivaRows, jurnal
   ];
   const laporanRowsMap = { labarugi:labaRugiRows, aruskas:arusKasRows, neraca:neracaRows };
 
+  // Grafik tren tiap KPI (Spark kumulatif, hover lihat tanggal+nilai per titik) — pola sama Home,
+  // gantikan chart ranking/status yang tadi dihapus. kbgRows sendiri (master akun) tidak punya
+  // riwayat tanggal, jadi trennya pakai pergerakan Masuk/Keluar dari transaksi Kas/Bank/Giro
+  // (net per tanggal, isoFn akToIso krn formatnya DD-MM-YYYY) sebagai proxy arus saldo terkini.
+  const netTrend = (masukRows, keluarRows) => cumulativeTrend(
+    [...masukRows.map(r => ({ tgl:r.tgl, _v:+r.nominal||0 })), ...keluarRows.map(r => ({ tgl:r.tgl, _v:-(+r.nominal||0) }))],
+    'tgl', r => r._v, { isoFn: akToIso, displayFn: fmtRp }
+  );
+
+  const kpis = [
+    { label:'Total Saldo Kas', value: fmtRp(totalKas), sub:`${kbgRows.filter(a=>a.tipe==='KAS').length} akun kas`,
+      trend: netTrend(kasMasukRows, kasKeluarRows), trendColor:'var(--realisasi)' },
+    { label:'Total Saldo Bank', value: fmtRp(totalBank), sub:`${kbgRows.filter(a=>a.tipe==='BANK').length} akun bank`,
+      trend: netTrend(bankMasukRows, bankKeluarRows), trendColor:'var(--primary)' },
+    { label:'Saldo Giro', value: fmtRp(totalGiro), sub:`${giroOutMasuk + giroOutKeluar} giro outstanding`,
+      trend: netTrend(giroMasukRows, giroKeluarRows), trendColor:'#7c3aed' },
+    { label:'Jurnal Memorial', value: jurnalRows.length, sub:`${jmDraft} perlu review`,
+      trend: cumulativeTrend(jurnalRows, 'tgl', () => 1, { isoFn: akToIso, displayFn: v => `${v} jurnal` }), trendColor:'var(--warn)' },
+  ];
+
   return (
     <div className="page" data-screen-label="06 Keuangan — Dashboard">
       <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><span className="current">Keuangan</span></div>
@@ -46,10 +66,14 @@ function KeuanganDashboard({ onOpenSub, onNavigate, akunRows, aktivaRows, jurnal
       </div>
 
       <div className="kpi-strip">
-        <div className="kpi"><div className="lbl">Total Saldo Kas</div><div className="val mono">{fmtRp(totalKas)}</div><div className="delta up">{kbgRows.filter(a=>a.tipe==='KAS').length} akun kas</div></div>
-        <div className="kpi"><div className="lbl">Total Saldo Bank</div><div className="val mono">{fmtRp(totalBank)}</div><div className="delta up">{kbgRows.filter(a=>a.tipe==='BANK').length} akun bank</div></div>
-        <div className="kpi"><div className="lbl">Saldo Giro</div><div className="val mono">{fmtRp(totalGiro)}</div><div className="delta">{giroOutMasuk + giroOutKeluar} giro outstanding</div></div>
-        <div className="kpi"><div className="lbl">Jurnal Memorial</div><div className="val mono">{jurnalRows.length}</div><div className="delta">{jmDraft} perlu review</div></div>
+        {kpis.map((k, i) => (
+          <div className="kpi" key={i}>
+            <div className="lbl">{k.label}</div>
+            <div className="val mono">{k.value}</div>
+            {k.sub && <div className="delta">{k.sub}</div>}
+            {k.trend && <Spark data={k.trend} color={k.trendColor} />}
+          </div>
+        ))}
       </div>
 
       <h3 className="section-title">Laporan Keuangan <span className="count">{AK_LAPORAN_LIST.length}</span></h3>
@@ -91,22 +115,7 @@ function KeuanganDashboard({ onOpenSub, onNavigate, akunRows, aktivaRows, jurnal
         ))}
       </div>
 
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginTop:32}}>
-        <div className="panel">
-          <h3>Saldo Akun</h3>
-          <table className="data" style={{margin:'4px -4px'}}>
-            <thead><tr><th>Akun</th><th>Tipe</th><th className="num">Saldo</th></tr></thead>
-            <tbody>
-              {kbgRows.slice(0,7).map(a => (
-                <tr key={a.kode}>
-                  <td><span className="cell-link" style={{fontWeight:500}}>{a.nama}</span><div className="muted mono" style={{fontSize:11.5}}>{a.kode}</div></td>
-                  <td><span className="pill" style={{background: a.tipe==='KAS'?'#eef2ff':a.tipe==='BANK'?'#f0fdfa':'#fdf4ff', color:a.tipe==='KAS'?'#4338ca':a.tipe==='BANK'?'#0f766e':'#7c3aed'}}>{a.tipe}</span></td>
-                  <td className="num mono" style={{fontWeight:600}}>{fmtRp(a.saldo)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div style={{marginTop:32}}>
         <div className="panel">
           <h3>Giro Outstanding — Jatuh Tempo Terdekat</h3>
           <div style={{display:'flex', flexDirection:'column', gap:8}}>

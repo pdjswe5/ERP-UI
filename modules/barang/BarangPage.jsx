@@ -12,11 +12,24 @@ function BarangDashboard({ onOpenSub }) {
   const penyesuaianAktif = PENYESUAIAN_BARANG.filter(r => !r.batal).length;
   const opnameAktif = STOCK_OPNAME.filter(r => !r.batal).length;
 
+  // Grafik tren tiap KPI (Spark kumulatif, hover lihat tanggal+nilai per titik) — pola sama Home,
+  // gantikan chart ranking/status yang tadi dihapus. Mutasi/Penyesuaian/Opname punya tglBukti
+  // (tersebar sebulan penuh); "Total Item Aktif" (katalog master, tidak punya tanggal) pakai
+  // proxy gabungan aktivitas gudang (mutasi+penyesuaian+opname per tanggal).
+  const mutasiAktifRows = MUTASI_BARANG.filter(r => !r.batal);
+  const penyesuaianAktifRows = PENYESUAIAN_BARANG.filter(r => !r.batal);
+  const opnameAktifRows = STOCK_OPNAME.filter(r => !r.batal);
+  const semuaAktivitasGudang = [...mutasiAktifRows, ...penyesuaianAktifRows, ...opnameAktifRows];
+
   const kpis = [
-    { label:'Total Item Aktif', value: totalAktif, sub:`dari ${totalItem} total item master` },
-    { label:'Mutasi Barang Aktif', value: mutasiAktif, sub:`dari ${MUTASI_BARANG.length} total mutasi` },
-    { label:'Penyesuaian Barang Aktif', value: penyesuaianAktif, sub:`dari ${PENYESUAIAN_BARANG.length} total penyesuaian` },
-    { label:'Stock Opname Aktif', value: opnameAktif, sub:`dari ${STOCK_OPNAME.length} total opname` },
+    { label:'Total Item Aktif', value: totalAktif, sub:`dari ${totalItem} total item master`,
+      trend: cumulativeTrend(semuaAktivitasGudang, 'tglBukti', () => 1, { displayFn: v => `${v} aktivitas` }), trendColor:'var(--realisasi)' },
+    { label:'Mutasi Barang Aktif', value: mutasiAktif, sub:`dari ${MUTASI_BARANG.length} total mutasi`,
+      trend: cumulativeTrend(mutasiAktifRows, 'tglBukti', () => 1, { displayFn: v => `${v} mutasi` }), trendColor:'var(--primary)' },
+    { label:'Penyesuaian Barang Aktif', value: penyesuaianAktif, sub:`dari ${PENYESUAIAN_BARANG.length} total penyesuaian`,
+      trend: cumulativeTrend(penyesuaianAktifRows, 'tglBukti', () => 1, { displayFn: v => `${v} penyesuaian` }), trendColor:'var(--warn)' },
+    { label:'Stock Opname Aktif', value: opnameAktif, sub:`dari ${STOCK_OPNAME.length} total opname`,
+      trend: cumulativeTrend(opnameAktifRows, 'tglBukti', () => 1, { displayFn: v => `${v} opname` }), trendColor:'#7c3aed' },
   ];
 
   const sections = [

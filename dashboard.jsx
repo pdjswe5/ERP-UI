@@ -1,19 +1,66 @@
 // Dashboard / module selector
 
+// Root-cause redesign: `data` sekarang array `{x, y, display?}` (bukan angka polos) supaya hover
+// bisa nunjukin label sumbu-X (tanggal/no. bukti) + nilai sumbu-Y sungguhan, bukan cuma garis
+// statis. Dipakai di kpi-strip SEMUA dashboard (Home + 5 modul) — satu-satunya komponen chart
+// interaktif di app ini (tidak ada chart library, murni SVG + mouse tracking).
 function Spark({ data, color = 'var(--accent)' }) {
-  const w = 100, h = 28, max = Math.max(...data), min = Math.min(...data);
-  const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w;
-    const y = h - ((v - min) / Math.max(1, max - min)) * (h - 4) - 2;
-    return `${x},${y}`;
-  }).join(' ');
-  const area = `0,${h} ${pts} ${w},${h}`;
+  const w = 100, h = 28;
+  const svgRef = React.useRef(null);
+  const [hoverIdx, setHoverIdx] = React.useState(null);
+  if (!data || data.length === 0) return <svg className="spark" width="100%" height={h} viewBox={`0 0 ${w} ${h}`} />;
+
+  const ys = data.map(d => d.y);
+  const max = Math.max(...ys), min = Math.min(...ys);
+  const pts = data.map((d, i) => ({
+    x: (i / Math.max(1, data.length - 1)) * w,
+    y: h - ((d.y - min) / Math.max(1, max - min)) * (h - 4) - 2,
+  }));
+  const ptsStr = pts.map(p => `${p.x},${p.y}`).join(' ');
+  const area = `0,${h} ${ptsStr} ${w},${h}`;
+
+  const handleMove = (e) => {
+    if (!svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width;
+    setHoverIdx(Math.max(0, Math.min(data.length - 1, Math.round(relX * (data.length - 1)))));
+  };
+
+  const hp = hoverIdx != null ? pts[hoverIdx] : null;
+  const hd = hoverIdx != null ? data[hoverIdx] : null;
+
   return (
-    <svg className="spark" width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-      <polygon points={area} fill={color} opacity=".12" />
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" />
-    </svg>
+    <div style={{position:'relative'}}>
+      <svg ref={svgRef} className="spark" width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none"
+        style={{cursor:'crosshair', overflow:'visible'}}
+        onMouseMove={handleMove} onMouseLeave={()=>setHoverIdx(null)}>
+        <polygon points={area} fill={color} opacity=".12" />
+        <polyline points={ptsStr} fill="none" stroke={color} strokeWidth="1.5" />
+        {hp && <line x1={hp.x} y1="0" x2={hp.x} y2={h} stroke="var(--border-strong)" strokeWidth="0.6" strokeDasharray="1.5,1.5" />}
+        {hp && <circle cx={hp.x} cy={hp.y} r="2" fill={color} stroke="#fff" strokeWidth="0.8" />}
+      </svg>
+      {hd && (
+        <div className="spark-tooltip" style={{left:`${(hoverIdx/Math.max(1,data.length-1))*100}%`}}>
+          <div className="spark-tooltip-y">{hd.display ?? hd.y}</div>
+          <div className="spark-tooltip-x">{hd.x}</div>
+        </div>
+      )}
+    </div>
   );
+}
+
+// Helper trend bersama (dipakai kpi-strip Home + 5 dashboard modul): urutkan `list` berdasarkan
+// tanggal (dikonversi ke ISO dulu via `isoFn` kalau formatnya bukan ISO, mis. DD-MM-YYYY di
+// Manufaktur/Keuangan), lalu kumulatifkan `valueFn(row)` per baris — pola identik cara Home
+// menghitung omset kumulatif sebelumnya, cuma diekstrak jadi reusable. `labelFn` opsional utk
+// label sumbu-X tooltip (default pakai tanggalnya sendiri).
+function cumulativeTrend(list, dateKey, valueFn, opts = {}) {
+  const isoFn = opts.isoFn || (d => d);
+  const labelFn = opts.labelFn || (r => r[dateKey]);
+  const displayFn = opts.displayFn || null;
+  const sorted = list.slice().sort((a,b) => isoFn(a[dateKey]||'').localeCompare(isoFn(b[dateKey]||'')));
+  let run = 0;
+  return sorted.map(r => { run += valueFn(r); return { x: labelFn(r), y: run, display: displayFn ? displayFn(run) : undefined }; });
 }
 
 function Tile({ icon, title, desc, badge, badgeKind = 'info', count, accentColor, onClick }) {
@@ -207,16 +254,19 @@ function HomeDashboard({ onNavigate }) {
   const nonBatalInvoices = INVOICE_SEED.filter(inv => !inv.Batal).slice().sort((a,b)=>a.Tgl_Bukti.localeCompare(b.Tgl_Bukti));
   const invBulanIni = nonBatalInvoices.filter(inv => inv.Tgl_Bukti.slice(0,7) === '2026-07');
   const invTahunIni = nonBatalInvoices.filter(inv => inv.Tgl_Bukti.slice(0,4) === '2026');
-  const cumulative = (list) => { let run = 0; return list.map(inv => (run += invoiceTotal(inv))); };
 
   const piutangNota = SALDO_PIUTANG_ITEMS.filter(it => it.jenis === 'Nota');
   const hutangNota = SALDO_HUTANG_ITEMS.filter(it => it.jenis === 'Nota');
 
   const ALL_HOME_KPIS = [
-    { id:'omsetBulan', label:'Omset Penjualan Bulan Ini', val:fmtRp(invBulanIni.reduce((s,inv)=>s+invoiceTotal(inv),0)), delta:`${invBulanIni.length} nota bulan ini`, up:true, data:cumulative(invBulanIni), color:'var(--realisasi)' },
-    { id:'omsetTahun', label:'Omset Penjualan Tahun Ini', val:fmtRp(invTahunIni.reduce((s,inv)=>s+invoiceTotal(inv),0)), delta:`${invTahunIni.length} nota tahun ini`, up:true, data:cumulative(invTahunIni), color:'var(--primary)' },
-    { id:'piutang', label:'Total Piutang', val:fmtRp(piutangNota.reduce((s,it)=>s+it.sisa,0)), delta:`${piutangNota.length} nota outstanding`, up:false, data:piutangNota.map(it=>it.sisa), color:'#7c3aed' },
-    { id:'hutang', label:'Total Hutang', val:fmtRp(hutangNota.reduce((s,it)=>s+it.sisa,0)), delta:`${hutangNota.length} nota outstanding`, up:false, data:hutangNota.map(it=>it.sisa), color:'#dc2626' },
+    { id:'omsetBulan', label:'Omset Penjualan Bulan Ini', val:fmtRp(invBulanIni.reduce((s,inv)=>s+invoiceTotal(inv),0)), delta:`${invBulanIni.length} nota bulan ini`, up:true,
+      data: cumulativeTrend(invBulanIni, 'Tgl_Bukti', invoiceTotal, { displayFn: fmtRp }), color:'var(--realisasi)' },
+    { id:'omsetTahun', label:'Omset Penjualan Tahun Ini', val:fmtRp(invTahunIni.reduce((s,inv)=>s+invoiceTotal(inv),0)), delta:`${invTahunIni.length} nota tahun ini`, up:true,
+      data: cumulativeTrend(invTahunIni, 'Tgl_Bukti', invoiceTotal, { displayFn: fmtRp }), color:'var(--primary)' },
+    { id:'piutang', label:'Total Piutang', val:fmtRp(piutangNota.reduce((s,it)=>s+it.sisa,0)), delta:`${piutangNota.length} nota outstanding`, up:false,
+      data: cumulativeTrend(piutangNota, 'tgl', it=>it.sisa, { isoFn: akToIso, labelFn: it=>it.noBukti, displayFn: fmtRp }), color:'#7c3aed' },
+    { id:'hutang', label:'Total Hutang', val:fmtRp(hutangNota.reduce((s,it)=>s+it.sisa,0)), delta:`${hutangNota.length} nota outstanding`, up:false,
+      data: cumulativeTrend(hutangNota, 'tgl', it=>it.sisa, { isoFn: akToIso, labelFn: it=>it.noBukti, displayFn: fmtRp }), color:'#dc2626' },
   ];
 
   const [visibleKpis, setVisibleKpis] = React.useState(['omsetBulan','omsetTahun','piutang','hutang']);

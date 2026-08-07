@@ -11,16 +11,21 @@ function PenjualanDashboard({ onOpenSub, onNavigate, pelanggan, konfirmasi, sale
   const returPending = salesReturns.filter(r => r.Status === 'Pending').length;
   const omzet30 = invoices.reduce((s,n)=>s+(n.Details||[]).reduce((t,d)=>t+pjLineTotal(d),0), 0);
 
-  const topPelanggan = (() => {
-    const byCust = {};
-    invoices.filter(n => !n.Batal).forEach(n => {
-      const nilai = (n.Details||[]).reduce((t,d)=>t+pjLineTotal(d),0);
-      byCust[n.Nama_Cust] = (byCust[n.Nama_Cust] || 0) + nilai;
-    });
-    const sorted = Object.entries(byCust).sort((a,b)=>b[1]-a[1]).slice(0,5);
-    const max = sorted[0]?.[1] || 1;
-    return sorted.map(([nm, val]) => [nm, val, Math.round((val/max)*100)]);
-  })();
+  // Grafik tren tiap KPI (pola sama Home: Spark kumulatif, bisa di-hover lihat tanggal+nilai per
+  // titik) — dipakai gantikan chart ranking/status yang tadi dihapus (user minta konsisten dgn
+  // gaya Home: angka + grafik naik/turun, bukan bar ranking/status composition terpisah).
+  const invNilai = n => (n.Details||[]).reduce((t,d)=>t+pjLineTotal(d),0);
+  const invoicesAktif = invoices.filter(n => !n.Batal);
+  const outstandingInvoices = invoices.filter(n => ['BELUM_REALISASI','SELESAI_SEBAGIAN'].includes(invoiceComputeStatus(n)));
+  const konfirmasiReturMerged = [
+    ...konfirmasi.map(k => ({ tgl: k.tglBukti })),
+    ...salesReturns.map(r => ({ tgl: r.Tgl_Bukti })),
+  ];
+
+  const trendPelanggan = cumulativeTrend(invoicesAktif, 'Tgl_Bukti', () => 1, { displayFn: v => `${v} nota` });
+  const trendOmzet = cumulativeTrend(invoicesAktif, 'Tgl_Bukti', invNilai, { displayFn: fmtRp });
+  const trendOutstanding = cumulativeTrend(outstandingInvoices, 'Tgl_Bukti', invNilai, { displayFn: fmtRp });
+  const trendKonfirmasiRetur = cumulativeTrend(konfirmasiReturMerged, 'tgl', () => 1, { displayFn: v => `${v} dokumen` });
 
   const tiles = [
     { id:'katalog',    icon:I.users(20),   title:'Katalog Pelanggan',    desc:'Master data pelanggan, kontak, alamat, dan info perusahaan.', badge:`${totalPel} pelanggan`, count:`${aktifPel} aktif`, accent:null },
@@ -53,21 +58,25 @@ function PenjualanDashboard({ onOpenSub, onNavigate, pelanggan, konfirmasi, sale
           <div className="lbl">Total Pelanggan</div>
           <div className="val mono">{totalPel}</div>
           <div className="delta up">{aktifPel} aktif (kontak lengkap)</div>
+          <Spark data={trendPelanggan} color="var(--realisasi)" />
         </div>
         <div className="kpi">
           <div className="lbl">Omzet (30 Hari)</div>
           <div className="val mono">{fmtRp(omzet30)}</div>
           <div className="delta up">▲ 6.2% vs bulan lalu</div>
+          <Spark data={trendOmzet} color="var(--primary)" />
         </div>
         <div className="kpi">
           <div className="lbl">Outstanding Piutang</div>
           <div className="val mono" style={{color: outstanding > 50000000 ? 'var(--warn)' : 'var(--text)'}}>{fmtRp(outstanding)}</div>
           <div className="delta down">{invoices.filter(n=>n.Status==='Outstanding').length} invoice belum lunas</div>
+          <Spark data={trendOutstanding} color="#dc2626" />
         </div>
         <div className="kpi">
           <div className="lbl">Konfirmasi & Retur Aktif</div>
           <div className="val mono">{konfirmasi.length + salesReturns.length}</div>
           <div className="delta">{pendingKonf + returPending} menunggu tindakan</div>
+          <Spark data={trendKonfirmasiRetur} color="#7c3aed" />
         </div>
       </div>
 
@@ -88,24 +97,7 @@ function PenjualanDashboard({ onOpenSub, onNavigate, pelanggan, konfirmasi, sale
         ))}
       </div>
 
-      <div style={{display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:16, marginTop:32}}>
-        <div className="panel">
-          <h3>Top Pelanggan</h3>
-          <div style={{display:'flex', flexDirection:'column', gap:14}}>
-            {topPelanggan.length === 0 && <div className="muted" style={{fontSize:12.5}}>Belum ada invoice tercatat.</div>}
-            {topPelanggan.map(([nm, val, pct]) => (
-              <div key={nm}>
-                <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, marginBottom:5}}>
-                  <span>{nm}</span><span className="mono muted">{fmtRp(val)}</span>
-                </div>
-                <div style={{height:6, background:'var(--bg-sub)', borderRadius:999, overflow:'hidden'}}>
-                  <div style={{height:'100%', width:pct+'%', background:'linear-gradient(90deg, var(--primary), var(--accent))', borderRadius:999}} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
+      <div style={{marginTop:32}}>
         <div className="panel">
           <h3>Aktivitas Penjualan Terkini</h3>
           <div className="timeline">

@@ -16,91 +16,52 @@ function MfManufakturDashboard({ onOpenSub, spkRows, produksiRows, bpblRows, rpb
   const planningOutstanding = planningRows.filter(r => r.status === 'outstanding').length;
   const menitTerjadwal = planningRows.filter(r => r.status !== 'Batal').reduce((s,r) => s + (+r.menit || 0), 0);
 
+  // Grafik tren tiap KPI (Spark kumulatif, hover lihat tanggal+nilai per titik) — pola sama Home,
+  // gantikan chart ranking/status yang tadi dihapus. `tgl` SPK format DD-MM-YYYY jadi butuh mfToIso
+  // sebelum diurutkan kronologis. Hasil Produksi tidak punya tanggal sendiri, di-resolve dari SPK
+  // rujukannya (noSpk). Planning Schedule semuanya di 1 tanggal yg sama (seed), jadi trennya pakai
+  // jam mulai (dalam hari itu) sebagai sumbu-X, bukan tanggal.
+  const produksiWithTgl = produksiRows.map(r => ({ ...r, _tgl: MF_SPK_SEED.find(s=>s.no===r.noSpk)?.tgl || '' })).filter(r => r._tgl);
+
   const kpis = [
-    { label:'SPK Aktif', value: spkAktif.length, sub:`dari ${spkRows.length} total SPK` },
-    { label:'SPK Menunggu Approval', value: spkPendingApproval, sub: spkPendingApproval > 0 ? 'Perlu ditinjau' : 'Tidak ada yang menunggu', color: spkPendingApproval > 0 ? 'var(--warn)' : null },
-    { label:'Hasil Produksi Tercatat', value: produksiRows.length, sub:`${bpblRows.length} BPBL, ${rpblRows.length} RPBL` },
-    { label:'Antrian Produksi Outstanding', value: planningOutstanding, sub:`${menitTerjadwal} menit terjadwal` },
+    { label:'SPK Aktif', value: spkAktif.length, sub:`dari ${spkRows.length} total SPK`,
+      trend: cumulativeTrend(spkAktif, 'tgl', () => 1, { isoFn: mfToIso, displayFn: v => `${v} SPK` }), trendColor:'var(--realisasi)' },
+    { label:'SPK Menunggu Approval', value: spkPendingApproval, sub: spkPendingApproval > 0 ? 'Perlu ditinjau' : 'Tidak ada yang menunggu', color: spkPendingApproval > 0 ? 'var(--warn)' : null,
+      trend: cumulativeTrend(spkRows.filter(s=>s.status==='Pending Approval'), 'tgl', () => 1, { isoFn: mfToIso, displayFn: v => `${v} SPK` }), trendColor:'var(--warn)' },
+    { label:'Hasil Produksi Tercatat', value: produksiRows.length, sub:`${bpblRows.length} BPBL, ${rpblRows.length} RPBL`,
+      trend: cumulativeTrend(produksiWithTgl, '_tgl', () => 1, { isoFn: mfToIso, displayFn: v => `${v} dokumen` }), trendColor:'var(--primary)' },
+    { label:'Antrian Produksi Outstanding', value: planningOutstanding, sub:`${menitTerjadwal} menit terjadwal`,
+      trend: cumulativeTrend(planningRows.filter(r=>r.status!=='Batal'), 'jamMulai', r => +r.menit||0, { displayFn: v => `${v} menit` }), trendColor:'#7c3aed' },
   ];
 
-  const tiles = [
-    {
-      id: 'spk',
-      icon: I.list(20),
-      title: 'Surat Perintah Kerja',
-      desc: 'Buat dan kelola work order produksi.',
-      badge: spkRows.filter(s => s.status === 'Pending Approval').length + ' Menunggu',
-      count: spkRows.length + ' SPK',
+  // Root-cause fix (konsistensi dashboard): sebelumnya markup bespoke sendiri (tile flat tanpa
+  // grouping, tanpa breadcrumb, tanpa activity log, tanpa chart) — sekarang pindah ke ModuleDashboard
+  // (components.jsx) yang sudah dipakai Pembelian/Barang, supaya struktur & visualnya konsisten.
+  const sections = [
+    { title:'Produksi', count:'2', tiles:[
+        { id:'spk', title:'Surat Perintah Kerja', badge: spkPendingApproval > 0 ? `${spkPendingApproval} Menunggu` : null, icon:I.list(20) },
+        { id:'produksi', title:'Hasil Produksi & Pemakaian Bahan', badge:null, icon:I.box(20) },
+      ]
     },
-    {
-      id: 'produksi',
-      icon: I.box(20),
-      title: 'Hasil Produksi & Pemakaian Bahan',
-      desc: 'Catat hasil produksi dan pemakaian bahan baku.',
-      badge: null,
-      count: produksiRows.length + ' Dokumen',
-    },
-    {
-      id: 'bpbl',
-      icon: I.invoice(20),
-      title: 'Bukti Pemakaian Barang Lain',
-      desc: 'Catat pemakaian barang lain dari gudang.',
-      badge: null,
-      count: bpblRows.length + ' Dokumen',
-    },
-    {
-      id: 'rpbl',
-      icon: I.truck(20),
-      title: 'Retur Pakai Barang Lain',
-      desc: 'Catat pengembalian barang ke gudang.',
-      badge: null,
-      count: rpblRows.length + ' Dokumen',
-    },
-    {
-      id: 'planning',
-      icon: I.cal(20),
-      title: 'Planning Schedule Produksi',
-      desc: 'Kelola antrian dan jadwal produksi per mesin.',
-      badge: planningRows.filter(r => r.status === 'planning').length + ' Antrian',
-      count: MF_MESIN_LIST.length + ' Mesin',
+    { title:'Pemakaian & Antrian', count:'3', tiles:[
+        { id:'bpbl', title:'Bukti Pemakaian Barang Lain', badge:null, icon:I.invoice(20) },
+        { id:'rpbl', title:'Retur Pakai Barang Lain', badge:null, icon:I.truck(20) },
+        { id:'planning', title:'Planning Schedule Produksi', badge: planningRows.filter(r=>r.status==='planning').length + ' Antrian', icon:I.cal(20) },
+      ]
     },
   ];
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <div>
-          <h1>Manufaktur</h1>
-          <div className="sub">Kelola proses produksi dan pemakaian bahan</div>
-        </div>
-      </div>
-      <div className="kpi-strip">
-        {kpis.map((k, i) => (
-          <div className="kpi" key={i}>
-            <div className="lbl">{k.label}</div>
-            <div className="val mono" style={k.color ? {color:k.color} : null}>{k.value}</div>
-            {k.sub && <div className="delta">{k.sub}</div>}
-          </div>
-        ))}
-      </div>
-      <div className="tile-grid">
-        {tiles.map(t => (
-          <button key={t.id} className="tile" onClick={() => onOpenSub(t.id)}>
-            <div className="tile-head">
-              <div className="tile-icon-wrap">{t.icon}</div>
-              {t.badge && (
-                <span className="tile-badge pulse">{t.badge}</span>
-              )}
-            </div>
-            <div>
-              <h3>{t.title}</h3>
-              <p>{t.desc}</p>
-            </div>
-            <div className="tile-foot"><b>{t.count}</b> {I.arrowR(11)}</div>
-          </button>
-        ))}
-      </div>
-    </div>
+    <ModuleDashboard
+      title="Manufaktur"
+      subtitle="Kelola proses produksi dan pemakaian bahan"
+      kpis={kpis}
+      sections={sections}
+      activityLog={ACTIVITY_LOG_MANUFAKTUR}
+      onOpenSub={onOpenSub}
+      activityTitle="Log Aktivitas Terbaru"
+      activitySub="Operasi sistem yang dideteksi secara real-time"
+    />
   );
 }
 

@@ -531,7 +531,61 @@ function MultiTabNav({ tabGroups, activeGroup, onGroupClick, onTabClick, onTabCl
 }
 
 // ---------- Reusable module dashboard (Pengaturan, Katalog Lain, Barang) ----------
-function ModuleDashboard({ title, subtitle, sections, activityLog, onOpenSub, activityTitle = 'Log Aktivitas Terbaru', activitySub = 'Operasi sistem yang dideteksi secara real-time', kpis }) {
+// ---------- Dashboard chart primitives (dipakai ke-6 dashboard menu utama) ----------
+// Tidak ada chart library di app ini (no build step) — primitif ringan berbasis div/CSS,
+// mengikuti pola SVG sparkline `Spark` (dashboard.jsx) yang sudah ada: warna reuse CSS var
+// yang sudah ada, tidak invent hue baru. DashBarChart = magnitude/ranking (sequential 1 hue,
+// var(--primary)). DashStatusBar = composition (warna status yang sudah reserved di seluruh
+// app: realisasi/warn/danger/text-3, sama seperti dipakai status pill). Angka SELALU dihitung
+// dari row-array live di tiap pemanggil, bukan angka statis.
+function DashBarChart({ title, items }) {
+  const max = Math.max(1, ...items.map(it => it.value));
+  return (
+    <div className="panel">
+      <h3>{title}</h3>
+      <div style={{display:'flex', flexDirection:'column', gap:12, marginTop:14}}>
+        {items.length === 0 && <div className="muted" style={{fontSize:12.5}}>Belum ada data.</div>}
+        {items.map((it,i) => (
+          <div key={i}>
+            <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, marginBottom:4}}>
+              <span style={{color:'var(--text-2)'}}>{it.label}</span>
+              <span className="mono" style={{fontWeight:600}}>{it.display ?? it.value}</span>
+            </div>
+            <div style={{height:8, background:'var(--primary-50)', borderRadius:999, overflow:'hidden'}} title={`${it.label}: ${it.display ?? it.value}`}>
+              <div style={{height:'100%', width:`${Math.max(3, (it.value/max)*100)}%`, background:'var(--primary)', borderRadius:999}} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DashStatusBar({ title, segments }) {
+  const total = Math.max(1, segments.reduce((s,seg)=>s+(+seg.value||0),0));
+  const visible = segments.filter(seg => seg.value > 0);
+  return (
+    <div className="panel">
+      <h3>{title}</h3>
+      <div style={{display:'flex', height:14, borderRadius:999, overflow:'hidden', gap:2, marginTop:14}}>
+        {visible.length === 0 && <div style={{flex:1, background:'var(--bg-sub)', borderRadius:999}} />}
+        {visible.map((seg,i) => (
+          <div key={i} style={{width:`${(seg.value/total)*100}%`, background:seg.color, minWidth:4}} title={`${seg.label}: ${seg.value}`} />
+        ))}
+      </div>
+      <div style={{display:'flex', flexWrap:'wrap', gap:'6px 16px', marginTop:12}}>
+        {segments.map((seg,i) => (
+          <div key={i} style={{display:'flex', alignItems:'center', gap:6, fontSize:12.5, color:'var(--text-2)'}}>
+            <span style={{width:9, height:9, borderRadius:3, background:seg.color, flex:'none'}} />
+            {seg.label} <b className="mono" style={{color:'var(--text)'}}>{seg.value}</b>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ModuleDashboard({ title, subtitle, sections, activityLog, onOpenSub, activityTitle = 'Log Aktivitas Terbaru', activitySub = 'Operasi sistem yang dideteksi secara real-time', kpis, charts }) {
   return (
     <div className="page" data-screen-label={title}>
       <div className="crumbs">
@@ -551,8 +605,14 @@ function ModuleDashboard({ title, subtitle, sections, activityLog, onOpenSub, ac
               <div className="lbl">{k.label}</div>
               <div className="val mono" style={k.color ? {color:k.color} : null}>{k.value}</div>
               {k.sub && <div className="delta">{k.sub}</div>}
+              {k.trend && <Spark data={k.trend} color={k.trendColor || 'var(--accent)'} />}
             </div>
           ))}
+        </div>
+      )}
+      {charts && charts.length > 0 && (
+        <div style={{display:'grid', gridTemplateColumns:`repeat(${charts.length}, 1fr)`, gap:20, marginBottom:24}}>
+          {charts}
         </div>
       )}
       <div style={{display:'grid', gridTemplateColumns:'1.5fr 1fr', gap:20, alignItems:'start'}}>

@@ -25,6 +25,17 @@ const MF_STEMPEL_LIST     = ['Urgent','Kapal Langka','Lunas COD','VIP Customer',
 const MF_SATUAN_SPK       = ['LBR','MTR','PCS'];
 const MF_STATUS_SPK       = ['Proses','Draft','Pending Approval','Approved','Realisasi','Selesai','Hold','Cancelled','Batal'];
 
+// Dashboard Manufaktur (ManufakturPage.jsx, migrasi ke ModuleDashboard) — pola identik
+// ACTIVITY_LOG_BARANG/ACTIVITY_LOG_PEMBELIAN, sebelumnya modul ini tidak punya panel activity log
+// sama sekali (dashboard bespoke minimal, tidak konsisten dgn modul lain).
+const ACTIVITY_LOG_MANUFAKTUR = [
+  { user:'pdjsw', action:'Melakukan Login:', detail:'Sistem Utama', time:'3 menit yang lalu', color:'var(--realisasi)' },
+  { user:'operator_1', action:'Menyetujui SPK:', detail:'SPK-2026-0021', time:'25 menit yang lalu', color:'var(--realisasi)' },
+  { user:'admin', action:'Mencatat Hasil Produksi:', detail:'HP-2026-0009', time:'1 jam yang lalu', color:'var(--accent)' },
+  { user:'operator_1', action:'Menjadwalkan Antrian:', detail:'TRIM 1 — 24-06-2026', time:'2 jam yang lalu', color:'var(--primary)' },
+  { user:'admin', action:'Membatalkan SPK:', detail:'SPK-2026-0011', time:'5 jam yang lalu', color:'var(--danger)' },
+];
+
 // Shared section-title style used across the SPK, Hasil Produksi, and Pemakaian/Retur dialogs.
 const MF_SEC_STYLE = {
   fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.07em',
