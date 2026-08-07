@@ -154,6 +154,7 @@ function App() {
     if (g === 'manufaktur')  return <ManufakturPage  activeSub={sub} onSubChange={id => onSubChange('manufaktur', id)}  onNavigate={navigateTo} />;
     if (g === 'sales')       return <PenjualanPage   activeSub={sub} onSubChange={id => onSubChange('sales', id)}       onNavigate={navigateTo} />;
     if (g === 'keuangan')   return <KeuanganPage    activeSub={sub} onSubChange={id => onSubChange('keuangan', id)}   onNavigate={navigateTo} />;
+    if (g === 'payroll')    return <PayrollPage     activeSub={sub} onSubChange={id => onSubChange('payroll', id)}    onNavigate={navigateTo} />;
     if (g === 'pengaturan')  return <PengaturanPage  activeSub={sub} onSubChange={id => onSubChange('pengaturan', id)}  onNavigate={navigateTo} />;
     if (g === 'inventory')   return <InventoryPage   activeSub={sub} onSubChange={id => onSubChange('inventory', id)}   onNavigate={navigateTo} />;
     return null;

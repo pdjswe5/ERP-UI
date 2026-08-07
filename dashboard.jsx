@@ -278,6 +278,7 @@ function HomeDashboard({ onNavigate }) {
     { id:'barang',      label:'Barang',       icon:I.box(22),      color:'#f59e0b', kpi:`${BARANG_LAIN.filter(b=>b.aktif).length + BAHAN_BAKU.filter(b=>b.aktif).length + BARANG_JADI.filter(b=>b.aktif).length} item aktif`, desc:'Barang, bahan baku, mutasi & stock opname' },
     { id:'manufaktur',  label:'Manufaktur',   icon:I.list(22),     color:'#dc2626', kpi:`${MF_SPK_SEED.filter(s=>!['Batal','Cancelled','Selesai'].includes(s.status)).length} SPK aktif`, desc:'SPK, hasil produksi & planning schedule' },
     { id:'keuangan',    label:'Keuangan',     icon:I.bank(22),     color:'#8b5cf6', kpi:'Akuntansi & kas/bank', desc:'Akun, jurnal, laporan keuangan, kas, bank & giro' },
+    { id:'payroll',     label:'Payroll',      icon:I.wallet(22),   color:'#be185d', kpi:`${PR_KARYAWAN.filter(k=>k.aktif).length} karyawan aktif`, desc:'Master karyawan, mutasi, absensi & penggajian' },
     { id:'kataloglain', label:'Katalog Lain', icon:I.layers(22),   color:'#0369a1', kpi:'Data pendukung',      desc:'Katalog & master data pendukung lainnya' },
     { id:'pengaturan',  label:'Pengaturan',   icon:I.settings(22), color:'#6b7280', kpi:'Konfigurasi sistem',  desc:'Preferensi & konfigurasi aplikasi' },
   ];

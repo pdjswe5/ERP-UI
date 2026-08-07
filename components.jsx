@@ -40,6 +40,7 @@ const I = {
   check:   (s=14)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
   arrowR:  (s=12)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
   fileX:   (s=14)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8.5"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="13" y2="13"/><line x1="16.5" y1="17.5" x2="21.5" y2="22.5"/><line x1="21.5" y1="17.5" x2="16.5" y2="22.5"/></svg>,
+  wallet:  (s=16)=> <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/><path d="M17 12h4v4h-4a2 2 0 0 1 0-4z"/><line x1="3" y1="8" x2="21" y2="8"/></svg>,
 };
 
 // PDJ logo mark — uses uploaded New_logo.png
@@ -303,6 +304,7 @@ const MODULES = [
   { id: 'kataloglain', label: 'Katalog Lain', icon: I.layers },
   { id: 'manufaktur',  label: 'Manufaktur',   icon: I.list },
   { id: 'keuangan',    label: 'Keuangan',     icon: I.bank },
+  { id: 'payroll',     label: 'Payroll',      icon: I.wallet },
   { id: 'pengaturan',  label: 'Pengaturan',   icon: I.settings },
 ];
 
@@ -366,6 +368,14 @@ const MODULE_SUBS = {
     { id:'penyesuaian',  label:'Penyesuaian Barang' },
     { id:'opname',       label:'Stock Opname' },
   ],
+  payroll: [
+    { id:'karyawan',          label:'Master Karyawan' },
+    { id:'masterdata',        label:'Master Data Payroll' },
+    { id:'absensi',           label:'Absensi Karyawan' },
+    { id:'produksiharian',    label:'Transaksi Produksi Harian' },
+    { id:'penggajianabsensi', label:'Proses Penggajian Absensi' },
+    { id:'penggajianborongan',label:'Proses Penggajian Borongan' },
+  ],
   kataloglain: [
     { id:'salesman',     label:'Katalog Salesman' },
     { id:'gudang',       label:'Katalog Gudang' },
@@ -398,7 +408,7 @@ const MODULE_SUBS = {
 const GROUP_COLORS = {
   home:'#6366f1', pembelian:'#0ea5e9', sales:'#10b981', inventory:'#f59e0b',
   barang:'#f59e0b', kataloglain:'#0d9488', manufaktur:'#f97316',
-  keuangan:'#8b5cf6', pengaturan:'#6b7280',
+  keuangan:'#8b5cf6', payroll:'#be185d', pengaturan:'#6b7280',
 };
 
 function MultiTabNav({ tabGroups, activeGroup, onGroupClick, onTabClick, onTabClose, onToggleCollapse, moduleOrder, onReorderGroups, onReorderSubTabs }) {
