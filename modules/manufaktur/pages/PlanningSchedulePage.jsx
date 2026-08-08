@@ -255,7 +255,17 @@ function MfPlanningScheduleList({ rows, setRows, spkRows, onSelesai }) {
               </div>
               <div className="field">
                 <label>Jam Mulai</label>
-                <input className="input" type="time" value={jamMulai} onChange={e => setJamMulai(e.target.value)} />
+                <input className="input" type="time" value={jamMulai}
+                  onChange={e => {
+                    const v = e.target.value;
+                    setJamMulai(v);
+                    // Ganti Jam Mulai langsung nge-reset ulang jam barang PERTAMA di antrian mesin
+                    // terpilih ke waktu ini, lalu semua barang berikutnya ikut geser berantai
+                    // (mfRechainMesinRows, resetFirst=true) — sebelumnya field ini cuma dipakai sbg
+                    // anchor SAAT nambah baris baru ke antrian kosong, jadi kalau antrian sudah ada
+                    // isinya, ubah Jam Mulai di sini tidak berpengaruh apa-apa ke jadwal yang berjalan.
+                    rechain(v, true);
+                  }} />
               </div>
               <div className="filter-actions">
                 <button className="btn btn-primary" disabled={!selectedMesin}

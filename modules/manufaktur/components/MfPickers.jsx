@@ -548,8 +548,8 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
         <div className="modal" style={{maxWidth:1180}} onClick={e => e.stopPropagation()}>
           <div className="modal-head">
             <div>
-              <h2>{data ? 'Edit Barang Jadi' : 'Tambah Barang Jadi'}</h2>
-              <div className="sub">Pilih barang, isi detail, dan tentukan mesin yang digunakan.</div>
+              <h2>{data ? 'Edit Data Item' : 'Tambah Data Item'}</h2>
+              <div className="sub">Pilih barang, isi detail, tentukan mesin yang digunakan, dan bahan yang dibutuhkan.</div>
             </div>
             <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
           </div>
@@ -747,9 +747,10 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
                   <thead>
                     <tr>
                       <th style={thBahanS('26px', true)}>No</th>
-                      <th style={thBahanS('18%')}>Gd. Bahan</th>
-                      <th style={thBahanS('22%')}>Kode Bahan</th>
-                      <th style={thBahanS('16%')}>Merk Bahan</th>
+                      <th style={thBahanS('14%')}>Gudang</th>
+                      <th style={thBahanS('20%')}>Nama</th>
+                      <th style={thBahanS('16%')}>Kode</th>
+                      <th style={thBahanS('14%')}>Merk</th>
                       <th style={thBahanS('12%', true)}>Jumlah SPK</th>
                       <th style={thBahanS('10%', true)}>Satuan</th>
                       <th style={thBahanS('50px', true)}></th>
@@ -757,7 +758,7 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
                   </thead>
                   <tbody>
                     {localBahan.length === 0 && (
-                      <tr><td colSpan={7} style={{padding:'20px 12px', textAlign:'center', color:'var(--text-3)', fontSize:13}}>
+                      <tr><td colSpan={8} style={{padding:'20px 12px', textAlign:'center', color:'var(--text-3)', fontSize:13}}>
                         Belum ada bahan. Klik "+ Tambah Bahan" untuk menambahkan.
                       </td></tr>
                     )}
@@ -771,6 +772,7 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
                             {MF_GUDANG_LIST.map(g => <option key={g}>{g}</option>)}
                           </select>
                         </td>
+                        <td style={tdBahanS}>{brgBomResolveKomponen(row.kodeBahan)?.namaKomponen || <span style={{color:'var(--text-3)'}}>—</span>}</td>
                         <td style={tdBahanS}><span style={{color:'var(--primary)', fontWeight:500}}>{row.kodeBahan}</span></td>
                         <td style={tdBahanS}>{row.merkBahan || <span style={{color:'var(--text-3)'}}>—</span>}</td>
                         <td style={tdBahanS}>

@@ -97,6 +97,14 @@ const PELUNASAN_PIUTANG = [
     items:[ { id:1, jenis:'Nota', noBukti:'NJ-2026-0160', sisaSaatItu:14200000, debet:0, kredit:14200000 } ],
     penerimaan:[ { id:1, metode:'Tunai', kodeAkun:'1000.011', namaAkun:'KAS KECIL 1', masuk:14200000, keluar:0 } ],
     total:14200000, status:'Posted' },
+  { no:'PP-2026-0005', tgl:'05-06-2026', noReferensi:'TF-05062026', kodeCust:'L015', namaCust:'Lusista Wijaya 2', catatan:'Pelunasan sebagian',
+    items:[ { id:1, jenis:'Nota', noBukti:'NJ-2026-0287', sisaSaatItu:9800000, debet:0, kredit:6000000 } ],
+    penerimaan:[ { id:1, metode:'Transfer', kodeAkun:'1005.000', namaAkun:'BANK BCA', masuk:6000000, keluar:0 } ],
+    total:6000000, status:'Posted' },
+  { no:'PP-2026-0006', tgl:'25-04-2026', noReferensi:'', kodeCust:'R006', namaCust:'Reynold 2', catatan:'Pelunasan penuh',
+    items:[ { id:1, jenis:'Nota', noBukti:'NJ-2026-0270', sisaSaatItu:19900000, debet:0, kredit:19900000 } ],
+    penerimaan:[ { id:1, metode:'Tunai', kodeAkun:'1000.005', namaAkun:'KAS BESAR', masuk:19900000, keluar:0 } ],
+    total:19900000, status:'Posted' },
 ];
 
 const PELUNASAN_HUTANG = [
@@ -115,4 +123,8 @@ const PELUNASAN_HUTANG = [
     ],
     penerimaan:[ { id:1, metode:'Tunai', kodeAkun:'1000.005', namaAkun:'KAS BESAR', masuk:18000000, keluar:0 } ],
     total:18000000, status:'Posted' },
+  { no:'PH-2026-0004', tgl:'20-05-2026', noReferensi:'TF-20052026', kodeSupp:'P003', namaSupp:'PT. Prima Baja Sentosa', catatan:'Pelunasan penuh',
+    items:[ { id:1, jenis:'Nota', noBukti:'BL26050020', sisaSaatItu:15500000, debet:0, kredit:15500000 } ],
+    penerimaan:[ { id:1, metode:'Transfer', kodeAkun:'1005.000', namaAkun:'BANK BCA', masuk:15500000, keluar:0 } ],
+    total:15500000, status:'Posted' },
 ];

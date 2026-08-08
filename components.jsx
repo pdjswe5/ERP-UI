@@ -305,6 +305,7 @@ const MODULES = [
   { id: 'manufaktur',  label: 'Manufaktur',   icon: I.list },
   { id: 'keuangan',    label: 'Keuangan',     icon: I.bank },
   { id: 'payroll',     label: 'Payroll',      icon: I.wallet },
+  { id: 'laporan',     label: 'Laporan',      icon: I.chart },
   { id: 'pengaturan',  label: 'Pengaturan',   icon: I.settings },
 ];
 
@@ -376,6 +377,15 @@ const MODULE_SUBS = {
     { id:'penggajianabsensi', label:'Proses Penggajian Absensi' },
     { id:'penggajianborongan',label:'Proses Penggajian Borongan' },
   ],
+  laporan: [
+    { id:'kartustok',          label:'Kartu Stok' },
+    { id:'posisistok',         label:'Posisi Stok' },
+    { id:'rekapstok',          label:'Rekap Stok' },
+    { id:'rekappiutanghutang', label:'Rekap Piutang dan Hutang' },
+    { id:'kartupiutanghutang', label:'Kartu Piutang dan Hutang' },
+    { id:'rinciannota',        label:'Rincian Nota Piutang dan Hutang' },
+    { id:'komisisalesman',     label:'Laporan Komisi Salesman' },
+  ],
   kataloglain: [
     { id:'salesman',     label:'Katalog Salesman' },
     { id:'gudang',       label:'Katalog Gudang' },
@@ -408,7 +418,7 @@ const MODULE_SUBS = {
 const GROUP_COLORS = {
   home:'#6366f1', pembelian:'#0ea5e9', sales:'#10b981', inventory:'#f59e0b',
   barang:'#f59e0b', kataloglain:'#0d9488', manufaktur:'#f97316',
-  keuangan:'#8b5cf6', payroll:'#be185d', pengaturan:'#6b7280',
+  keuangan:'#8b5cf6', payroll:'#be185d', laporan:'#0891b2', pengaturan:'#6b7280',
 };
 
 function MultiTabNav({ tabGroups, activeGroup, onGroupClick, onTabClick, onTabClose, onToggleCollapse, moduleOrder, onReorderGroups, onReorderSubTabs }) {
