@@ -4,7 +4,7 @@ function PjHeader({ title, sub, onAdd, addLabel='Tambah', extra, onRefresh, onEx
   return (
     <div className="page-head">
       <div><h1>{title}</h1><div className="sub">{sub}</div></div>
-      <div style={{display:'flex', gap:8}}>
+      <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
         <button className="btn btn-sm" onClick={onRefresh || (()=>window.__erpToast && window.__erpToast('Data diperbarui.'))}>{I.refresh()} Refresh</button>
         <button className="btn btn-sm" onClick={onExport || (()=>window.__erpToast && window.__erpToast('Fitur export akan tersedia pada integrasi backend.'))}>{I.download()} Export</button>
         {extra}

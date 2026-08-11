@@ -140,7 +140,7 @@ function KeuanganDashboard({ onOpenSub, onNavigate }) {
       <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><span className="current">Keuangan</span></div>
       <div className="page-head">
         <div><h1>Keuangan Workspace</h1><div className="sub">Kelola arus kas, bank, giro, dan pelunasan piutang/hutang.</div></div>
-        <div style={{display:'flex', gap:8}}>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
           <button className="btn btn-sm btn-primary" onClick={()=>onOpenSub('km')}>{I.plus()} Transaksi Baru</button>
         </div>
@@ -166,7 +166,7 @@ function KeuanganDashboard({ onOpenSub, onNavigate }) {
         ))}
       </div>
 
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginTop:32}}>
+      <div className="form-grid-2" style={{gap:16, marginTop:32}}>
         <div className="panel">
           <h3>Saldo Akun</h3>
           <table className="data" style={{margin:'4px -4px'}}>
@@ -211,7 +211,7 @@ function TxPage({ title, sub, rows, columns, onAdd, onEdit, totalKey, totalLabel
     <>
       <div className="page-head">
         <div><h1>{title}</h1><div className="sub">{sub}</div></div>
-        <div style={{display:'flex', gap:8}}>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
           <button className="btn btn-sm">{I.download()} Export</button>
           {onAdd && <button className="btn btn-primary" onClick={onAdd}>{I.plus()} Tambah</button>}
@@ -273,7 +273,7 @@ function KasBankGiro({ onAdd, onEdit }) {
     <>
       <div className="page-head">
         <div><h1>Kas, Bank & Giro</h1><div className="sub">{KAS_BANK_GIRO.length} akun · Total saldo {fmtRp(KAS_BANK_GIRO.reduce((s,a)=>s+a.saldo,0))}</div></div>
-        <div style={{display:'flex', gap:8}}>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
           <button className="btn btn-primary" onClick={onAdd}>{I.plus()} Tambah Akun</button>
         </div>
@@ -374,7 +374,7 @@ function CashModal({ data, onClose, onSave, kind }) {
       sub={isEdit ? data.deskripsi : `Catat transaksi ${labels.title.toLowerCase()} baru`}
       onClose={onClose} onSave={onSave}
       saveLabel={isEdit?'Simpan Perubahan':'Simpan & Posting'}>
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:24}}>
+      <div className="form-grid-2" style={{gap:24}}>
         <div className="form-section">
           <h4>Header Transaksi</h4>
           <div className="form-row">
@@ -473,7 +473,7 @@ function GiroModal({ data, onClose, onSave, kind }) {
       sub={isEdit?`${data.dari||data.untuk} · ${data.noGiro}`:`Catat giro ${kind==='gm'?'masuk dari pelanggan':'keluar ke supplier'}`}
       onClose={onClose} onSave={onSave}
       saveLabel={isEdit?'Simpan Perubahan':'Simpan & Posting'}>
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:24}}>
+      <div className="form-grid-2" style={{gap:24}}>
         <div className="form-section">
           <h4>Detail Giro</h4>
           <div className="form-row">
@@ -529,7 +529,7 @@ function PelunasanModal({ data, onClose, onSave, kind }) {
       sub={isEdit?(isPiutang?data.pelanggan:data.supplier):`Catat pelunasan ${isPiutang?'invoice penjualan':'bill supplier'}`}
       onClose={onClose} onSave={onSave}
       saveLabel={isEdit?'Simpan Perubahan':'Simpan & Posting'}>
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:24}}>
+      <div className="form-grid-2" style={{gap:24}}>
         <div className="form-section">
           <h4>Detail Pelunasan</h4>
           <div className="form-row">

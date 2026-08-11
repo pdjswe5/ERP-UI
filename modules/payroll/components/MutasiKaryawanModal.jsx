@@ -116,8 +116,8 @@ function MutasiKaryawanModal({ karyawan, mutasiRows, onClose, onSave }) {
           <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
         </div>
         <div className="modal-body" style={{maxHeight:'74vh', overflow:'auto'}}>
-          <div style={{display:'flex', gap:20}}>
-            <div style={{width:200, flexShrink:0, display:'flex', flexDirection:'column', gap:8}}>
+          <div className="pr-mutasi-layout">
+            <div className="pr-mutasi-col-hist">
               <button className="btn btn-primary btn-sm" onClick={startNew}>{I.plus(14)} Mutasi Baru</button>
               <div className="muted" style={{fontSize:12, marginTop:8, fontWeight:600}}>Histori Mutasi</div>
               {history.length === 0 && <div className="muted" style={{fontSize:12.5}}>Belum ada histori mutasi.</div>}
@@ -133,9 +133,9 @@ function MutasiKaryawanModal({ karyawan, mutasiRows, onClose, onSave }) {
               ))}
             </div>
 
-            <div style={{width:1, background:'var(--border)', flexShrink:0}} />
+            <div className="pr-mutasi-divider" />
 
-            <div style={{width:320, flexShrink:0}}>
+            <div className="pr-mutasi-col-detail">
               <div className="muted" style={{fontSize:12, fontWeight:600, marginBottom:8}}>Detil {isNew ? '(Mutasi Baru)' : ''}</div>
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
                 <div className="field">
@@ -166,9 +166,9 @@ function MutasiKaryawanModal({ karyawan, mutasiRows, onClose, onSave }) {
               <div className="field"><label>Keterangan</label><textarea className="textarea" disabled={disabled} value={view.keterangan || ''} onChange={e=>setField('keterangan', e.target.value)} /></div>
             </div>
 
-            <div style={{width:1, background:'var(--border)', flexShrink:0}} />
+            <div className="pr-mutasi-divider" />
 
-            <div style={{flex:1, minWidth:520}}>
+            <div className="pr-mutasi-col-komponen">
               <div className="muted" style={{fontSize:12, fontWeight:600, marginBottom:8}}>Komponen Gaji</div>
               <div style={{display:'flex', gap:16}}>
                 <div style={{flex:1}}>

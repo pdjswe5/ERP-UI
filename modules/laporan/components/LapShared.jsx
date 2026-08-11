@@ -381,7 +381,7 @@ function LapCetakPage({ docTitle, plainTitle, metaRight, infoLines, columns, row
 function LapReportShell({ filterPanel, previewChildren, onCetak, disabled, footNote }) {
   const [zoom, setZoom] = React.useState(100);
   return (
-    <div className="table-card" style={{display:'flex', height:'calc(100vh - 220px)', minHeight:520, overflow:'hidden'}}>
+    <div className="table-card lap-report-shell" style={{display:'flex', height:'calc(100vh - 220px)', minHeight:520, overflow:'hidden'}}>
       <div className="cetak-filter panel" style={{borderRight:'1px solid var(--border)', padding:16, borderRadius:0}}>{filterPanel}</div>
       <div className="cetak-preview-pane" style={{borderRadius:0}}>
         <div className="cetak-toolbar">

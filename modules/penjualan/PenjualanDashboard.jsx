@@ -48,7 +48,7 @@ function PenjualanDashboard({ onOpenSub, onNavigate, pelanggan, konfirmasi, sale
           <h1>Dashboard Penjualan</h1>
           <div className="sub">Kelola pelanggan, konfirmasi, sales order, delivery, invoice, dan sales return dalam satu workspace.</div>
         </div>
-        <div style={{display:'flex', gap:8}}>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
         </div>
       </div>

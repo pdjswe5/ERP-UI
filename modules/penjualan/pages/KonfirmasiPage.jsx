@@ -65,7 +65,7 @@ function KonfirmasiPenjualan({ rows, onAdd, onView, onEdit, onCancel, onCetak, o
       <PjHeader title="Confirmation Order" sub="Konfirmasi Pesanan Pelanggan" onAdd={onAdd} addLabel="Confirmation Order baru"
         extra={onCetak && <button className="btn btn-sm" onClick={onCetak}>{I.print()} Cetak</button>} />
       <div className="filter-bar">
-        <div className="filter-grid" style={{gridTemplateColumns:'repeat(6, minmax(0,1fr)) auto'}}>
+        <div className="filter-grid filter-grid-6">
           <div className="field">
             <label>Pencarian</label>
             <div className="input-w-icon">{I.search(14)}<input className="input" placeholder="Pencarian…" value={q} onChange={e=>setQ(e.target.value)}/></div>

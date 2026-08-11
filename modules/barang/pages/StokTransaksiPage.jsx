@@ -297,7 +297,7 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
           {form.batal && <BrgAlasanBatal alasan={form.alasanBatal} />}
           <div className="panel">
             <h3>Informasi {title}</h3>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:12}}>
+            <div className="form-grid-3" style={{gap:12}}>
               {isView ? (
                 <BrgViewField label="No Bukti" value={form.noBukti} mono />
               ) : (
@@ -320,20 +320,20 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
 
               {isKonsinyasi && (
                 isView ? <BrgViewField label="Customer" value={customerNama(form.kodeCustomer) ? `${customerNama(form.kodeCustomer)} (${form.kodeCustomer})` : form.kodeCustomer} /> : (
-                  <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:8}}>
+                  <div className="form-grid-2" style={{gap:8}}>
                     <div className="field"><label>Customer {req}</label><select className="select" disabled={noBuktiLocked} value={form.kodeCustomer} onChange={e=>set('kodeCustomer',e.target.value)}><option value="">Pilih Customer</option>{PJ_PELANGGAN.map(c=><option key={c.code} value={c.code}>{c.code}</option>)}</select></div>
                     <div className="field"><label>&nbsp;</label><input className="input" value={customerNama(form.kodeCustomer)} readOnly placeholder="Customer" /></div>
                   </div>
                 )
               )}
               {isView ? <BrgViewField label="Gudang Asal" value={brgGudangNama(form.kodeGudangDari)} /> : (
-                <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:8}}>
+                <div className="form-grid-2" style={{gap:8}}>
                   <div className="field"><label>Gudang Asal {req}</label><select className="select" disabled={noBuktiLocked} value={form.kodeGudangDari} onChange={e=>set('kodeGudangDari',e.target.value)}><option value="">Pilih Gudang</option>{BRG_GUDANG_OPTS.map(g=><option key={g.kode} value={g.kode}>{g.kode}</option>)}</select></div>
                   <div className="field"><label>&nbsp;</label><input className="input" value={brgGudangNama(form.kodeGudangDari)} readOnly placeholder="Gudang Asal" /></div>
                 </div>
               )}
               {isView ? <BrgViewField label="Gudang Tujuan" value={brgGudangNama(form.kodeGudangKe)} /> : (
-                <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:8}}>
+                <div className="form-grid-2" style={{gap:8}}>
                   <div className="field"><label>Gudang Tujuan {req}</label><select className="select" disabled={noBuktiLocked} value={form.kodeGudangKe} onChange={e=>set('kodeGudangKe',e.target.value)}><option value="">Pilih Gudang</option>{BRG_GUDANG_OPTS.map(g=><option key={g.kode} value={g.kode}>{g.kode}</option>)}</select></div>
                   <div className="field"><label>&nbsp;</label><input className="input" value={brgGudangNama(form.kodeGudangKe)} readOnly placeholder="Gudang Tujuan" /></div>
                 </div>
@@ -646,7 +646,7 @@ function PenyesuaianKoreksiModal({ data, initialMode, onClose, onSave, onRequest
           {form.batal && <BrgAlasanBatal alasan={form.alasanBatal} />}
           <div className="panel">
             <h3>Informasi Koreksi</h3>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:12}}>
+            <div className="form-grid-3" style={{gap:12}}>
               {isView ? (
                 <BrgViewField label="No Bukti" value={form.noBukti} mono />
               ) : (
@@ -668,7 +668,7 @@ function PenyesuaianKoreksiModal({ data, initialMode, onClose, onSave, onRequest
               )}
 
               {isView ? <BrgViewField label="Gudang" value={brgGudangNama(form.kodeGudang)} /> : (
-                <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:8}}>
+                <div className="form-grid-2" style={{gap:8}}>
                   <div className="field"><label>Gudang {req}</label><select className="select" disabled={noBuktiLocked} value={form.kodeGudang} onChange={e=>set('kodeGudang',e.target.value)}><option value="">Pilih Gudang</option>{BRG_GUDANG_OPTS.map(g=><option key={g.kode} value={g.kode}>{g.kode}</option>)}</select></div>
                   <div className="field"><label>&nbsp;</label><input className="input" value={brgGudangNama(form.kodeGudang)} readOnly placeholder="Gudang" /></div>
                 </div>
@@ -959,7 +959,7 @@ function StockOpnameModal({ data, initialMode, onClose, onSave, onRequestCancel 
           {form.batal && <BrgAlasanBatal alasan={form.alasanBatal} />}
           <div className="panel">
             <h3>Informasi Opname</h3>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:12}}>
+            <div className="form-grid-3" style={{gap:12}}>
               {isView ? (
                 <BrgViewField label="No Bukti" value={form.noBukti} mono />
               ) : (
@@ -981,7 +981,7 @@ function StockOpnameModal({ data, initialMode, onClose, onSave, onRequestCancel 
               )}
 
               {isView ? <BrgViewField label="Gudang" value={brgGudangNama(form.kodeGudang)} /> : (
-                <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:8}}>
+                <div className="form-grid-2" style={{gap:8}}>
                   <div className="field"><label>Gudang {req}</label><select className="select" disabled={noBuktiLocked} value={form.kodeGudang} onChange={e=>set('kodeGudang',e.target.value)}><option value="">Pilih Gudang</option>{BRG_GUDANG_OPTS.map(g=><option key={g.kode} value={g.kode}>{g.kode}</option>)}</select></div>
                   <div className="field"><label>&nbsp;</label><input className="input" value={brgGudangNama(form.kodeGudang)} readOnly placeholder="Gudang" /></div>
                 </div>

@@ -230,7 +230,7 @@ function PjDocModal({ title, data, tabs, showTotals, showRealisasi, prefix, xwid
       return { id:t.id, label:t.label, content: (
         <div className="panel">
           {t.TopComponent && <t.TopComponent form={form} set={set} disabled={isView} isCreate={isCreate} />}
-          <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:12}}>
+          <div className="form-grid-3" style={{gap:12}}>
             {t.fields.map(renderField)}
           </div>
         </div>

@@ -635,11 +635,11 @@ function ModuleDashboard({ title, subtitle, sections, activityLog, onOpenSub, ac
         </div>
       )}
       {charts && charts.length > 0 && (
-        <div style={{display:'grid', gridTemplateColumns:`repeat(${charts.length}, 1fr)`, gap:20, marginBottom:24}}>
+        <div className="dash-charts-row">
           {charts}
         </div>
       )}
-      <div style={{display:'grid', gridTemplateColumns:'1.5fr 1fr', gap:20, alignItems:'start'}}>
+      <div className="dash-two-col">
         <div>
           {sections.map((sec, i) => (
             <div key={i} style={{marginBottom:24}}>

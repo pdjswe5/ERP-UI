@@ -96,7 +96,7 @@ function Dashboard({ onOpenList }) {
           <h1>Purchasing Workspace</h1>
           <div className="sub">Selamat datang kembali, Administrator. Berikut ringkasan pembelian Anda hari ini.</div>
         </div>
-        <div style={{display:'flex', gap:8}}>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
         </div>
       </div>
@@ -186,7 +186,7 @@ function Dashboard({ onOpenList }) {
         />
       </div>
 
-      <div style={{display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:16, marginTop:32}}>
+      <div className="dash-two-col" style={{marginTop:32}}>
         <div className="panel">
           <h3>Aktivitas Terkini</h3>
           <div className="timeline">

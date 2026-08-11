@@ -89,7 +89,7 @@ function InvHeader({ title, sub, onAdd, addLabel = 'Tambah Item', extra }) {
         <h1>{title}</h1>
         <div className="sub">{sub}</div>
       </div>
-      <div style={{display:'flex', gap:8}}>
+      <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
         <button className="btn btn-sm">{I.refresh()} Refresh</button>
         <button className="btn btn-sm">{I.download()} Export</button>
         {extra}
@@ -211,7 +211,7 @@ function KatalogKategori({ onEdit, onAdd }) {
       <InvHeader title="Katalog Kategori Produk" sub={`${filtered.length} kategori · ${KATEGORI.filter(k=>k.active).length} aktif`}
         onAdd={onAdd} addLabel="Tambah Kategori" />
       <div className="filter-bar">
-        <div className="filter-grid" style={{gridTemplateColumns:'1fr auto'}}>
+        <div className="filter-grid filter-grid-2">
           <div className="field">
             <label>Pencarian</label>
             <div className="input-w-icon">{I.search(14)}<input className="input" placeholder="Nama atau kode kategori…" value={q} onChange={e=>setQ(e.target.value)}/></div>
@@ -407,7 +407,7 @@ function StockOpname({ onEdit, onAdd }) {
       <InvHeader title="Stock Opname" sub={`${OPNAME.length} sesi · ${OPNAME.filter(o=>o.status==='In Progress').length} sedang berjalan`}
         onAdd={onAdd} addLabel="Mulai Opname Baru" />
 
-      <div className="kpi-strip" style={{gridTemplateColumns:'repeat(4, 1fr)', marginBottom:18}}>
+      <div className="kpi-strip" style={{marginBottom:18}}>
         <div className="kpi"><div className="lbl">Total Sesi (YTD)</div><div className="val mono">{OPNAME.length}</div></div>
         <div className="kpi"><div className="lbl">In Progress</div><div className="val mono">{OPNAME.filter(o=>o.status==='In Progress').length}</div></div>
         <div className="kpi"><div className="lbl">Total Item Dihitung</div><div className="val mono">{fmtNum(OPNAME.reduce((s,o)=>s+o.items,0))}</div></div>
@@ -506,7 +506,7 @@ function BarangModal({ data, onClose, onSave }) {
       sub={isEdit ? data.name : 'Lengkapi informasi master barang'}
       onClose={onClose} onSave={onSave}
       saveLabel={isEdit ? 'Simpan Perubahan' : 'Simpan Barang'}>
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:24}}>
+      <div className="form-grid-2" style={{gap:24}}>
         <div className="form-section">
           <h4>Identitas</h4>
           <div className="field"><label>Nama Barang *</label><input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Contoh: Brake Pad Set Front — Ranger"/></div>
@@ -682,7 +682,7 @@ function PenyesuaianModal({ data, onClose, onSave }) {
         </div>
         <div className="form-row">
           <div className="field"><label>Tipe Penyesuaian *</label>
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:6}}>
+            <div className="form-grid-2" style={{gap:6}}>
               <button type="button" className={`btn ${tipe==='Plus'?'btn-primary':''}`} onClick={()=>setTipe('Plus')} style={tipe==='Plus' ? {background:'var(--realisasi)', borderColor:'var(--realisasi)'} : null}>+ Plus (Tambah)</button>
               <button type="button" className={`btn ${tipe==='Minus'?'btn-primary':''}`} onClick={()=>setTipe('Minus')} style={tipe==='Minus' ? {background:'var(--danger)', borderColor:'var(--danger)'} : null}>− Minus (Kurang)</button>
             </div>
@@ -882,7 +882,7 @@ function InventoryDashboard({ onOpenSub, onNavigate }) {
         ))}
       </div>
 
-      <div style={{display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:16, marginTop:32}}>
+      <div className="dash-two-col" style={{marginTop:32}}>
         <div className="panel">
           <h3>Stock Kritis (Perlu Reorder)</h3>
           <div style={{display:'flex', flexDirection:'column', gap:10}}>

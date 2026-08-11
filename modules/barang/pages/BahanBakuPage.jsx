@@ -56,24 +56,24 @@ function BahanBakuModal({ data, onClose, onSave }) {
     <BrgModalShell title={isEdit ? `Edit Bahan Baku — ${form.kodeProduk}` : 'Tambah Bahan Baku'} onClose={onClose} onSave={handleSave} wide>
       <div className="panel">
         <h3>Informasi Bahan Baku</h3>
-        <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:24, alignItems:'start'}}>
+        <div className="form-grid-3" style={{gap:24, alignItems:'start'}}>
           <div style={{display:'flex', flexDirection:'column', gap:12}}>
             <div className="field"><label>Nama Produk {req}</label><input className="input" value={form.namaProduk} onChange={e=>set('namaProduk',e.target.value)}/></div>
             <div className="field"><label>Nama Produk Supplier {req}</label><input className="input" value={form.namaProdukSupplier} onChange={e=>set('namaProdukSupplier',e.target.value)}/></div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Warna {req}</label><select className="select" value={form.warna} onChange={e=>set('warna',e.target.value)}><option value="">Pilih Warna</option>{BRG_WARNA_OPTS.map(w=><option key={w.kode} value={w.kode}>{w.kode}</option>)}</select></div>
               <div className="field"><label>&nbsp;</label><input className="input" value={brgWarnaNama(form.warna)} readOnly placeholder="Warna" /></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12}}>
+            <div className="form-grid-3" style={{gap:12}}>
               <div className="field"><label>Satuan (Qty : 1) {req}</label><select className="select" value={form.satuan} onChange={e=>set('satuan',e.target.value)}>{BRG_SATUAN_OPTS.map(s=><option key={s}>{s}</option>)}</select></div>
               <div className="field"><label>Tebal (Mm) {req}</label><input className="input mono" type="number" value={form.tebal} onChange={e=>set('tebal',+e.target.value)}/></div>
               <div className="field"><label>Lebar (Mm) {req}</label><input className="input mono" type="number" value={form.lebar} onChange={e=>set('lebar',+e.target.value)}/></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>AZ {req}</label><select className="select" value={form.az} onChange={e=>set('az',e.target.value)}><option value="">Pilih AZ</option>{BRG_AZ_OPTS.map(a=><option key={a.kode} value={a.kode}>{a.kode}</option>)}</select></div>
               <div className="field"><label>&nbsp;</label><input className="input" value={brgAzNama(form.az)} readOnly placeholder="AZ" /></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Yield {req}</label><select className="select" value={form.yield} onChange={e=>set('yield',e.target.value)}><option value="">Pilih Yield</option>{BRG_YIELD_OPTS.map(y=><option key={y.kode} value={y.kode}>{y.kode}</option>)}</select></div>
               <div className="field"><label>&nbsp;</label><input className="input" value={brgYieldNama(form.yield)} readOnly placeholder="Yield" /></div>
             </div>
@@ -81,16 +81,16 @@ function BahanBakuModal({ data, onClose, onSave }) {
 
           <div style={{display:'flex', flexDirection:'column', gap:12}}>
             <div className="field"><label>Kode Produk {req}</label><input className="input mono" value={form.kodeProduk} onChange={e=>set('kodeProduk',e.target.value)}/></div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12}}>
+            <div className="form-grid-3" style={{gap:12}}>
               <div className="field"><label>Minimum Qty {req}</label><input className="input mono" type="number" value={form.minimQty} onChange={e=>set('minimQty',+e.target.value)}/></div>
               <div className="field"><label>Tipe Barang {req}</label><select className="select" value={form.tipeData} onChange={e=>set('tipeData',e.target.value)}><option value="F">F</option><option value="K">K</option></select></div>
               <div className="field"><label>Aktif {req}</label><select className="select" value={form.aktif ? '1':'0'} onChange={e=>set('aktif', e.target.value==='1')}><option value="1">Ya</option><option value="0">Tidak</option></select></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Buffer Stock BHP (Ton) {req}</label><input className="input mono" type="number" value={form.minimBhp} onChange={e=>set('minimBhp',+e.target.value)}/></div>
               <div className="field"><label>Buffer Stock NON (Ton) {req}</label><input className="input mono" type="number" value={form.minimNon} onChange={e=>set('minimNon',+e.target.value)}/></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Koefisien [Kg/M&apos;] {req}</label><input className="input mono" type="number" value={form.koefisien} onChange={e=>set('koefisien',+e.target.value)}/></div>
               <div className="field"><label>Toleransi (%) {req}</label><input className="input mono" type="number" value={form.toleransi} onChange={e=>set('toleransi',+e.target.value)}/></div>
             </div>
@@ -105,7 +105,7 @@ function BahanBakuModal({ data, onClose, onSave }) {
               </div>
             </div>
             <div className="field"><label>HPP Standar {req}</label><input className="input mono" type="number" value={form.hppStandar} onChange={e=>set('hppStandar',+e.target.value)}/></div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Marketing {req}</label><select className="select" value={form.marketing ? '1':'0'} onChange={e=>set('marketing', e.target.value==='1')}><option value="1">Ya</option><option value="0">Tidak</option></select></div>
               <div className="field"><label>Slow Moving {req}</label><select className="select" value={form.slow ? '1':'0'} onChange={e=>set('slow', e.target.value==='1')}><option value="1">Ya</option><option value="0">Tidak</option></select></div>
             </div>

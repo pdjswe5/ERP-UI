@@ -214,10 +214,10 @@ function MfPlanningScheduleList({ rows, setRows, spkRows, onSelesai }) {
         </div>
       </div>
 
-      <div style={{display:'flex', gap:16, alignItems:'flex-start'}}>
+      <div className="mf-mesin-layout">
 
         {/* ── Left: Machine sidebar ── */}
-        <div style={{width:220, flexShrink:0, position:'sticky', top:0}}>
+        <div className="mf-mesin-sidebar">
           <div className="table-card">
             <div className="table-toolbar" style={{minHeight:42}}>
               <div className="table-toolbar-left" style={{fontWeight:600, fontSize:12.5, letterSpacing:'.04em', textTransform:'uppercase'}}>
@@ -248,7 +248,7 @@ function MfPlanningScheduleList({ rows, setRows, spkRows, onSelesai }) {
 
           {/* Action bar */}
           <div className="filter-bar">
-            <div className="filter-grid" style={{gridTemplateColumns:'160px 120px auto'}}>
+            <div className="filter-grid filter-grid-px2">
               <div className="field">
                 <label>Tanggal</label>
                 <input className="input" type="date" value={tgl} onChange={e => setTgl(e.target.value)} />
@@ -454,7 +454,7 @@ function MfPlanningSpkPickerModal({ rows, onConfirm, onCancel }) {
           <button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button>
         </div>
         <div className="modal-body">
-          <div style={{display:'flex', gap:8, marginBottom:12}}>
+          <div style={{display:'flex', gap:8, marginBottom:12, flexWrap:'wrap'}}>
             <div className="input-w-icon" style={{flex:1}}>{I.search(14)}<input className="input" placeholder="Cari No. SPK atau Nama Barang…" value={q} onChange={e => setQ(e.target.value)}/></div>
             <select className="select" style={{width:200}} value={spkFilter} onChange={e => setSpkFilter(e.target.value)}>
               <option value="">Semua No. SPK</option>

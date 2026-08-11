@@ -401,7 +401,7 @@ function MfHasilProduksiList({ rows, onAdd, onEdit }) {
       </div>
 
       <div className="filter-bar">
-        <div className="filter-grid" style={{gridTemplateColumns:'1fr 1fr 1fr auto auto'}}>
+        <div className="filter-grid filter-grid-5">
           <div className="field">
             <label>Tgl. Dari</label>
             <input className="input" type="date" value={tglDari} onChange={e => setTglDari(e.target.value)} />

@@ -60,7 +60,7 @@ function KeuanganDashboard({ onOpenSub, onNavigate, akunRows, aktivaRows, jurnal
       <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><span className="current">Keuangan</span></div>
       <div className="page-head">
         <div><h1>Keuangan Workspace</h1><div className="sub">Kelola akuntansi, kas, bank, giro, dan pelunasan piutang/hutang dalam satu workspace.</div></div>
-        <div style={{display:'flex', gap:8}}>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
         </div>
       </div>

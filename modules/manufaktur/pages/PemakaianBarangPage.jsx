@@ -81,7 +81,7 @@ function MfPemakaianBarangDialog({ type, data, spkRows, onClose, onSave }) {
           <div className="modal-body" style={{paddingTop:0}}>
             {/* Header info bar */}
             <div style={{background:'var(--bg-sub)', padding:'14px 24px', borderBottom:'1px solid var(--border)', marginBottom:24}}>
-              <div style={{display:'grid', gridTemplateColumns:'200px 160px 1fr 1fr', gap:12, marginBottom:12}}>
+              <div className="form-grid-px4b" style={{gap:12, marginBottom:12}}>
                 <div className="field">
                   <label>No. Bukti *</label>
                   {isCreate ? (
@@ -252,7 +252,7 @@ function MfPemakaianBarangList({ type, rows, onAdd, onEdit }) {
       </div>
 
       <div className="filter-bar">
-        <div className="filter-grid" style={{gridTemplateColumns:'1fr 1fr 1fr auto'}}>
+        <div className="filter-grid filter-grid-4">
           <div className="field">
             <label>Tgl. Dari</label>
             <input className="input" type="date" value={tglDari}

@@ -30,7 +30,7 @@ function BrgHeader({ title, sub, onAdd, addLabel='Tambah', extra }) {
   return (
     <div className="page-head">
       <div><h1>{title}</h1><div className="sub">{sub}</div></div>
-      <div style={{display:'flex', gap:8}}>
+      <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
         <button className="btn btn-sm">{I.refresh()} Refresh</button>
         <button className="btn btn-sm">{I.download()} Export</button>
         {extra}
@@ -51,7 +51,7 @@ function BrgModalShell({ title, sub, onClose, onSave, children, saveLabel='Simpa
         <div className="modal-body" style={wide ? {overflowY:'auto', maxHeight:'calc(92vh - 180px)'} : {}}>{children}</div>
         <div className="modal-foot">
           <div className="muted" style={{fontSize:12.5}}><kbd>Esc</kbd> untuk batal</div>
-          <div className="right" style={{display:'flex', gap:8}}>
+          <div className="right" style={{display:'flex', gap:8, flexWrap:'wrap'}}>
             {footerExtra}
             <button className="btn" onClick={onClose}>Batal</button>
             <button className="btn btn-primary" onClick={onSave} disabled={saveDisabled}>{I.check()} {saveLabel}</button>

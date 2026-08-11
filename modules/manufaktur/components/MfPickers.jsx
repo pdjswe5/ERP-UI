@@ -540,7 +540,6 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
   // alignItems:'end' — field Kode nggak punya <label> lagi, jadi tanpa ini inputnya nempel ke atas
   // sementara input Nama (yang masih punya label di atasnya) turun lebih rendah, bikin tinggi beda.
   const pairGrid  = { display:'grid', gridTemplateColumns:'2fr 1fr', gap:8, alignItems:'end' };
-  const shortGrid = { display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:8 };
 
   return (
     <>
@@ -558,7 +557,7 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
             {/* Grid 3 kolom (4/4/4) — tiap kolom 1 "zona" field yang berdiri sendiri, isinya
                 di-stack lewat nested grid: pairGrid (2fr/1fr) buat pasangan Nama+Kode, shortGrid
                 (3 kolom rata) buat field pendek (dropdown/angka) yg nggak punya pasangan Kode. */}
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:16}}>
+            <div className="form-grid-3" style={{gap:16}}>
 
               {/* Zona 1: Barang — Nama/Kode Barang, lalu Satuan/Qty SPK/Stempel */}
               <div style={{display:'flex', flexDirection:'column', gap:12}}>
@@ -573,7 +572,7 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
                     <input className="input mono" value={kodeBarang} readOnly placeholder="Kode..." />
                   </div>
                 </div>
-                <div style={shortGrid}>
+                <div className="form-grid-3" style={{gap:8}}>
                   <div className="field">
                     <label>Satuan</label>
                     <select className="select" value={satuan} disabled={!kodeBarang} onChange={e => setSatuan(e.target.value)}>
@@ -661,7 +660,7 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
             <div style={{marginTop:20}}>
               <div style={{fontSize:14, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em',
                 color:'var(--text)', marginBottom:8}}>Daftar Mesin</div>
-              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
+              <div className="form-grid-2" style={{gap:12}}>
                 {/* Left: all machines */}
                 <div style={{opacity: kodeBarang ? 1 : .5}}>
                   <div style={panelHeadStyle}>Daftar Mesin — klik untuk pilih</div>
@@ -874,7 +873,7 @@ function MfBarangPakaiEntryModal({ data, spkRows, onClose, onSave }) {
           </div>
           <div className="modal-body">
             <div style={{display:'flex', flexDirection:'column', gap:14}}>
-              <div style={{display:'flex', gap:8, alignItems:'flex-end'}}>
+              <div style={{display:'flex', gap:8, alignItems:'flex-end', flexWrap:'wrap'}}>
                 <div className="field" style={{flex:1}}>
                   <label>Nama Barang *</label>
                   <input className="input" style={{cursor:'pointer', background:'var(--bg-elev)'}} readOnly
@@ -886,7 +885,7 @@ function MfBarangPakaiEntryModal({ data, spkRows, onClose, onSave }) {
                   <input className="input mono" value={kodeBarang} readOnly placeholder="Otomatis" />
                 </div>
               </div>
-              <div style={{display:'grid', gridTemplateColumns:'140px 120px 1fr', gap:10}}>
+              <div className="form-grid-px3b" style={{gap:10}}>
                 <div className="field">
                   <label>Jumlah *</label>
                   <input className="input" type="number" min="0" step="0.01" placeholder="0.00"

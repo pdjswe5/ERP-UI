@@ -231,7 +231,7 @@ function MfCetakModal({ docLabel='Hasil Produksi', rows, getGroupLabel, initialS
         <div className="cetak-body">
           <div className="cetak-filter panel">
             <h3>Filter Cetak</h3>
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
+            <div className="form-grid-2" style={{gap:10}}>
               <div className="field"><label>Tgl Awal</label><input className="input" type="date" value={tglAwal} onChange={e=>setTglAwal(e.target.value)}/></div>
               <div className="field"><label>Tgl Akhir</label><input className="input" type="date" value={tglAkhir} onChange={e=>setTglAkhir(e.target.value)}/></div>
               <div className="field"><label>No Bukti Awal</label><input className="input mono" value={noAwal} onChange={e=>setNoAwal(e.target.value)}/></div>
@@ -559,7 +559,7 @@ function MfSpkCetakModal({ docLabel='Surat Perintah Kerja', rows, statusFilter, 
         <div className="cetak-body">
           <div className="cetak-filter panel">
             <h3>Filter Cetak</h3>
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
+            <div className="form-grid-2" style={{gap:10}}>
               <div className="field"><label>Tgl Awal</label><input className="input" type="date" value={tglAwal} onChange={e=>setTglAwal(e.target.value)}/></div>
               <div className="field"><label>Tgl Akhir</label><input className="input" type="date" value={tglAkhir} onChange={e=>setTglAkhir(e.target.value)}/></div>
               <div className="field"><label>No Bukti Awal</label><input className="input mono" value={noAwal} onChange={e=>setNoAwal(e.target.value)}/></div>

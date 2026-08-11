@@ -91,8 +91,7 @@ function MfSpkList({ rows, onAdd, onView, onEdit, onCancelDoc, onNavigate }) {
 
       <div className="filter-bar">
         <div
-          className="filter-grid"
-          style={{ gridTemplateColumns: "1fr 1fr 1fr auto auto" }}
+          className="filter-grid filter-grid-5"
         >
           <div className="field">
             <label>Tgl. Dari</label>
@@ -637,11 +636,8 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
                   sendiri), bukan side-by-side lagi. Grid 1: No. SPK/Status, Grid 2: Tanggal/Tgl.
                   Kirim, Grid 3: No. SO/Stempel. */}
               <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, minmax(0,1fr))",
-                  gap: 16,
-                }}
+                className="form-grid-3"
+                style={{ gap: 16 }}
               >
                 {/* Grid 1: No. SPK, Status */}
                 <div

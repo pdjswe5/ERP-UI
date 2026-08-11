@@ -65,35 +65,35 @@ function BarangUmumModal({ data, onClose, onSave }) {
     <BrgModalShell title={isEdit ? `Edit Barang Jadi Umum — ${form.kodeProduk}` : 'Tambah Barang Jadi Umum'} sub="Pastikan semua kolom bertanda (*) terisi." onClose={onClose} onSave={handleSave} wide>
       <div className="panel">
         <h3>Informasi Barang Jadi Umum</h3>
-        <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:24, alignItems:'start'}}>
+        <div className="form-grid-3" style={{gap:24, alignItems:'start'}}>
           <div style={{display:'flex', flexDirection:'column', gap:12}}>
             <div className="field"><label>Nama Produk {req}</label><input className="input" value={form.namaProduk} onChange={e=>set('namaProduk',e.target.value)}/></div>
             <div className="field"><label>Kode Produk {req}</label><input className="input mono" value={form.kodeProduk} onChange={e=>set('kodeProduk',e.target.value)}/></div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Jenis {req}</label><select className="select" value={form.jenis} onChange={e=>set('jenis',e.target.value)}><option value="">Pilih Jenis</option>{BRG_JENIS_OPTS.map(j=><option key={j.kode} value={j.kode}>{j.kode}</option>)}</select></div>
               <div className="field"><label>&nbsp;</label><input className="input" value={brgJenisNama(form.jenis)} readOnly placeholder="Jenis" /></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Tipe {req}</label><select className="select" value={form.tipe} onChange={e=>set('tipe',e.target.value)}><option value="">Pilih Tipe</option>{BRG_TIPE_OPTS.map(t=><option key={t.kode} value={t.kode}>{t.kode}</option>)}</select></div>
               <div className="field"><label>&nbsp;</label><input className="input" value={brgTipeNama(form.tipe)} readOnly placeholder="Tipe" /></div>
             </div>
           </div>
 
           <div style={{display:'flex', flexDirection:'column', gap:12}}>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12}}>
+            <div className="form-grid-3" style={{gap:12}}>
               <div className="field"><label>Minimum Qty {req}</label><input className="input mono" type="number" value={form.minimQty} onChange={e=>set('minimQty',+e.target.value)}/></div>
               <div className="field"><label>Tipe Barang {req}</label><select className="select" value={form.tipeData} onChange={e=>set('tipeData',e.target.value)}><option value="F">F</option><option value="K">K</option></select></div>
               <div className="field"><label>Aktif {req}</label><select className="select" value={form.aktif ? '1':'0'} onChange={e=>set('aktif', e.target.value==='1')}><option value="1">Ya</option><option value="0">Tidak</option></select></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Lebar {req}</label><input className="input mono" type="number" value={form.lebar} onChange={e=>set('lebar',+e.target.value)}/></div>
               <div className="field"><label>Panjang {req}</label><input className="input mono" type="number" value={form.panjang} onChange={e=>set('panjang',+e.target.value)}/></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Lebar Real (Mm) {req}</label><input className="input mono" type="number" value={form.lbrReal} onChange={e=>set('lbrReal',+e.target.value)}/></div>
               <div className="field"><label>Panjang Real (Mm) {req}</label><input className="input mono" type="number" value={form.pjgReal} onChange={e=>set('pjgReal',+e.target.value)}/></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12}}>
+            <div className="form-grid-3" style={{gap:12}}>
               <div className="field"><label>Bahan {req}</label><input className="input mono" type="number" value={form.bahan} onChange={e=>set('bahan',+e.target.value)}/></div>
               <div className="field"><label>Tebal TCT {req}</label><input className="input mono" type="number" value={form.tebalTct} onChange={e=>set('tebalTct',+e.target.value)}/></div>
               <div className="field"><label>Tebal BMT {req}</label><input className="input mono" type="number" value={form.tebalBmt} onChange={e=>set('tebalBmt',+e.target.value)}/></div>
@@ -107,16 +107,16 @@ function BarangUmumModal({ data, onClose, onSave }) {
                 {ketItems.length ? <ul style={{margin:0, paddingLeft:18}}>{ketItems.map((k,i)=><li key={i}>{k}</li>)}</ul> : <span className="muted">Otomatis dari Jenis, Tipe, Warna &amp; Merk</span>}
               </div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12}}>
+            <div className="form-grid-3" style={{gap:12}}>
               <div className="field"><label>HPP Standar {req}</label><input className="input mono" type="number" value={form.hppStandar} onChange={e=>set('hppStandar',+e.target.value)}/></div>
               <div className="field"><label>Status {req}</label><select className="select" value={form.status} onChange={e=>set('status',e.target.value)}><option>AKTIF</option><option>NONAKTIF</option></select></div>
               <div className="field"><label>Ongkos {req}</label><input className="input mono" type="number" value={form.ongkos} onChange={e=>set('ongkos',+e.target.value)}/></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Warna {req}</label><select className="select" value={form.warna} onChange={e=>set('warna',e.target.value)}><option value="">Pilih Warna</option>{BRG_WARNA_OPTS.map(w=><option key={w.kode} value={w.kode}>{w.kode}</option>)}</select></div>
               <div className="field"><label>&nbsp;</label><input className="input" value={brgWarnaNama(form.warna)} readOnly placeholder="Warna" /></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Merk {req}</label><select className="select" value={form.merk} onChange={e=>set('merk',e.target.value)}><option value="">Pilih Merk</option>{BRG_MERK_OPTS.map(m=><option key={m.kode} value={m.kode}>{m.kode}</option>)}</select></div>
               <div className="field"><label>&nbsp;</label><input className="input" value={brgMerkNama(form.merk)} readOnly placeholder="Merk" /></div>
             </div>
@@ -227,14 +227,14 @@ function BarangJadiModal({ data, allRows, onClose, onSave }) {
     <BrgModalShell title={isEdit ? `Edit Barang PU — ${form.kodeProduk}` : 'Tambah Barang PU Baru'} sub="Pastikan semua kolom bertanda (*) terisi." onClose={onClose} onSave={handleSave} wide maxWidth={1400}>
       <div className="panel">
         <h3>Informasi Barang Jadi PU</h3>
-        <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:24, alignItems:'start'}}>
+        <div className="form-grid-3" style={{gap:24, alignItems:'start'}}>
           <div style={{display:'flex', flexDirection:'column', gap:12}}>
             <div className="field"><label>Nama Produk {req}</label><input className="input" value={form.namaProduk} onChange={e=>set('namaProduk',e.target.value)}/></div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Jenis {req}</label><select className="select" value={form.jenis} onChange={e=>set('jenis',e.target.value)}><option value="">Pilih Jenis</option>{BRG_JENIS_PU_OPTS.map(j=><option key={j.kode} value={j.kode}>{j.kode}</option>)}</select></div>
               <div className="field"><label>&nbsp;</label><input className="input" value={brgJenisPuNama(form.jenis)} readOnly placeholder="Jenis" /></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Tipe {req}</label><select className="select" value={form.tipe} onChange={e=>set('tipe',e.target.value)}><option value="">Pilih Tipe</option>{BRG_TIPE_PU_OPTS.map(t=><option key={t.kode} value={t.kode}>{t.kode}</option>)}</select></div>
               <div className="field"><label>&nbsp;</label><input className="input" value={brgTipePuNama(form.tipe)} readOnly placeholder="Tipe" /></div>
             </div>
@@ -242,12 +242,12 @@ function BarangJadiModal({ data, allRows, onClose, onSave }) {
 
           <div style={{display:'flex', flexDirection:'column', gap:12}}>
             <div className="field"><label>Kode Produk {req}</label><input className="input mono" value={form.kodeProduk} onChange={e=>set('kodeProduk',e.target.value)}/></div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12}}>
+            <div className="form-grid-3" style={{gap:12}}>
               <div className="field"><label>Minimum Qty {req}</label><input className="input mono" type="number" min={1} value={form.minimQty} onChange={e=>set('minimQty', Math.max(1, +e.target.value || 1))}/></div>
               <div className="field"><label>Tipe Barang {req}</label><select className="select" value={form.tipeData} onChange={e=>set('tipeData',e.target.value)}><option value="F">F</option><option value="K">K</option></select></div>
               <div className="field"><label>Aktif {req}</label><select className="select" value={form.aktif ? '1':'0'} onChange={e=>set('aktif', e.target.value==='1')}><option value="1">Ya</option><option value="0">Tidak</option></select></div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+            <div className="form-grid-2" style={{gap:12}}>
               <div className="field"><label>Lebar {req}</label><input className="input mono" type="number" value={form.lebar} onChange={e=>set('lebar',+e.target.value)}/></div>
               <div className="field"><label>Panjang {req}</label><input className="input mono" type="number" value={form.panjang} onChange={e=>set('panjang',+e.target.value)}/></div>
             </div>
@@ -260,7 +260,7 @@ function BarangJadiModal({ data, allRows, onClose, onSave }) {
                 {ketItems.length ? <ul style={{margin:0, paddingLeft:18}}>{ketItems.map((k,i)=><li key={i}>{k}</li>)}</ul> : <span className="muted">Otomatis dari Jenis, Tipe, Warna Top &amp; Warna Bottom</span>}
               </div>
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12}}>
+            <div className="form-grid-3" style={{gap:12}}>
               <div className="field"><label>HPP Standar {req}</label><input {...currencyProps('hppStandar')} /></div>
               <div className="field"><label>Status {req}</label><select className="select" value={form.status} onChange={e=>set('status',e.target.value)}>{BRG_STATUS_PU_OPTS.map(s=><option key={s}>{s}</option>)}</select></div>
               <div className="field"><label>Ongkos {req}</label><input {...currencyProps('ongkos')} /></div>
@@ -269,20 +269,20 @@ function BarangJadiModal({ data, allRows, onClose, onSave }) {
         </div>
       </div>
 
-      <div className="panel" style={{marginTop:16, display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:24, alignItems:'start'}}>
+      <div className="panel form-grid-3" style={{marginTop:16, gap:24, alignItems:'start'}}>
         <div style={{gridColumn:'span 2'}}>
           <LapisPuTable rows={form.detailsPU} setRows={v=>set('detailsPU', v)} productOptions={productOptions} />
         </div>
         <div style={{display:'flex', flexDirection:'column', gap:12}}>
-          <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+          <div className="form-grid-2" style={{gap:12}}>
             <div className="field"><label>Warna Top {req}</label><select className="select" value={form.warnaTop} onChange={e=>set('warnaTop',e.target.value)}><option value="">Pilih Warna Top</option>{BRG_WARNA_OPTS.map(w=><option key={w.kode} value={w.kode}>{w.kode}</option>)}</select></div>
             <div className="field"><label>&nbsp;</label><input className="input" value={brgWarnaNama(form.warnaTop)} readOnly placeholder="Warna Top" /></div>
           </div>
-          <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+          <div className="form-grid-2" style={{gap:12}}>
             <div className="field"><label>Warna Bottom {req}</label><select className="select" value={form.warnaBot} onChange={e=>set('warnaBot',e.target.value)}><option value="">Pilih Warna Bottom</option>{BRG_WARNA_OPTS.map(w=><option key={w.kode} value={w.kode}>{w.kode}</option>)}</select></div>
             <div className="field"><label>&nbsp;</label><input className="input" value={brgWarnaNama(form.warnaBot)} readOnly placeholder="Warna Bottom" /></div>
           </div>
-          <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
+          <div className="form-grid-2" style={{gap:12}}>
             <div className="field"><label>Tebal Top {req}</label><input className="input mono" type="number" value={form.tebalTop} onChange={e=>set('tebalTop',+e.target.value)}/></div>
             <div className="field"><label>Tebal Bottom {req}</label><input className="input mono" type="number" value={form.tebalBot} onChange={e=>set('tebalBot',+e.target.value)}/></div>
           </div>

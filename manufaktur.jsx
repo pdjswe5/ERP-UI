@@ -135,7 +135,7 @@ function BarangJadiEntryModal({ data, onClose, onSave }) {
             <div style={{display:'flex', flexDirection:'column', gap:14}}>
 
               {/* Row 1: Kode + Nama */}
-              <div style={{display:'flex', gap:8, alignItems:'flex-end'}}>
+              <div style={{display:'flex', gap:8, alignItems:'flex-end', flexWrap:'wrap'}}>
                 <div className="field" style={{width:220}}>
                   <label>Kode Barang *</label>
                   <div style={{display:'flex', gap:4}}>
@@ -153,7 +153,7 @@ function BarangJadiEntryModal({ data, onClose, onSave }) {
               </div>
 
               {/* Row 2: Qty + Satuan + Kelompok Warna + AZ */}
-              <div style={{display:'grid', gridTemplateColumns:'120px 100px 1fr 130px', gap:10}}>
+              <div className="form-grid-px4a" style={{gap:10}}>
                 <div className="field">
                   <label>Qty SPK *</label>
                   <input className="input" type="number" min="0" step="0.01" placeholder="0.00"
@@ -210,7 +210,7 @@ function BarangJadiEntryModal({ data, onClose, onSave }) {
               <div>
                 <div style={{fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em',
                   color:'var(--text-3)', marginBottom:8}}>Daftar Mesin</div>
-                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
+                <div className="form-grid-2" style={{gap:12}}>
                   {/* Left: all machines */}
                   <div>
                     <div style={panelHeadStyle}>Daftar Mesin — klik untuk pilih</div>
@@ -383,7 +383,7 @@ function SpkDialog({ data, onClose, onSave }) {
               marginLeft:-24, marginRight:-24, paddingLeft:24, paddingRight:24,
               borderBottom:'1px solid var(--border)', marginBottom:0,
             }}>
-              <div style={{display:'grid', gridTemplateColumns:'200px 160px 1fr 1fr', gap:12, marginBottom:10}}>
+              <div className="form-grid-px4b" style={{gap:12, marginBottom:10}}>
                 <div className="field" style={{marginBottom:0}}>
                   <label>No. SPK</label>
                   <input className="input" value={data?.no || nextNo} readOnly />
@@ -405,7 +405,7 @@ function SpkDialog({ data, onClose, onSave }) {
                     onChange={e => setNoSo(e.target.value)} />
                 </div>
               </div>
-              <div style={{display:'grid', gridTemplateColumns:'180px 160px 1fr', gap:12}}>
+              <div className="form-grid-px3a" style={{gap:12}}>
                 <div className="field" style={{marginBottom:0}}>
                   <label>Status</label>
                   <select className="select" value={status} onChange={e => setStatus(e.target.value)}>
@@ -688,7 +688,7 @@ function SpkList({ onAdd, onEdit, onNavigate }) {
       </div>
 
       <div className="filter-bar">
-        <div className="filter-grid" style={{gridTemplateColumns:'1fr 1fr 1fr auto auto'}}>
+        <div className="filter-grid filter-grid-5">
           <div className="field">
             <label>Tgl. Dari</label>
             <input className="input" type="date" value={tglDari} onChange={e => setTglDari(e.target.value)} />
@@ -1070,7 +1070,7 @@ function SpkEntryModal({ data, onClose, onSave }) {
             <div style={{display:'flex', flexDirection:'column', gap:14}}>
 
               {/* Row 1: No. SPK + Sisa Stock */}
-              <div style={{display:'flex', gap:12, alignItems:'flex-end'}}>
+              <div style={{display:'flex', gap:12, alignItems:'flex-end', flexWrap:'wrap'}}>
                 <div className="field" style={{flex:1}}>
                   <label>No. SPK *</label>
                   <div style={{display:'flex', gap:4}}>
@@ -1134,7 +1134,7 @@ function SpkEntryModal({ data, onClose, onSave }) {
               </div>
 
               {/* Row 5: Jumlah + Satuan  +  Lapisan PU (right) */}
-              <div style={{display:'flex', alignItems:'flex-end', gap:16}}>
+              <div style={{display:'flex', alignItems:'flex-end', gap:16, flexWrap:'wrap'}}>
                 <div className="field" style={{width:160}}>
                   <label>Jumlah</label>
                   <div style={{display:'flex', gap:4}}>
@@ -1495,7 +1495,7 @@ function HasilProduksiList({ onAdd, onEdit }) {
       </div>
 
       <div className="filter-bar">
-        <div className="filter-grid" style={{gridTemplateColumns:'1fr 1fr 1fr auto auto'}}>
+        <div className="filter-grid filter-grid-5">
           <div className="field">
             <label>Tgl. Dari</label>
             <input className="input" type="date" value={tglDari} onChange={e => setTglDari(e.target.value)} />
@@ -1615,7 +1615,7 @@ function BarangPakaiEntryModal({ data, onClose, onSave }) {
           </div>
           <div className="modal-body">
             <div style={{display:'flex', flexDirection:'column', gap:14}}>
-              <div style={{display:'flex', gap:8, alignItems:'flex-end'}}>
+              <div style={{display:'flex', gap:8, alignItems:'flex-end', flexWrap:'wrap'}}>
                 <div className="field" style={{width:220}}>
                   <label>Kode Barang *</label>
                   <div style={{display:'flex', gap:4}}>
@@ -1628,7 +1628,7 @@ function BarangPakaiEntryModal({ data, onClose, onSave }) {
                   <input className="input" value={namaBarang} readOnly style={{background:'var(--bg-sub)'}} placeholder="auto" />
                 </div>
               </div>
-              <div style={{display:'grid', gridTemplateColumns:'140px 120px 1fr', gap:10}}>
+              <div className="form-grid-px3b" style={{gap:10}}>
                 <div className="field">
                   <label>Jumlah *</label>
                   <input className="input" type="number" min="0" step="0.01" placeholder="0.00"
@@ -1722,7 +1722,7 @@ function PemakaianBarangDialog({ type, data, onClose, onSave }) {
           <div className="modal-body" style={{paddingTop:0}}>
             {/* Header info bar */}
             <div style={{background:'var(--bg-sub)', padding:'14px 24px', borderBottom:'1px solid var(--border)', marginBottom:24}}>
-              <div style={{display:'grid', gridTemplateColumns:'200px 160px 1fr 1fr', gap:12, marginBottom:12}}>
+              <div className="form-grid-px4b" style={{gap:12, marginBottom:12}}>
                 <div className="field">
                   <label>No. {prefix}</label>
                   <input className="input" value={data?.no || nextNo} readOnly
@@ -1874,7 +1874,7 @@ function PemakaianBarangList({ type, onAdd, onEdit }) {
       </div>
 
       <div className="filter-bar">
-        <div className="filter-grid" style={{gridTemplateColumns:'1fr 1fr 1fr auto'}}>
+        <div className="filter-grid filter-grid-4">
           <div className="field">
             <label>Tgl. Dari</label>
             <input className="input" type="date" value={tglDari}
@@ -2043,10 +2043,10 @@ function PlanningScheduleList() {
         </div>
       </div>
 
-      <div style={{display:'flex', gap:16, alignItems:'flex-start'}}>
+      <div className="mf-mesin-layout">
 
         {/* ── Left: Machine sidebar ── */}
-        <div style={{width:220, flexShrink:0, position:'sticky', top:0}}>
+        <div className="mf-mesin-sidebar">
           <div className="table-card">
             <div className="table-toolbar" style={{minHeight:42}}>
               <div className="table-toolbar-left" style={{fontWeight:600, fontSize:12.5, letterSpacing:'.04em', textTransform:'uppercase'}}>
@@ -2079,7 +2079,7 @@ function PlanningScheduleList() {
 
           {/* Action bar */}
           <div className="filter-bar">
-            <div className="filter-grid" style={{gridTemplateColumns:'160px 120px 16px 120px auto'}}>
+            <div className="filter-grid filter-grid-px3">
               <div className="field">
                 <label>Tanggal</label>
                 <input className="input" type="date" value={tgl} onChange={e => setTgl(e.target.value)} />

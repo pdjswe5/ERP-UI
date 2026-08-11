@@ -224,7 +224,7 @@ function PelangganModal({ data, initialMode, onClose, onSave }) {
 
   return (
     <div className="modal-backdrop">
-      <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth: 1400, maxHeight: '92vh'}}>
+      <div className="modal modal-xwide" onClick={e=>e.stopPropagation()} style={{maxHeight: '92vh'}}>
         <div className="modal-head">
           <div>
             <h2>{mode==='CREATE' ? 'Tambah Pelanggan Baru' : mode==='EDIT' ? `Edit Pelanggan — ${form.code}` : `Pelanggan — ${form.code}`}</h2>
@@ -244,7 +244,7 @@ function PelangganModal({ data, initialMode, onClose, onSave }) {
         <div className="modal-body" ref={modalBodyRef} style={{overflowY:'auto', maxHeight:'calc(92vh - 180px)', background:'var(--bg)', padding:'16px 24px'}}>
           <div ref={dasarRef} className="panel" style={{marginBottom:16}}>
             <h3>Informasi Dasar</h3>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(4, minmax(0,1fr))', gap:12}}>
+            <div className="form-grid-4" style={{gap:12}}>
               <Fld label="Kode Customer" required mono locked={mode!=='CREATE'} value={form.code} onChange={v=>set('code',v)} />
               <Fld label="Nama Customer" required locked={isView} value={form.name} onChange={v=>set('name',v)} />
               {fieldsDisabled ? (
@@ -284,7 +284,7 @@ function PelangganModal({ data, initialMode, onClose, onSave }) {
 
           <div ref={pajakRef} className="panel" style={{marginBottom:16}}>
             <h3>Pajak & Kredit</h3>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(4, minmax(0,1fr))', gap:12}}>
+            <div className="form-grid-4" style={{gap:12}}>
               <Fld label="No. NPWP" mono span={2} locked={fieldsDisabled} value={form.noNpwp} onChange={v=>set('noNpwp',v)} />
               <Fld label="Jenis Harga" required type="select" options={['Standar','Khusus','Grosir']} locked={fieldsDisabled} value={form.jenisHarga} onChange={v=>set('jenisHarga',v)} />
               <Fld label="Nama Pajak" locked={fieldsDisabled} value={form.namaPajak} onChange={v=>set('namaPajak',v)} />

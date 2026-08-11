@@ -63,7 +63,7 @@ function PgHeader({ title, sub, onAdd, addLabel='Tambah' }) {
   return (
     <div className="page-head">
       <div><h1>{title}</h1><div className="sub">{sub}</div></div>
-      <div style={{display:'flex', gap:8}}>
+      <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
         <button className="btn btn-sm">{I.refresh()} Refresh</button>
         {onAdd && <button className="btn btn-primary" onClick={onAdd}>{I.plus()} {addLabel}</button>}
       </div>
@@ -82,7 +82,7 @@ function PgModalShell({ title, sub, onClose, onSave, children, saveLabel='Simpan
         <div className="modal-body" style={wide ? {overflowY:'auto', maxHeight:'calc(92vh - 180px)'} : {}}>{children}</div>
         <div className="modal-foot">
           <div className="muted" style={{fontSize:12.5}}><kbd>Esc</kbd> untuk batal</div>
-          <div className="right" style={{display:'flex', gap:8}}>
+          <div className="right" style={{display:'flex', gap:8, flexWrap:'wrap'}}>
             <button className="btn" onClick={onClose}>Batal</button>
             <button className="btn btn-primary" onClick={onSave}>{I.check()} {saveLabel}</button>
           </div>
@@ -101,7 +101,7 @@ function PgGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
   return (
     <PgModalShell title={isEdit ? `Edit ${moduleTitle}` : `Tambah ${moduleTitle}`} sub="Pastikan semua kolom bertanda (*) terisi." onClose={onClose} onSave={()=>onSave(form)}>
-      <div style={{display:'grid', gridTemplateColumns:`repeat(${formCols}, minmax(0,1fr))`, gap:12}}>
+      <div className={`form-grid-${formCols}`} style={{gap:12}}>
         {fields.map(f => {
           const spanStyle = f.span ? {gridColumn:`span ${f.span}`} : {};
           if (f.type === 'aktif') {
@@ -247,7 +247,7 @@ function AksesUserModal({ data, onClose, onSave }) {
   return (
     <PgModalShell title={isEdit ? `Edit Akses User — ${form.kodeUser}` : 'Tambah Akses User'} onClose={onClose} onSave={()=>onSave(form)} wide>
       <div className="panel">
-        <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:12}}>
+        <div className="form-grid-3" style={{gap:12}}>
           <div className="field"><label>Kode User <span style={{color:'var(--danger)'}}>*</span></label><input className="input mono" value={form.kodeUser} onChange={e=>set('kodeUser',e.target.value)} disabled={isEdit}/></div>
           <div className="field"><label>Nama User <span style={{color:'var(--danger)'}}>*</span></label><input className="input" value={form.namaUser} onChange={e=>set('namaUser',e.target.value)}/></div>
           <div className="field"><label>Grup User</label><select className="select" value={form.grupUser} onChange={e=>set('grupUser',e.target.value)}><option value="">— Pilih —</option>{PG_GRUP_OPTS.map(g=><option key={g}>{g}</option>)}</select></div>
@@ -377,7 +377,7 @@ function KonfigurasiSistem() {
     <>
       <PgHeader title="Konfigurasi Sistem" sub="Pengaturan umum sistem ERP." />
       <div className="panel" style={{marginTop:0}}>
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16}}>
+        <div className="form-grid-2" style={{gap:16}}>
           <div className="field"><label>Tempo Hutang (hari)</label><input className="input mono" type="number" value={d.tempoHutang} onChange={e=>setD({...d, tempoHutang:+e.target.value})}/></div>
           <div className="field"><label>Gudang Pembelian Default</label><select className="select" value={d.kodeGudangBeli} onChange={e=>setD({...d, kodeGudangBeli:e.target.value})}>{gudangOpts.map(g=><option key={g}>{g}</option>)}</select></div>
           <div className="field"><label>Satuan Default</label><select className="select" value={d.kodeSatuan} onChange={e=>setD({...d, kodeSatuan:e.target.value})}>{satuanOpts.map(s=><option key={s}>{s}</option>)}</select></div>
@@ -400,7 +400,7 @@ function KonfigurasiOrganisasi() {
     <>
       <PgHeader title="Konfigurasi Organisasi" sub="Pengaturan data perusahaan & cabang." />
       <div className="panel" style={{marginTop:0}}>
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16}}>
+        <div className="form-grid-2" style={{gap:16}}>
           <div className="field" style={{gridColumn:'span 2'}}><label>Nama Perusahaan</label><input className="input" value={d.nama} onChange={e=>setD({...d, nama:e.target.value})}/></div>
           <div className="field" style={{gridColumn:'span 2'}}><label>Alamat</label><textarea className="textarea" value={d.alamat} onChange={e=>setD({...d, alamat:e.target.value})}/></div>
           <div className="field"><label>Kota</label><input className="input" value={d.kota} onChange={e=>setD({...d, kota:e.target.value})}/></div>
@@ -426,7 +426,7 @@ function KonfigurasiPenjualan() {
     <>
       <PgHeader title="Konfigurasi Penjualan" sub="Pengaturan default modul penjualan." />
       <div className="panel" style={{marginTop:0}}>
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16}}>
+        <div className="form-grid-2" style={{gap:16}}>
           <div className="field"><label>Besaran PPN (%)</label><input className="input mono" type="number" value={d.ppn} onChange={e=>setD({...d, ppn:+e.target.value})}/></div>
           <div className="field"><label>Gudang Penjualan Default</label><select className="select" value={d.kodeGudangJual} onChange={e=>setD({...d, kodeGudangJual:e.target.value})}>{gudangOpts.map(g=><option key={g}>{g}</option>)}</select></div>
           <div className="field"><label>Pajak Masukan</label><input className="input" value={d.ppnMasukan} onChange={e=>setD({...d, ppnMasukan:e.target.value})}/></div>

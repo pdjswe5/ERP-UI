@@ -18,7 +18,7 @@ function AkuntanDashboard({ onOpenSub, onNavigate, akunRows, aktivaRows, jurnalR
       <div className="crumbs"><a onClick={() => onNavigate?.('home')} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span><span className="current">Akuntan</span></div>
       <div className="page-head">
         <div><h1>Akuntan Workspace</h1><div className="sub">Kelola akun buku besar, aktiva tetap, jurnal memorial, dan laporan keuangan dalam satu workspace.</div></div>
-        <div style={{display:'flex', gap:8}}>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
           <button className="btn btn-sm btn-primary" onClick={()=>onOpenSub('jurnal')}>{I.plus()} Jurnal Baru</button>
         </div>
@@ -57,7 +57,7 @@ function AkuntanDashboard({ onOpenSub, onNavigate, akunRows, aktivaRows, jurnalR
         ))}
       </div>
 
-      <div style={{display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:16, marginTop:32}}>
+      <div className="dash-two-col" style={{marginTop:32}}>
         <div className="panel">
           <h3>Komposisi Akun BB per Grup</h3>
           <div style={{display:'flex', flexDirection:'column', gap:10}}>

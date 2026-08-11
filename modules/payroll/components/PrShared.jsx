@@ -54,7 +54,7 @@ function PrGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave
           <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
         </div>
         <div className="modal-body">
-          <div style={{display:'grid', gridTemplateColumns:`repeat(${formCols}, minmax(0,1fr))`, gap:12}}>
+          <div className={`form-grid-${formCols}`} style={{gap:12}}>
             {fields.map(f => {
               const spanStyle = f.span ? {gridColumn:`span ${f.span}`} : {};
               if (f.type === 'aktif') {

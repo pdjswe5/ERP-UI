@@ -5,7 +5,7 @@ function KasBankGiro({ rows, onAdd, onEdit }) {
     <>
       <div className="page-head">
         <div><h1>Kas, Bank & Giro</h1><div className="sub">{rows.length} akun · Total saldo {fmtRp(rows.reduce((s,a)=>s+a.saldo,0))}</div></div>
-        <div style={{display:'flex', gap:8}}>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
           <button className="btn btn-primary" onClick={onAdd}>{I.plus()} Tambah Akun</button>
         </div>

@@ -100,7 +100,7 @@ function AktivaModal({ data, onClose, onSave }) {
       sub={isEdit?data.nama:'Daftarkan aktiva tetap baru beserta jadwal penyusutan'}
       onClose={onClose} onSave={handleSave}
       saveLabel={isEdit?'Simpan Perubahan':'Simpan Aktiva'}>
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:24}}>
+      <div className="form-grid-2" style={{gap:24}}>
         <div className="form-section">
           <h4>Identitas Aktiva</h4>
           <div className="form-row">

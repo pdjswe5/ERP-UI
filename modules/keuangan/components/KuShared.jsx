@@ -24,7 +24,7 @@ function TxPage({ title, sub, rows, columns, onAdd, onEdit, onCancelDoc, onCetak
     <>
       <div className="page-head">
         <div><h1>{title}</h1><div className="sub">{sub}</div></div>
-        <div style={{display:'flex', gap:8}}>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
           <button className="btn btn-sm">{I.download()} Export</button>
           {onCetak && <button className="btn btn-sm" onClick={onCetak}>{I.print()} Cetak</button>}
@@ -420,7 +420,7 @@ function SaldoPickerModal({ items, onConfirm, onCancel }) {
         </div>
         <div className="modal-foot">
           <div className="muted" style={{fontSize:12.5}}>{selectedCount} dipilih</div>
-          <div className="right" style={{display:'flex', gap:8}}>
+          <div className="right" style={{display:'flex', gap:8, flexWrap:'wrap'}}>
             <button className="btn" onClick={onCancel}>Batal</button>
             <button className="btn btn-primary" disabled={selectedCount===0} onClick={handleConfirm}>Pilih ({selectedCount})</button>
           </div>
@@ -703,7 +703,7 @@ function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partner
                     <tr key={'giro-'+p.id} style={{background:'var(--bg-sub)'}}>
                       <td style={tdS} colSpan={2}><span className="muted" style={{fontSize:11.5}}>Detail Giro — {p.namaAkun || '—'}</span></td>
                       <td style={tdS} colSpan={3}>
-                        <div style={{display:'flex', gap:8}}>
+                        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
                           <input className="input mono" placeholder="No. Giro" value={p.noGiro} onChange={e=>updatePenerimaan(p.id, {noGiro:e.target.value})} style={{padding:'3px 6px'}}/>
                           <input className="input" type="date" value={p.jthTempoGiro} onChange={e=>updatePenerimaan(p.id, {jthTempoGiro:e.target.value})} style={{padding:'3px 6px'}}/>
                         </div>

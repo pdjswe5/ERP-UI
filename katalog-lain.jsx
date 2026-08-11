@@ -197,7 +197,7 @@ function KLHeader({ title, sub, onAdd, addLabel='Tambah' }) {
   return (
     <div className="page-head">
       <div><h1>{title}</h1><div className="sub">{sub}</div></div>
-      <div style={{display:'flex', gap:8}}>
+      <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
         <button className="btn btn-sm">{I.refresh()} Refresh</button>
         <button className="btn btn-sm">{I.download()} Export</button>
         {onAdd && <button className="btn btn-primary" onClick={onAdd}>{I.plus()} {addLabel}</button>}
@@ -238,7 +238,7 @@ function KLGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave
           <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
         </div>
         <div className="modal-body">
-          <div style={{display:'grid', gridTemplateColumns:`repeat(${formCols}, minmax(0,1fr))`, gap:12}}>
+          <div className={`form-grid-${formCols}`} style={{gap:12}}>
             {fields.map(f => {
               const spanStyle = f.span ? {gridColumn:`span ${f.span}`} : {};
               if (f.type === 'aktif') {
@@ -288,7 +288,7 @@ function KLGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave
         </div>
         <div className="modal-foot">
           <div className="muted" style={{fontSize:12.5}}><kbd>Esc</kbd> untuk batal</div>
-          <div className="right" style={{display:'flex', gap:8}}>
+          <div className="right" style={{display:'flex', gap:8, flexWrap:'wrap'}}>
             <button className="btn" onClick={onClose}>Batal</button>
             <button className="btn btn-primary" onClick={()=>onSave(form)}>{I.check()} Simpan</button>
           </div>

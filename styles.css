@@ -894,6 +894,113 @@ table.data tbody tr:last-child td { border-bottom: 0; }
   .filter-grid { grid-template-columns: repeat(2, 1fr); }
   .hide-sm { display: none !important; }
   .topbar-search { max-width: 280px; }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .totals-card { position: static; }
+}
+
+.tabs-pills { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+.tabs-pills::-webkit-scrollbar { display: none; }
+
+/* ===== filter-grid modifiers =====
+   Beberapa halaman set gridTemplateColumns lewat inline `style` di atas className="filter-grid" —
+   style inline itu selalu menang atas aturan stylesheet manapun (termasuk @media di atas), jadi
+   filter-grid biasa di halaman itu tidak pernah collapse. Modifier class ini gantikan style inline
+   tsb supaya ikut collapse di breakpoint 1100px/480px seperti .filter-grid lainnya. */
+.filter-grid-2   { display: grid; grid-template-columns: 1fr auto; gap: 12px 14px; align-items: end; }
+.filter-grid-4   { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 12px 14px; align-items: end; }
+.filter-grid-5   { display: grid; grid-template-columns: repeat(3, 1fr) auto auto; gap: 12px 14px; align-items: end; }
+.filter-grid-6   { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)) auto; gap: 12px 14px; align-items: end; }
+.filter-grid-px3 { display: grid; grid-template-columns: 160px 120px 16px 120px auto; gap: 12px 14px; align-items: end; }
+.filter-grid-px2 { display: grid; grid-template-columns: 160px 120px auto; gap: 12px 14px; align-items: end; }
+@media (max-width: 1100px) {
+  .filter-grid-2, .filter-grid-4, .filter-grid-5, .filter-grid-6, .filter-grid-px2, .filter-grid-px3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== form-grid utility modifiers =====
+   Alasan sama dengan filter-grid-N: pengganti gridTemplateColumns inline di form/modal supaya ikut
+   collapse per breakpoint (inline style tidak bisa disentuh @media). `gap` sengaja tidak diatur di
+   sini — dibiarkan tetap inline per pemanggil karena nilainya bervariasi (8/10/12/16/24) dan bukan
+   properti yang perlu berubah per breakpoint. */
+.form-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); }
+.form-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); }
+.form-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); }
+@media (max-width: 1100px) {
+  .form-grid-3, .form-grid-4,
+  .form-grid-px4a, .form-grid-px4b, .form-grid-px3a, .form-grid-px3b { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+/* one-off px-track form grids (kolom kiri lebar tetap px, sisanya fleksibel) — dipakai di beberapa
+   form Manufaktur/Barang, ganti dari gridTemplateColumns inline supaya ikut collapse di atas. */
+.form-grid-px4a { display: grid; grid-template-columns: 120px 100px 1fr 130px; }
+.form-grid-px4b { display: grid; grid-template-columns: 200px 160px 1fr 1fr; }
+.form-grid-px3a { display: grid; grid-template-columns: 180px 160px 1fr; }
+.form-grid-px3b { display: grid; grid-template-columns: 140px 120px 1fr; }
+
+/* ===== dashboard grid classes =====
+   Sebelumnya inline style di ModuleDashboard/Dashboard/AkuntanDashboard (gridTemplateColumns
+   ditulis langsung di JSX) — dipindah ke class supaya bisa collapse lewat @media di atas, yang
+   mustahil selama masih inline. */
+.dash-charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 24px; }
+.dash-two-col { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; align-items: start; }
+
+/* ===== Responsive tiers: tablet portrait (768px) + phone (480px) =====
+   Ditumpuk SETELAH semua base class di atas (filter-grid-N/form-grid-N/dash-two-col dst) supaya
+   cascade normal (tier lebih sempit menyempurnakan tier lebih lebar) tanpa perlu !important, kecuali
+   disebutkan lain. PENTING: blok ini HARUS berada SETELAH base class yg di-collapse-nya (bukan
+   sebelumnya) — kalau base class dideklarasikan belakangan, dia menang atas @media manapun yg
+   mendahuluinya walau kondisi media-nya cocok (specificity sama → urutan sumber yg menentukan).
+   .cetak-page / .cetak-table (ukuran kertas A4 cetak, di bawah file ini) SENGAJA tidak disentuh —
+   itu harus tetap ukuran tetap untuk print. */
+@media (max-width: 768px) {
+  .topbar { gap: 10px; padding: 0 10px; }
+  .topbar-search { max-width: 200px; }
+  .page-head, .detail-head { flex-wrap: wrap; }
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .modal-backdrop { padding: 16px; }
+  .dash-two-col { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .topbar-search { display: none; } /* modul/menu tetap bisa diakses lewat burger menu */
+  .brand-name small { display: none; }
+  .page, .page-wide { padding: 14px; }
+  .kpi-strip { grid-template-columns: 1fr; gap: 10px; }
+  .filter-grid,
+  .filter-grid-2, .filter-grid-4, .filter-grid-5, .filter-grid-6, .filter-grid-px2, .filter-grid-px3,
+  .form-grid-2, .form-grid-3, .form-grid-4,
+  .form-grid-px4a, .form-grid-px4b, .form-grid-px3a, .form-grid-px3b { grid-template-columns: 1fr; }
+  .modal-backdrop { padding: 8px; }
+  .modal-head { padding: 14px 16px; }
+  .modal-body { padding: 16px; }
+  .modal-foot { padding: 12px 16px; }
+  .table-toolbar, .pager { flex-wrap: wrap; gap: 8px; }
+  .notif-menu { width: calc(100vw - 24px); right: 12px; left: 12px; }
+}
+
+/* ===== MutasiKaryawanModal (Payroll) — 3 kolom lebar tetap (200+320+520px min) =====
+   Ini satu-satunya kasus non-tabel yg ditemukan bisa overflow parah di phone: modal-nya sendiri
+   sudah width:96vw (bukan dibatasi .modal{width:100%} spt modal lain), jadi 3 kolom fixed-width
+   di dalamnya (~1042px minimum) tidak pernah bisa muat di layar <1042px tanpa scroll-x horizontal
+   yg canggung. Ditumpuk vertikal di bawah 1100px. */
+.pr-mutasi-layout { display: flex; gap: 20px; }
+.pr-mutasi-col-hist { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+.pr-mutasi-col-detail { width: 320px; flex-shrink: 0; }
+.pr-mutasi-col-komponen { flex: 1; min-width: 520px; }
+.pr-mutasi-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+@media (max-width: 1100px) {
+  .pr-mutasi-layout { flex-direction: column; }
+  .pr-mutasi-col-hist, .pr-mutasi-col-detail, .pr-mutasi-col-komponen { width: 100%; min-width: 0; }
+  .pr-mutasi-divider { width: 100%; height: 1px; }
+}
+
+/* Sidebar mesin (Planning Schedule Produksi, duplikat di manufaktur.jsx & PlanningSchedulePage.jsx)
+   — sidebar 220px fixed + konten flex:1, ditumpuk vertikal di bawah 900px spt lap-report-shell. */
+.mf-mesin-layout { display: flex; gap: 16px; align-items: flex-start; }
+.mf-mesin-sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 0; }
+@media (max-width: 900px) {
+  .mf-mesin-layout { flex-direction: column; }
+  .mf-mesin-sidebar { width: 100%; position: static; }
 }
 
 /* keyboard hint kbd */
@@ -1213,6 +1320,23 @@ kbd {
 .cetak-checklist-scroll { max-height: 180px; overflow-y: auto; }
 .cetak-checklist-row:last-child { border-bottom: 0; }
 .cetak-preview-pane { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-sub); border-radius: var(--radius); overflow: hidden; }
+
+/* ===== Responsive: filter+preview split-view (UI popup/panel, BUKAN ukuran kertas cetak) =====
+   .cetak-body/.cetak-filter/.cetak-preview-pane di sini adalah panel UI (filter + pratinjau),
+   berbeda dari .cetak-page / .cetak-table (ukuran kertas A4 asli) di bawah — yang terakhir itu
+   sengaja tidak disentuh. Di bawah 900px, panel filter (lebar tetap 320px) menyisakan terlalu
+   sedikit ruang buat pratinjau, jadi ditumpuk vertikal. */
+@media (max-width: 900px) {
+  .cetak-body { flex-direction: column; }
+  .cetak-filter { width: 100%; flex: 0 0 auto; max-height: 280px; }
+  /* LapReportShell (modules/laporan/components/LapShared.jsx) mengatur flex row-nya lewat inline
+     style (height/overflow), yang tidak bisa di-override tanpa !important — !important di sini
+     aman krn class-nya baru & lokal ke satu komponen, bukan base class bersama. */
+  .lap-report-shell { flex-direction: column; height: auto !important; min-height: 0 !important; overflow: visible !important; }
+  .lap-report-shell .cetak-filter { width: 100% !important; flex: 0 0 auto !important; max-height: 320px; border-right: 0 !important; border-bottom: 1px solid var(--border); }
+  .lap-report-shell .cetak-preview-pane { min-height: 420px; }
+}
+
 .cetak-toolbar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 14px; background: var(--bg-elev); border-bottom: 1px solid var(--border);
