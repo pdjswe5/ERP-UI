@@ -297,7 +297,11 @@ function lapChunkCetakLines(lines, size) {
 // Render otomatis DIPAGINASI ke beberapa "kertas" A4 (.cetak-page-landscape) kalau isinya melebihi
 // kapasitas 1 halaman (LAP_ROWS_PER_PAGE) — kop+judul+"Hal. X dari Y" diulang tiap halaman, footer
 // timestamp cuma di halaman terakhir (persis pola PbCetakRegisterBody, PbCetakModal.jsx).
-function LapCetakPage({ docTitle, plainTitle, metaRight, infoLines, columns, rows, footerRow, groupBy, emptyMsg }) {
+// `roomy` opsional: laporan berkolom sedikit (Kartu/Posisi Stok, Kartu Piutang-Hutang, Rincian Nota
+// — 5-10 kolom) pasang ini utk tabel font 13px drpd 9px generik (styles.css .cetak-lap-roomy).
+// TIDAK dipasang di laporan berkolom banyak (Komisi Salesman, Rekap Piutang-Hutang, 13-16 kolom) —
+// bakal overflow di lebar 1123px kalau ikut dibesarkan.
+function LapCetakPage({ docTitle, plainTitle, metaRight, infoLines, columns, rows, footerRow, groupBy, emptyMsg, roomy }) {
   const org = lapOrgInfo();
 
   const renderRow = (r, key, bold) => (
@@ -318,7 +322,7 @@ function LapCetakPage({ docTitle, plainTitle, metaRight, infoLines, columns, row
   return (
     <>
       {pages.map((pageLines, pi) => (
-        <div className="cetak-page cetak-page-landscape" key={pi}>
+        <div className={`cetak-page cetak-page-landscape${roomy ? ' cetak-lap-roomy' : ''}`} key={pi}>
           <div className="cetak-doc">
             <div className="cetak-kop">
               {plainTitle ? (

@@ -51,7 +51,7 @@ function lapRincianGroups(partners, items, pelunasanList, kodeKey, kodeDari, kod
       footerRow: { tanggal:'', nomor:'', sales:'', jtTercetak:'', jtReal:'', tglLunas:`Total ${p.nama}`,
         nilai: lapFmtNum(subNilai), retur: lapFmtNum(0), pembayaran: lapFmtNum(subNilai - subSisa), sisaNota: lapFmtNum(subSisa) },
       infoRow: (
-        <div style={{display:'flex', gap:24, fontSize:11.5}}>
+        <div style={{display:'flex', gap:24, fontSize:13}}>
           <span>Plafon <b>{lapFmtNum(p.plafon || 0)}</b></span>
           <span>Sisa Titipan <b>{lapFmtNum(p.saldoTitipan ? lapResolveTitipan(p.saldoTitipan, tglAkhirIso) : 0)}</b></span>
           <span>Outs.GIRO <b>{lapFmtNum(lapGiroOutstanding(pelunasanList, kodeKey, p.kode, tglAkhirIso))}</b></span>
@@ -121,7 +121,7 @@ function LaporanRincianNotaPage() {
           <LapCetakPage
             docTitle={`Perincian Nota ${isPiutang ? 'Piutang' : 'Hutang'} (Belum+Sudah Lunas)`}
             metaRight={<>Tgl {lapFmtTgl(tglAwal)} sd {lapFmtTgl(tglAkhir)}<br/>{lapFmtTglNow()}</>}
-            columns={LAP_RINCIAN_COLS} rows={[]} groupBy={groups} footerRow={groups.length > 0 ? grandFooter : null}
+            columns={LAP_RINCIAN_COLS} rows={[]} groupBy={groups} footerRow={groups.length > 0 ? grandFooter : null} roomy
             emptyMsg="Tidak ada nota pada filter ini."
           />
         }

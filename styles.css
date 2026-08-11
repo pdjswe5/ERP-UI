@@ -1269,6 +1269,15 @@ kbd {
 .cetak-page-landscape.cetak-bb-roomy .cetak-table td {
   font-size: 11.5px; padding: 5px 7px;
 }
+/* Sub-halaman Laporan berkolom sedikit (5-10 kolom: Kartu/Posisi Stok, Kartu Piutang-Hutang,
+   Rincian Nota) — beda dari Komisi Salesman/Rekap Piutang-Hutang (13-16 kolom) yg TETAP butuh 9px
+   generik di atas supaya muat 1123px. Modifier TAMBAHAN ini (LapCetakPage prop `roomy`, dipasang
+   di keempat halaman itu saja) menaikkan ukuran font tabel ke permintaan user (~12-14px) — TIDAK
+   diterapkan ke laporan berkolom banyak krn akan overflow/kepotong. */
+.cetak-page-landscape.cetak-lap-roomy .cetak-table th,
+.cetak-page-landscape.cetak-lap-roomy .cetak-table td {
+  font-size: 13px; padding: 5px 7px; line-height: 1.35;
+}
 /* Zoom preview (tombol +/− di toolbar Laporan/Keuangan) diterapkan lewat CSS var drpd inline
    transform per halaman, krn 1 laporan sekarang bisa render beberapa .cetak-page sekaligus
    (LapReportShell di modules/laporan, AkBbReportShell di modules/keuangan) — 1 var di kontainer

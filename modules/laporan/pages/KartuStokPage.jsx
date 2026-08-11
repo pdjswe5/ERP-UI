@@ -66,7 +66,7 @@ function LaporanKartuStokPage() {
           <LapCetakPage
             docTitle={`KARTU STOCK BRG.JADI Lokasi: ${kodeLokasi || 'Semua'}`}
             metaRight={<>TGL: {lapFmtTgl(tglAwal)} sd. {lapFmtTgl(tglAkhir)}<br/>{lapFmtTglNow()}</>}
-            columns={LAP_KARTU_STOK_COLS} rows={[]} groupBy={groups}
+            columns={LAP_KARTU_STOK_COLS} rows={[]} groupBy={groups} roomy
             emptyMsg={`Tidak ada pergerakan stok di ${lokasiNama} pada periode ini.`}
           />
         }

@@ -56,7 +56,7 @@ function LaporanPosisiStokPage() {
           <LapCetakPage
             docTitle={`POSISI STOCK BRG.JADI Per Tgl. ${lapFmtTgl(asOf)}   Lokasi : ${kodeLokasi || 'Semua'}${lokasi ? ` - ${lokasi.nama}` : ''}`}
             metaRight={lapFmtTglNow()}
-            columns={LAP_POSISI_COLS} rows={[]} groupBy={groups} footerRow={groups.length > 0 ? grandFooter : null}
+            columns={LAP_POSISI_COLS} rows={[]} groupBy={groups} footerRow={groups.length > 0 ? grandFooter : null} roomy
             emptyMsg="Tidak ada item pada filter ini."
           />
         }

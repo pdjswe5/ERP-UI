@@ -75,7 +75,7 @@ function LaporanKartuPiutangHutangPage() {
           <LapCetakPage
             docTitle={`KARTU ${isPiutang ? 'PIUTANG' : 'HUTANG'} TGL: ${lapFmtTgl(tglAwal)} sd. ${lapFmtTgl(tglAkhir)}`}
             metaRight={lapFmtTglNow()}
-            columns={LAP_KARTU_COLS} rows={[]} groupBy={groups}
+            columns={LAP_KARTU_COLS} rows={[]} groupBy={groups} roomy
             emptyMsg="Tidak ada partner pada rentang kode ini."
           />
         }
