@@ -58,6 +58,44 @@
 #app-loading .hint { font-size: 13px; color: var(--text-3); }
 @keyframes app-loading-spin { to { transform: rotate(360deg); } }
 
+/* ===== Login screen =====
+   Gerbang tampilan sebelum App mount (lihat login.jsx) — bukan pengganti #app-loading di atas,
+   keduanya bisa tampil berurutan: #app-loading dulu (statis, sebelum React siap), lalu React mount
+   LoginPage begitu siap, baru App setelah "Masuk" diklik. */
+.login-screen {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; background: var(--bg); padding: 24px;
+}
+.login-card {
+  width: 100%; max-width: 400px; background: var(--bg-elev); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg); overflow: hidden;
+}
+.login-card-accent { height: 4px; background: linear-gradient(90deg, var(--primary), var(--accent)); }
+.login-card-body { padding: 32px 32px 28px; }
+.login-logo {
+  width: 68px; height: 68px; margin: 0 auto 16px; border-radius: 50%;
+  overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
+}
+.login-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.login-title { margin: 0; font-size: 21px; font-weight: 700; color: var(--text); text-align: center; }
+.login-subtitle { margin: 2px 0 26px; font-size: 13px; font-weight: 500; color: var(--text-3); text-align: center; }
+.login-card-body .field + .field { margin-top: 14px; }
+.login-remember {
+  display: flex; align-items: center; gap: 8px; margin: 16px 0 20px;
+  font-size: 12.5px; color: var(--text-2); cursor: pointer;
+}
+.login-remember input { margin: 0; accent-color: var(--primary); cursor: pointer; }
+.login-submit { width: 100%; justify-content: center; height: 40px; font-size: 14px; }
+.login-demo-hint {
+  display: flex; align-items: flex-start; gap: 8px; margin-top: 18px; padding: 10px 12px;
+  background: var(--info-soft); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-2);
+}
+.login-demo-hint svg { flex-shrink: 0; margin-top: 1px; color: var(--primary); }
+.login-demo-hint code {
+  background: rgba(0,0,0,.06); border-radius: 4px; padding: 1px 5px; font-family: 'IBM Plex Mono', monospace;
+}
+.login-footer { font-size: 11.5px; color: var(--text-4); text-align: center; }
+
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; height: 100%; }
 body {
@@ -1196,6 +1234,12 @@ kbd {
      dipaksa IBM Plex Mono (lihat .cetak-table td.mono di bawah), jadi terasa tidak konsisten. */
   font-family: 'Times New Roman', Times, serif;
 }
+/* A4 potrait SEBENARNYA (210mm x 297mm ≈ 794x1123px @96dpi) — .cetak-page dasar (780x1000) sudah
+   dipakai luas oleh dokumen potrait modul lain (Invoice/PO/Jurnal dkk) dgn ukuran itu, jadi tidak
+   diubah langsung supaya cetakan² itu tidak ikut bergeser; kelas TAMBAHAN ini dipasang di atas
+   .cetak-page (className="cetak-page cetak-page-a4-portrait") khusus laporan potrait modul Keuangan
+   (mis. Laporan Bank, AkBbCetakPage) yg memang perlu ukuran kertas A4 presisi. */
+.cetak-page-a4-portrait { width: 794px; min-height: 1123px; }
 /* Varian landscape (modul Laporan — Kartu/Rekap/Rincian Stok & Piutang-Hutang, Komisi Salesman):
    dokumen² ini py banyak kolom (10-16) jadi butuh lebar, dan marginnya sengaja kecil (bukan 40px/44px
    spt .cetak-page portrait) supaya tabel lebar tidak kepotong. Dipasang sbg class TAMBAHAN di atas
@@ -1215,10 +1259,24 @@ kbd {
   font-size: 9px; padding: 2px 4px; line-height: 1.3;
   overflow-wrap: break-word; word-break: break-word;
 }
-/* Zoom preview (tombol +/− di toolbar Laporan) diterapkan lewat CSS var drpd inline transform per
-   halaman, krn 1 laporan sekarang bisa render beberapa .cetak-page sekaligus (LapReportShell,
-   components/LapShared.jsx) — 1 var di kontainer scroll otomatis kepakai semua halaman. */
-.cetak-canvas-scroll .cetak-page-landscape { transform: scale(var(--lap-zoom, 1)); }
+/* Laporan Keuangan (Buku Besar Detil/Rekap Total, AkBbCetakPage) cuma py 7 kolom — jauh lebih
+   sedikit drpd laporan terlebar modul Laporan (16 kolom, Rekap Piutang) yg butuh font 9px sekecil
+   itu supaya muat. Dipaksa ikut 9px generik tadi jadi kekecilan tanpa alasan (proporsinya salah,
+   spt yg dilaporkan user). Kelas TAMBAHAN ini (dua kelas jadi lebih spesifik drpd rule generik di
+   atas, otomatis menang) menaikkan balik ke ukuran yg nyaman dibaca — TIDAK mengubah laporan modul
+   Laporan yg masih butuh 9px. */
+.cetak-page-landscape.cetak-bb-roomy .cetak-table th,
+.cetak-page-landscape.cetak-bb-roomy .cetak-table td {
+  font-size: 11.5px; padding: 5px 7px;
+}
+/* Zoom preview (tombol +/− di toolbar Laporan/Keuangan) diterapkan lewat CSS var drpd inline
+   transform per halaman, krn 1 laporan sekarang bisa render beberapa .cetak-page sekaligus
+   (LapReportShell di modules/laporan, AkBbReportShell di modules/keuangan) — 1 var di kontainer
+   scroll otomatis kepakai semua halaman. Selector target .cetak-page dasar (bukan cuma varian
+   -landscape) supaya laporan potrait (mis. Laporan Bank di Keuangan) ikut ke-zoom juga — aman utk
+   modul lain yg masih pakai inline transform per-halaman (PbCetakModal dkk.), krn inline style
+   SELALU menang atas rule stylesheet manapun. */
+.cetak-canvas-scroll .cetak-page { transform: scale(var(--lap-zoom, 1)); }
 
 .cetak-doc { font-size: 12.5px; color: #111; position: relative; }
 .cetak-watermark {

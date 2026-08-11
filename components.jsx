@@ -61,7 +61,9 @@ const NOTIFS_DATA = [
 ];
 
 // ---------- Top bar ----------
-function TopBar({ onHome, onNavigate }) {
+function TopBar({ onHome, onNavigate, session, onLogout }) {
+  const userLabel = (session && session.kodeUser) ? session.kodeUser.toUpperCase() : 'Administrator';
+  const userInitials = userLabel.slice(0, 2).toUpperCase();
   // Burger menu
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef(null);
@@ -268,13 +270,13 @@ function TopBar({ onHome, onNavigate }) {
         )}
 
         {/* Avatar + user menu */}
-        <button ref={userBtnRef} className={`avatar-btn${userOpen ? ' active' : ''}`} title="Administrator"
-          onClick={() => setUserOpen(v => !v)}>AD</button>
+        <button ref={userBtnRef} className={`avatar-btn${userOpen ? ' active' : ''}`} title={userLabel}
+          onClick={() => setUserOpen(v => !v)}>{userInitials}</button>
 
         {userOpen && (
           <div className="user-menu" ref={userMenuRef}>
             <div className="user-menu-header">
-              <div style={{fontWeight:600, fontSize:13}}>Administrator</div>
+              <div style={{fontWeight:600, fontSize:13}}>{userLabel}</div>
               <div style={{fontSize:11.5, color:'var(--text-3)', marginTop:1}}>PDJ Administrator</div>
             </div>
             <hr className="user-menu-divider" />
@@ -285,7 +287,7 @@ function TopBar({ onHome, onNavigate }) {
               {I.edit(14)} Ubah Password
             </button>
             <hr className="user-menu-divider" />
-            <button className="user-menu-item user-menu-danger" onClick={()=>{ window.__erpToast&&window.__erpToast('Anda telah keluar.'); setUserOpen(false); }}>
+            <button className="user-menu-item user-menu-danger" onClick={()=>{ setUserOpen(false); onLogout && onLogout(); }}>
               {I.arrowR(14)} Keluar
             </button>
           </div>
@@ -347,6 +349,8 @@ const MODULE_SUBS = {
     { id:'akun', label:'Katalog Akun' }, { id:'aktiva', label:'Aktiva Tetap' },
     { id:'jurnal', label:'Jurnal Memorial' }, { id:'labarugi', label:'Laba Rugi' },
     { id:'aruskas', label:'Laporan Arus Kas' }, { id:'neraca', label:'Neraca' },
+    { id:'lapbank', label:'Laporan Bank' }, { id:'bbdetil', label:'Buku Besar (Detil)' },
+    { id:'bbrekap', label:'Buku Besar (Rekap Total)' },
     // Cash & Bank
     { id:'kbg', label:'Kas, Bank & Giro' },
     { id:'km',  label:'Kas Masuk' },

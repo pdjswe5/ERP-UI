@@ -153,6 +153,15 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
       {activeSub === 'labarugi' && <LaporanKeuanganPage reportId="labarugi" rows={labaRugiRows} setRows={setLabaRugiRows} />}
       {activeSub === 'aruskas' && <LaporanKeuanganPage reportId="aruskas" rows={arusKasRows} setRows={setArusKasRows} />}
       {activeSub === 'neraca'  && <LaporanKeuanganPage reportId="neraca" rows={neracaRows} setRows={setNeracaRows} />}
+      {['lapbank','bbdetil','bbrekap'].includes(activeSub) && (() => {
+        const bbProps = {
+          akunRows, kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows,
+          transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows,
+        };
+        if (activeSub === 'lapbank') return <LaporanBankPage {...bbProps} />;
+        if (activeSub === 'bbdetil') return <LaporanBukuBesarDetailPage {...bbProps} />;
+        return <LaporanBukuBesarRekapPage {...bbProps} />;
+      })()}
       {txMap[activeSub] && (
         <TxPage
           title={txMap[activeSub].title}

@@ -181,7 +181,7 @@ function lapStokRunningBalance(events, tglAwalIso, tglAkhirIso) {
 }
 
 // Posisi (Stock Real & Available = Stock Real - Reserved) semua item pada tanggal `asOfIso` —
-// dasar Posisi Stok & Rekap Stok, difilter opsional per Lokasi & Tebal.
+// dasar Posisi Stok, difilter opsional per Lokasi & Tebal.
 function lapStokPosisiSemua(asOfIso, kodeLokasiFilter, tebalFilter) {
   return LAP_STOK_ITEMS
     .filter(it => !kodeLokasiFilter || it.lokasi === kodeLokasiFilter)
@@ -291,10 +291,13 @@ function lapChunkCetakLines(lines, size) {
 // Total di akhir SEMUA grup (mode groupBy, opsional, mis. Rincian Nota/Posisi Stok).
 // `groupBy` opsional: [{ label, rows, footerRow, infoRow }] — infoRow (opsional) = 1 React node
 // dicetak sbg baris lebar (colSpan penuh) setelah footerRow grup itu, mis. blok Plafon/Sisa Titipan.
+// `plainTitle` opsional: sebagian dokumen referensi (mis. Rekap Stock) TIDAK py kop 3-kolom (nama PT
+// kiri/judul tengah) — cuma 1 baris judul tebal rata-kiri + tanggal/hal di kanan. Set true utk pakai
+// layout itu (docTitle jadi teks judul penuh, org.nama tidak ditampilkan).
 // Render otomatis DIPAGINASI ke beberapa "kertas" A4 (.cetak-page-landscape) kalau isinya melebihi
 // kapasitas 1 halaman (LAP_ROWS_PER_PAGE) — kop+judul+"Hal. X dari Y" diulang tiap halaman, footer
 // timestamp cuma di halaman terakhir (persis pola PbCetakRegisterBody, PbCetakModal.jsx).
-function LapCetakPage({ docTitle, metaRight, infoLines, columns, rows, footerRow, groupBy, emptyMsg }) {
+function LapCetakPage({ docTitle, plainTitle, metaRight, infoLines, columns, rows, footerRow, groupBy, emptyMsg }) {
   const org = lapOrgInfo();
 
   const renderRow = (r, key, bold) => (
@@ -318,8 +321,14 @@ function LapCetakPage({ docTitle, metaRight, infoLines, columns, rows, footerRow
         <div className="cetak-page cetak-page-landscape" key={pi}>
           <div className="cetak-doc">
             <div className="cetak-kop">
-              <div className="cetak-kop-left"><b>{org.nama}</b></div>
-              <div className="cetak-kop-center">{docTitle}</div>
+              {plainTitle ? (
+                <div className="cetak-kop-left" style={{flex:3}}><b>{docTitle}</b></div>
+              ) : (
+                <>
+                  <div className="cetak-kop-left"><b>{org.nama}</b></div>
+                  <div className="cetak-kop-center">{docTitle}</div>
+                </>
+              )}
               <div className="cetak-kop-right">{metaRight}<br/>Hal. {pi + 1} dari {totalPages}</div>
             </div>
             {infoLines && infoLines.length > 0 && (

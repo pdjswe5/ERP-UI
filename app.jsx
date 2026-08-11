@@ -22,33 +22,11 @@ const INITIAL_TAB_GROUPS = () => {
   return groups;
 };
 
-function App() {
-  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+function App({ session, onLogout, t, setTweak }) {
   const [activeGroup, setActiveGroup] = React.useState('home');
   const [tabGroups, setTabGroups] = React.useState(INITIAL_TAB_GROUPS);
   const [toast, setToast] = React.useState(null);
   const [moduleOrder, setModuleOrder] = React.useState(() => MODULES.map(m => m.id));
-
-  // apply primary preset to colors when preset changes
-  React.useEffect(() => {
-    if (t.primaryAlt && t.primaryAlt !== 'custom' && PRIMARY_PRESETS[t.primaryAlt]) {
-      const p = PRIMARY_PRESETS[t.primaryAlt];
-      if (p.primaryColor !== t.primaryColor || p.accentColor !== t.accentColor) {
-        setTweak({ primaryColor: p.primaryColor, accentColor: p.accentColor });
-      }
-    }
-  }, [t.primaryAlt]);
-
-  // apply CSS variables
-  React.useEffect(() => {
-    const r = document.documentElement;
-    r.style.setProperty('--primary', t.primaryColor);
-    r.style.setProperty('--accent', t.accentColor);
-    r.style.setProperty('--primary-50',  t.primaryColor + '0d');
-    r.style.setProperty('--primary-100', t.primaryColor + '1f');
-    r.style.setProperty('--accent-soft', t.accentColor + '1f');
-    r.dataset.density = t.density;
-  }, [t.primaryColor, t.accentColor, t.density]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -163,7 +141,7 @@ function App() {
 
   return (
     <>
-      <TopBar onHome={() => activateGroup('home')} onNavigate={navigateTo} />
+      <TopBar onHome={() => activateGroup('home')} onNavigate={navigateTo} session={session} onLogout={onLogout} />
       <MultiTabNav
         tabGroups={tabGroups}
         activeGroup={activeGroup}
@@ -213,4 +191,39 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+// Gerbang login — session cuma di memori (bukan localStorage), jadi refresh halaman kembali ke
+// LoginPage. Ini SENGAJA (prototipe tampilan, "sementara"): data tetap dimuat lewat <script> tags
+// di index.html seperti biasa terlepas dari status login, cuma komponen yang dirender yang beda.
+// Tweaks (warna primary/accent dkk) dipindah ke sini (bukan di dalam App) supaya CSS var-nya
+// SUDAH aktif sebelum login — LoginPage jadi ikut warna tema yang sama dgn dashboard, bukan warna
+// default stylesheet.
+function AppRoot() {
+  const [session, setSession] = React.useState(null);
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // apply primary preset to colors when preset changes
+  React.useEffect(() => {
+    if (t.primaryAlt && t.primaryAlt !== 'custom' && PRIMARY_PRESETS[t.primaryAlt]) {
+      const p = PRIMARY_PRESETS[t.primaryAlt];
+      if (p.primaryColor !== t.primaryColor || p.accentColor !== t.accentColor) {
+        setTweak({ primaryColor: p.primaryColor, accentColor: p.accentColor });
+      }
+    }
+  }, [t.primaryAlt]);
+
+  // apply CSS variables
+  React.useEffect(() => {
+    const r = document.documentElement;
+    r.style.setProperty('--primary', t.primaryColor);
+    r.style.setProperty('--accent', t.accentColor);
+    r.style.setProperty('--primary-50',  t.primaryColor + '0d');
+    r.style.setProperty('--primary-100', t.primaryColor + '1f');
+    r.style.setProperty('--accent-soft', t.accentColor + '1f');
+    r.dataset.density = t.density;
+  }, [t.primaryColor, t.accentColor, t.density]);
+
+  if (!session) return <LoginPage onLogin={setSession} />;
+  return <App session={session} onLogout={() => setSession(null)} t={t} setTweak={setTweak} />;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<AppRoot />);

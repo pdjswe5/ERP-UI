@@ -76,7 +76,7 @@ function KeuanganDashboard({ onOpenSub, onNavigate, akunRows, aktivaRows, jurnal
         ))}
       </div>
 
-      <h3 className="section-title">Laporan Keuangan <span className="count">{AK_LAPORAN_LIST.length}</span></h3>
+      <h3 className="section-title">Laporan Keuangan <span className="count">{AK_LAPORAN_LIST.length + 3}</span></h3>
       <div className="tile-grid">
         {AK_LAPORAN_LIST.map(r => (
           <button key={r.id} className="tile" onClick={()=>onOpenSub(r.id)}>
@@ -87,6 +87,27 @@ function KeuanganDashboard({ onOpenSub, onNavigate, akunRows, aktivaRows, jurnal
             <div><h3>{r.label}</h3><p>{r.desc}</p></div>
           </button>
         ))}
+        <button className="tile" onClick={()=>onOpenSub('lapbank')}>
+          <div className="tile-head">
+            <div className="tile-icon-wrap" style={{background:'#0369a114', color:'#0369a1'}}>{I.wallet ? I.wallet(20) : I.invoice(20)}</div>
+            <span className="tile-badge">{kbgRows.length} akun</span>
+          </div>
+          <div><h3>Laporan Bank</h3><p>Ledger berjalan per akun Kas, Bank & Giro — saldo awal + mutasi periode.</p></div>
+        </button>
+        <button className="tile" onClick={()=>onOpenSub('bbdetil')}>
+          <div className="tile-head">
+            <div className="tile-icon-wrap" style={{background:'#0369a114', color:'#0369a1'}}>{I.list(20)}</div>
+            <span className="tile-badge">{akunRows.length} akun</span>
+          </div>
+          <div><h3>Buku Besar (Detil)</h3><p>Ledger berjalan per akun untuk seluruh Chart of Accounts.</p></div>
+        </button>
+        <button className="tile" onClick={()=>onOpenSub('bbrekap')}>
+          <div className="tile-head">
+            <div className="tile-icon-wrap" style={{background:'#0369a114', color:'#0369a1'}}>{I.list(20)}</div>
+            <span className="tile-badge">{akunRows.length} akun</span>
+          </div>
+          <div><h3>Buku Besar (Rekap Total)</h3><p>Neraca saldo — Saldo Awal, Mutasi, dan Saldo Akhir per akun.</p></div>
+        </button>
       </div>
 
       <h3 className="section-title" style={{marginTop:28}}>Modul Keuangan <span className="count">{kasBankTiles.length}</span></h3>
