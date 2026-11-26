@@ -116,17 +116,24 @@ function BahanBakuModal({ data, onClose, onSave }) {
   );
 }
 
-function BahanBakuPage() {
-  const [rows, setRows] = React.useState(BAHAN_BAKU);
+function BahanBakuPage(props) {
+  // State dipegang BarangPage (tidak hilang saat pindah sub-tab); fallback lokal bila dipakai mandiri.
+  const [rowsLocal, setRowsLocal] = React.useState(BAHAN_BAKU);
+  const rows = (props && props.rows) || rowsLocal;
+  const setRows = (props && props.setRows) || setRowsLocal;
   const [modal, setModal] = React.useState(null);
   const [showModal, setShowModal] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(null);
   const save = (form) => {
+    if (!(showModal===2) && rows.some(r => String(r.kodeProduk).toUpperCase() === String(form.kodeProduk || '').trim().toUpperCase())) { window.__erpToast && window.__erpToast(`Kode ${form.kodeProduk} sudah dipakai.`); return; }
+    if (!String(form.kodeProduk || '').trim()) { window.__erpToast && window.__erpToast('Kode produk wajib diisi.'); return; }
     setRows(prev => showModal===2 ? prev.map(r => r.kodeProduk===modal.kodeProduk ? form : r) : [...prev, form]);
     window.__erpToast && window.__erpToast('Bahan baku berhasil disimpan.');
     setShowModal(false); setModal(null);
   };
   const deleteRow = () => {
+    const pakai = brgDipakai(confirmDelete.kodeProduk, props && props.bomRows);
+    if (pakai) { window.__erpToast && window.__erpToast(`Tidak bisa dihapus: barang dipakai di ${pakai}.`); setConfirmDelete(null); return; }
     setRows(prev => prev.filter(r => r.kodeProduk !== confirmDelete.kodeProduk));
     window.__erpToast && window.__erpToast('Bahan baku berhasil dihapus.');
     setConfirmDelete(null);

@@ -2,7 +2,7 @@
 
 const PJ_PELANGGAN = [
   {
-      name:"Budi Susanto Cahyono Siner",
+      name:"Pelanggan Contoh 01",
       code:"b7364",
       alamat:"Jl. Melati No. 12",
       kota:"SURABAYA",
@@ -26,11 +26,11 @@ const PJ_PELANGGAN = [
       klasifikasi:"Retail",
       fk:"K",
       status:"Aktif",
-      keterangan:"Data lengkap pelanggan Budi Susanto Cahyono Siner",
+      keterangan:"Data lengkap pelanggan Pelanggan Contoh 01",
       alamatKirim:"Jl. Melati No. 12",
       noNpwp:"09.001.002.3-100.004",
       jenisHarga:"Standar",
-      namaPajak:"Budi Susanto Cahyono Siner",
+      namaPajak:"Pelanggan Contoh 01",
       kotaPajak:"SURABAYA",
       plafon:5000000,
       plafonTemp:0,
@@ -50,7 +50,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 1", alamatKirim:"Jl. Kirim No. 10", kota:"SURABAYA", telepon:"081234567890", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.001.002.3-100.004", namaNpwp:"Budi Susanto Cahyono Siner", alamat:"Jl. Melati No. 12" },
+          { noNpwp:"09.001.002.3-100.004", namaNpwp:"Pelanggan Contoh 01", alamat:"Jl. Melati No. 12" },
           { noNpwp:"09.005.006.000-200.000", namaNpwp:"Cabang SURABAYA", alamat:"Jl. Melati No. 12" }
         ],
       saldoTitipan:[
@@ -63,7 +63,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Brandon Fononta 3",
+      name:"Pelanggan Contoh 02",
       code:"C001",
       alamat:"Blok M",
       kota:"JKT",
@@ -87,11 +87,11 @@ const PJ_PELANGGAN = [
       klasifikasi:"Distributor",
       fk:"F",
       status:"Aktif",
-      keterangan:"Data lengkap pelanggan Brandon Fononta 3",
+      keterangan:"Data lengkap pelanggan Pelanggan Contoh 02",
       alamatKirim:"Blok M",
       noNpwp:"09.002.003.4-101.005",
       jenisHarga:"Standar",
-      namaPajak:"Brandon Fononta 3",
+      namaPajak:"Pelanggan Contoh 02",
       kotaPajak:"JKT",
       plafon:10000000,
       plafonTemp:1000000,
@@ -111,7 +111,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 2", alamatKirim:"Jl. Kirim No. 11", kota:"JKT", telepon:"Brandon", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.002.003.4-101.005", namaNpwp:"Brandon Fononta 3", alamat:"Blok M" },
+          { noNpwp:"09.002.003.4-101.005", namaNpwp:"Pelanggan Contoh 02", alamat:"Blok M" },
           { noNpwp:"09.006.007.000-201.000", namaNpwp:"Cabang JKT", alamat:"Blok M" }
         ],
       saldoTitipan:[
@@ -124,7 +124,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Charlie Reynold 2",
+      name:"Pelanggan Contoh 03",
       code:"C012",
       alamat:"Blok M",
       kota:"JKT",
@@ -148,11 +148,11 @@ const PJ_PELANGGAN = [
       klasifikasi:"Korporat",
       fk:"F",
       status:"Aktif",
-      keterangan:"Data lengkap pelanggan Charlie Reynold 2",
+      keterangan:"Data lengkap pelanggan Pelanggan Contoh 03",
       alamatKirim:"Blok M",
       noNpwp:"09.003.004.5-102.006",
       jenisHarga:"Standar",
-      namaPajak:"Charlie Reynold 2",
+      namaPajak:"Pelanggan Contoh 03",
       kotaPajak:"JKT",
       plafon:15000000,
       plafonTemp:2000000,
@@ -172,7 +172,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 3", alamatKirim:"Jl. Kirim No. 12", kota:"JKT", telepon:"Charlie", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.003.004.5-102.006", namaNpwp:"Charlie Reynold 2", alamat:"Blok M" },
+          { noNpwp:"09.003.004.5-102.006", namaNpwp:"Pelanggan Contoh 03", alamat:"Blok M" },
           { noNpwp:"09.007.008.000-202.000", namaNpwp:"Cabang JKT", alamat:"Blok M" }
         ],
       saldoTitipan:[
@@ -185,7 +185,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"gagagaga",
+      name:"Pelanggan Contoh 04",
       code:"g123",
       alamat:"Jl. Mawar 45",
       kota:"BANDUNG",
@@ -213,7 +213,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"Jl. Mawar 45",
       noNpwp:"09.004.005.6-103.007",
       jenisHarga:"Standar",
-      namaPajak:"gagagaga",
+      namaPajak:"Pelanggan Contoh 04",
       kotaPajak:"BANDUNG",
       plafon:20000000,
       plafonTemp:3000000,
@@ -233,7 +233,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 4", alamatKirim:"Jl. Kirim No. 13", kota:"BANDUNG", telepon:"09089876655", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.004.005.6-103.007", namaNpwp:"gagagaga", alamat:"Jl. Mawar 45" },
+          { noNpwp:"09.004.005.6-103.007", namaNpwp:"Pelanggan Contoh 04", alamat:"Jl. Mawar 45" },
           { noNpwp:"09.008.009.000-203.000", namaNpwp:"Cabang BANDUNG", alamat:"Jl. Mawar 45" }
         ],
       saldoTitipan:[
@@ -246,7 +246,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Pelanggan 1",
+      name:"Pelanggan Contoh 05",
       code:"H01",
       alamat:"Jl. Anggrek 7",
       kota:"SURABAYA",
@@ -274,7 +274,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"Jl. Anggrek 7",
       noNpwp:"09.005.006.7-104.008",
       jenisHarga:"Standar",
-      namaPajak:"Pelanggan 1",
+      namaPajak:"Pelanggan Contoh 05",
       kotaPajak:"SURABAYA",
       plafon:25000000,
       plafonTemp:4000000,
@@ -294,7 +294,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 5", alamatKirim:"Jl. Kirim No. 14", kota:"SURABAYA", telepon:"081300001111", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.005.006.7-104.008", namaNpwp:"Pelanggan 1", alamat:"Jl. Anggrek 7" },
+          { noNpwp:"09.005.006.7-104.008", namaNpwp:"Pelanggan Contoh 05", alamat:"Jl. Anggrek 7" },
           { noNpwp:"09.009.010.000-204.000", namaNpwp:"Cabang SURABAYA", alamat:"Jl. Anggrek 7" }
         ],
       saldoTitipan:[
@@ -307,7 +307,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"KAVI",
+      name:"Pelanggan Contoh 06",
       code:"KV001",
       alamat:"Jl. Kenari 88",
       kota:"JAKARTA",
@@ -335,7 +335,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"Jl. Kenari 88",
       noNpwp:"09.006.007.8-105.009",
       jenisHarga:"Standar",
-      namaPajak:"KAVI",
+      namaPajak:"Pelanggan Contoh 06",
       kotaPajak:"JAKARTA",
       plafon:30000000,
       plafonTemp:5000000,
@@ -355,7 +355,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 6", alamatKirim:"Jl. Kirim No. 15", kota:"JAKARTA", telepon:"02199887766", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.006.007.8-105.009", namaNpwp:"KAVI", alamat:"Jl. Kenari 88" },
+          { noNpwp:"09.006.007.8-105.009", namaNpwp:"Pelanggan Contoh 06", alamat:"Jl. Kenari 88" },
           { noNpwp:"09.010.011.000-205.000", namaNpwp:"Cabang JAKARTA", alamat:"Jl. Kenari 88" }
         ],
       saldoTitipan:[
@@ -368,7 +368,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Lia Malik",
+      name:"Pelanggan Contoh 07",
       code:"L001",
       alamat:"Blok M",
       kota:"JKT",
@@ -392,11 +392,11 @@ const PJ_PELANGGAN = [
       klasifikasi:"Korporat",
       fk:"K",
       status:"Aktif",
-      keterangan:"Data lengkap pelanggan Lia Malik",
+      keterangan:"Data lengkap pelanggan Pelanggan Contoh 07",
       alamatKirim:"Blok M",
       noNpwp:"09.007.008.9-106.010",
       jenisHarga:"Standar",
-      namaPajak:"Lia Malik",
+      namaPajak:"Pelanggan Contoh 07",
       kotaPajak:"JKT",
       plafon:35000000,
       plafonTemp:6000000,
@@ -416,7 +416,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 7", alamatKirim:"Jl. Kirim No. 16", kota:"JKT", telepon:"Lia", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.007.008.9-106.010", namaNpwp:"Lia Malik", alamat:"Blok M" },
+          { noNpwp:"09.007.008.9-106.010", namaNpwp:"Pelanggan Contoh 07", alamat:"Blok M" },
           { noNpwp:"09.011.012.000-206.000", namaNpwp:"Cabang JKT", alamat:"Blok M" }
         ],
       saldoTitipan:[
@@ -429,7 +429,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Lanny Wijaya",
+      name:"Pelanggan Contoh 08",
       code:"L002",
       alamat:"Blok M",
       kota:"JKT",
@@ -453,11 +453,11 @@ const PJ_PELANGGAN = [
       klasifikasi:"Project",
       fk:"F",
       status:"Aktif",
-      keterangan:"Data lengkap pelanggan Lanny Wijaya",
+      keterangan:"Data lengkap pelanggan Pelanggan Contoh 08",
       alamatKirim:"Blok M",
       noNpwp:"09.008.009.10-107.011",
       jenisHarga:"Standar",
-      namaPajak:"Lanny Wijaya",
+      namaPajak:"Pelanggan Contoh 08",
       kotaPajak:"JKT",
       plafon:40000000,
       plafonTemp:7000000,
@@ -477,7 +477,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 8", alamatKirim:"Jl. Kirim No. 17", kota:"JKT", telepon:"Lanny", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.008.009.10-107.011", namaNpwp:"Lanny Wijaya", alamat:"Blok M" },
+          { noNpwp:"09.008.009.10-107.011", namaNpwp:"Pelanggan Contoh 08", alamat:"Blok M" },
           { noNpwp:"09.012.013.000-207.000", namaNpwp:"Cabang JKT", alamat:"Blok M" }
         ],
       saldoTitipan:[
@@ -490,7 +490,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Lusista Wijaya 2",
+      name:"Pelanggan Contoh 09",
       code:"L015",
       alamat:"Blok M",
       kota:"JKT",
@@ -514,11 +514,11 @@ const PJ_PELANGGAN = [
       klasifikasi:"Retail",
       fk:"F",
       status:"Aktif",
-      keterangan:"Data lengkap pelanggan Lusista Wijaya 2",
+      keterangan:"Data lengkap pelanggan Pelanggan Contoh 09",
       alamatKirim:"Blok M",
       noNpwp:"09.009.010.11-108.012",
       jenisHarga:"Standar",
-      namaPajak:"Lusista Wijaya 2",
+      namaPajak:"Pelanggan Contoh 09",
       kotaPajak:"JKT",
       plafon:45000000,
       plafonTemp:8000000,
@@ -538,7 +538,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 9", alamatKirim:"Jl. Kirim No. 18", kota:"JKT", telepon:"Lusista", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.009.010.11-108.012", namaNpwp:"Lusista Wijaya 2", alamat:"Blok M" },
+          { noNpwp:"09.009.010.11-108.012", namaNpwp:"Pelanggan Contoh 09", alamat:"Blok M" },
           { noNpwp:"09.013.014.000-208.000", namaNpwp:"Cabang JKT", alamat:"Blok M" }
         ],
       saldoTitipan:[
@@ -551,7 +551,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Lusiska",
+      name:"Pelanggan Contoh 10",
       code:"L0151",
       alamat:"Blok M",
       kota:"JKT",
@@ -559,7 +559,7 @@ const PJ_PELANGGAN = [
       pemilik:"Alex",
       nik:"12345",
       email:"lusiska@pdj.com",
-      kontak:"Lusiska",
+      kontak:"Pelanggan Contoh 10",
       flag:null,
       kodeSales:"SL002", namaSales:"Sales Senior",
       noKtp:"12345",
@@ -579,7 +579,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"Blok M",
       noNpwp:"09.010.011.12-109.013",
       jenisHarga:"Standar",
-      namaPajak:"Lusiska",
+      namaPajak:"Pelanggan Contoh 10",
       kotaPajak:"JKT",
       plafon:50000000,
       plafonTemp:9000000,
@@ -596,10 +596,10 @@ const PJ_PELANGGAN = [
         ],
       alamatKirimList:[
           { namaPenerima:"Alex", alamatKirim:"Blok M", kota:"JKT", telepon:"5555", keterangan:"Alamat utama" },
-          { namaPenerima:"Penerima 10", alamatKirim:"Jl. Kirim No. 19", kota:"JKT", telepon:"Lusiska", keterangan:"Cabang" }
+          { namaPenerima:"Penerima 10", alamatKirim:"Jl. Kirim No. 19", kota:"JKT", telepon:"Pelanggan Contoh 10", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.010.011.12-109.013", namaNpwp:"Lusiska", alamat:"Blok M" },
+          { noNpwp:"09.010.011.12-109.013", namaNpwp:"Pelanggan Contoh 10", alamat:"Blok M" },
           { noNpwp:"09.014.015.000-209.000", namaNpwp:"Cabang JKT", alamat:"Blok M" }
         ],
       saldoTitipan:[
@@ -612,7 +612,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Pelanggan 40000000",
+      name:"Pelanggan Contoh 11",
       code:"p12345",
       alamat:"Jl. Sudirman Kav. 10",
       kota:"JAKARTA",
@@ -640,7 +640,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"Jl. Sudirman Kav. 10",
       noNpwp:"09.011.012.13-110.014",
       jenisHarga:"Standar",
-      namaPajak:"Pelanggan 40000000",
+      namaPajak:"Pelanggan Contoh 11",
       kotaPajak:"JAKARTA",
       plafon:55000000,
       plafonTemp:10000000,
@@ -660,7 +660,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 11", alamatKirim:"Jl. Kirim No. 20", kota:"JAKARTA", telepon:"09089876655", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.011.012.13-110.014", namaNpwp:"Pelanggan 40000000", alamat:"Jl. Sudirman Kav. 10" },
+          { noNpwp:"09.011.012.13-110.014", namaNpwp:"Pelanggan Contoh 11", alamat:"Jl. Sudirman Kav. 10" },
           { noNpwp:"09.015.016.000-210.000", namaNpwp:"Cabang JAKARTA", alamat:"Jl. Sudirman Kav. 10" }
         ],
       saldoTitipan:[
@@ -673,22 +673,22 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"INDOMILK 2",
+      name:"Pelanggan Contoh 12",
       code:"P105",
       alamat:"Jl.Mutiara",
       kota:"Sampang",
       tel:"00872",
-      pemilik:"Affan Maulana Zulkamain",
+      pemilik:"Ahmad Zulkarnain",
       nik:"",
-      email:"indomilk@example.com",
+      email:"pelanggan12@contoh.co.id",
       kontak:"Kosong Bro",
       flag:null,
       kodeSales:"SL004", namaSales:"Sales Junior 2",
       noKtp:"3175000000011",
-      namaKtp:"Affan Maulana Zulkamain",
+      namaKtp:"Ahmad Zulkarnain",
       tglLahir:"1990-01-01T00:00:00",
-      owner:"Affan Maulana Zulkamain",
-      namaPemesan:"Affan Maulana Zulkamain",
+      owner:"Ahmad Zulkarnain",
+      namaPemesan:"Ahmad Zulkarnain",
       area:"Jawa Barat",
       kodeGabungan:"Gab-P105",
       golongan:"Baik",
@@ -697,11 +697,11 @@ const PJ_PELANGGAN = [
       klasifikasi:"Project",
       fk:"F",
       status:"Aktif",
-      keterangan:"Data lengkap pelanggan INDOMILK 2",
+      keterangan:"Data lengkap pelanggan Pelanggan Contoh 12",
       alamatKirim:"Jl.Mutiara",
       noNpwp:"09.012.013.14-111.015",
       jenisHarga:"Standar",
-      namaPajak:"INDOMILK 2",
+      namaPajak:"Pelanggan Contoh 12",
       kotaPajak:"Sampang",
       plafon:60000000,
       plafonTemp:11000000,
@@ -717,11 +717,11 @@ const PJ_PELANGGAN = [
           { expedisi:"JNE", alamatExpedisi:"Jl. Cargo 13", telepon:"02170111", keterangan:"Reguler" }
         ],
       alamatKirimList:[
-          { namaPenerima:"Affan Maulana Zulkamain", alamatKirim:"Jl.Mutiara", kota:"Sampang", telepon:"00872", keterangan:"Alamat utama" },
+          { namaPenerima:"Ahmad Zulkarnain", alamatKirim:"Jl.Mutiara", kota:"Sampang", telepon:"00872", keterangan:"Alamat utama" },
           { namaPenerima:"Penerima 12", alamatKirim:"Jl. Kirim No. 21", kota:"Sampang", telepon:"Kosong Bro", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.012.013.14-111.015", namaNpwp:"INDOMILK 2", alamat:"Jl.Mutiara" },
+          { noNpwp:"09.012.013.14-111.015", namaNpwp:"Pelanggan Contoh 12", alamat:"Jl.Mutiara" },
           { noNpwp:"09.016.017.000-211.000", namaNpwp:"Cabang Sampang", alamat:"Jl.Mutiara" }
         ],
       saldoTitipan:[
@@ -734,7 +734,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"PELANGGAN H",
+      name:"Pelanggan Contoh 13",
       code:"P34567",
       alamat:"JL KEDUNG BARUK NO 588S",
       kota:"SURABAYA",
@@ -762,7 +762,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"JL KEDUNG BARUK NO 588S",
       noNpwp:"09.013.014.15-112.016",
       jenisHarga:"Standar",
-      namaPajak:"PELANGGAN H",
+      namaPajak:"Pelanggan Contoh 13",
       kotaPajak:"SURABAYA",
       plafon:65000000,
       plafonTemp:12000000,
@@ -782,7 +782,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 13", alamatKirim:"Jl. Kirim No. 22", kota:"SURABAYA", telepon:"08145678967", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.013.014.15-112.016", namaNpwp:"PELANGGAN H", alamat:"JL KEDUNG BARUK NO 588S" },
+          { noNpwp:"09.013.014.15-112.016", namaNpwp:"Pelanggan Contoh 13", alamat:"JL KEDUNG BARUK NO 588S" },
           { noNpwp:"09.017.018.000-212.000", namaNpwp:"Cabang SURABAYA", alamat:"JL KEDUNG BARUK NO 588S" }
         ],
       saldoTitipan:[
@@ -795,7 +795,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"PELANGGAN I",
+      name:"Pelanggan Contoh 14",
       code:"P86432",
       alamat:"JL GRESIKAN NO 20000",
       kota:"SURABAYA",
@@ -823,7 +823,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"JL GRESIKAN NO 20000",
       noNpwp:"09.014.015.16-113.017",
       jenisHarga:"Standar",
-      namaPajak:"PELANGGAN I",
+      namaPajak:"Pelanggan Contoh 14",
       kotaPajak:"SURABAYA",
       plafon:70000000,
       plafonTemp:13000000,
@@ -843,7 +843,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 14", alamatKirim:"Jl. Kirim No. 23", kota:"SURABAYA", telepon:"08145678967", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.014.015.16-113.017", namaNpwp:"PELANGGAN I", alamat:"JL GRESIKAN NO 20000" },
+          { noNpwp:"09.014.015.16-113.017", namaNpwp:"Pelanggan Contoh 14", alamat:"JL GRESIKAN NO 20000" },
           { noNpwp:"09.018.019.000-213.000", namaNpwp:"Cabang SURABAYA", alamat:"JL GRESIKAN NO 20000" }
         ],
       saldoTitipan:[
@@ -856,7 +856,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"PELANGGAN BARU",
+      name:"Pelanggan Contoh 15",
       code:"PRB01",
       alamat:"JAI AN JAI AN NO 1234",
       kota:"SURABAYA",
@@ -884,7 +884,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"JAI AN JAI AN NO 1234",
       noNpwp:"09.015.016.17-114.018",
       jenisHarga:"Standar",
-      namaPajak:"PELANGGAN BARU",
+      namaPajak:"Pelanggan Contoh 15",
       kotaPajak:"SURABAYA",
       plafon:75000000,
       plafonTemp:14000000,
@@ -904,7 +904,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 15", alamatKirim:"Jl. Kirim No. 24", kota:"SURABAYA", telepon:"08765654321", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.015.016.17-114.018", namaNpwp:"PELANGGAN BARU", alamat:"JAI AN JAI AN NO 1234" },
+          { noNpwp:"09.015.016.17-114.018", namaNpwp:"Pelanggan Contoh 15", alamat:"JAI AN JAI AN NO 1234" },
           { noNpwp:"09.019.020.000-214.000", namaNpwp:"Cabang SURABAYA", alamat:"JAI AN JAI AN NO 1234" }
         ],
       saldoTitipan:[
@@ -917,7 +917,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Pelanggan 3",
+      name:"Pelanggan Contoh 16",
       code:"PLG03",
       alamat:"Jl.Pattimura no 123",
       kota:"malang",
@@ -945,7 +945,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"Jl.Pattimura no 123",
       noNpwp:"09.016.017.18-115.019",
       jenisHarga:"Standar",
-      namaPajak:"Pelanggan 3",
+      namaPajak:"Pelanggan Contoh 16",
       kotaPajak:"malang",
       plafon:80000000,
       plafonTemp:15000000,
@@ -965,7 +965,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 16", alamatKirim:"Jl. Kirim No. 25", kota:"malang", telepon:"08912345657", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.016.017.18-115.019", namaNpwp:"Pelanggan 3", alamat:"Jl.Pattimura no 123" },
+          { noNpwp:"09.016.017.18-115.019", namaNpwp:"Pelanggan Contoh 16", alamat:"Jl.Pattimura no 123" },
           { noNpwp:"09.020.021.000-215.000", namaNpwp:"Cabang malang", alamat:"Jl.Pattimura no 123" }
         ],
       saldoTitipan:[
@@ -978,7 +978,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Perusahaan 7",
+      name:"Pelanggan Contoh 17",
       code:"PT07",
       alamat:"jl mawar no 12345",
       kota:"Jakarta",
@@ -1006,7 +1006,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"jl mawar no 12345",
       noNpwp:"09.017.018.19-116.020",
       jenisHarga:"Standar",
-      namaPajak:"Perusahaan 7",
+      namaPajak:"Pelanggan Contoh 17",
       kotaPajak:"Jakarta",
       plafon:85000000,
       plafonTemp:16000000,
@@ -1026,7 +1026,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 17", alamatKirim:"Jl. Kirim No. 26", kota:"Jakarta", telepon:"08712345672", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.017.018.19-116.020", namaNpwp:"Perusahaan 7", alamat:"jl mawar no 12345" },
+          { noNpwp:"09.017.018.19-116.020", namaNpwp:"Pelanggan Contoh 17", alamat:"jl mawar no 12345" },
           { noNpwp:"09.021.022.000-216.000", namaNpwp:"Cabang Jakarta", alamat:"jl mawar no 12345" }
         ],
       saldoTitipan:[
@@ -1039,7 +1039,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Reynold",
+      name:"Pelanggan Contoh 18",
       code:"R003",
       alamat:"Blok M",
       kota:"JKT",
@@ -1047,7 +1047,7 @@ const PJ_PELANGGAN = [
       pemilik:"Alex",
       nik:"12345",
       email:"reynold1@pdj.com",
-      kontak:"Reynold",
+      kontak:"Pelanggan Contoh 18",
       flag:null,
       kodeSales:"SL002", namaSales:"Sales Senior",
       noKtp:"12345",
@@ -1067,7 +1067,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"Blok M",
       noNpwp:"09.018.019.20-117.021",
       jenisHarga:"Standar",
-      namaPajak:"Reynold",
+      namaPajak:"Pelanggan Contoh 18",
       kotaPajak:"JKT",
       plafon:90000000,
       plafonTemp:17000000,
@@ -1084,10 +1084,10 @@ const PJ_PELANGGAN = [
         ],
       alamatKirimList:[
           { namaPenerima:"Alex", alamatKirim:"Blok M", kota:"JKT", telepon:"5555", keterangan:"Alamat utama" },
-          { namaPenerima:"Penerima 18", alamatKirim:"Jl. Kirim No. 27", kota:"JKT", telepon:"Reynold", keterangan:"Cabang" }
+          { namaPenerima:"Penerima 18", alamatKirim:"Jl. Kirim No. 27", kota:"JKT", telepon:"Pelanggan Contoh 18", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.018.019.20-117.021", namaNpwp:"Reynold", alamat:"Blok M" },
+          { noNpwp:"09.018.019.20-117.021", namaNpwp:"Pelanggan Contoh 18", alamat:"Blok M" },
           { noNpwp:"09.022.023.000-217.000", namaNpwp:"Cabang JKT", alamat:"Blok M" }
         ],
       saldoTitipan:[
@@ -1100,7 +1100,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Reynold 2",
+      name:"Pelanggan Contoh 19",
       code:"R006",
       alamat:"Blok M",
       kota:"JKT",
@@ -1108,7 +1108,7 @@ const PJ_PELANGGAN = [
       pemilik:"Alex",
       nik:"12345",
       email:"reynold2@pdj.com",
-      kontak:"Reynold",
+      kontak:"Pelanggan Contoh 18",
       flag:null,
       kodeSales:"SL003", namaSales:"Sales Junior 1",
       noKtp:"12345",
@@ -1128,7 +1128,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"Blok M",
       noNpwp:"09.019.020.21-118.022",
       jenisHarga:"Standar",
-      namaPajak:"Reynold 2",
+      namaPajak:"Pelanggan Contoh 19",
       kotaPajak:"JKT",
       plafon:95000000,
       plafonTemp:18000000,
@@ -1145,10 +1145,10 @@ const PJ_PELANGGAN = [
         ],
       alamatKirimList:[
           { namaPenerima:"Alex", alamatKirim:"Blok M", kota:"JKT", telepon:"5555", keterangan:"Alamat utama" },
-          { namaPenerima:"Penerima 19", alamatKirim:"Jl. Kirim No. 28", kota:"JKT", telepon:"Reynold", keterangan:"Cabang" }
+          { namaPenerima:"Penerima 19", alamatKirim:"Jl. Kirim No. 28", kota:"JKT", telepon:"Pelanggan Contoh 18", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.019.020.21-118.022", namaNpwp:"Reynold", alamat:"Blok M" },
+          { noNpwp:"09.019.020.21-118.022", namaNpwp:"Pelanggan Contoh 18", alamat:"Blok M" },
           { noNpwp:"09.023.024.000-218.000", namaNpwp:"Cabang JKT", alamat:"Blok M" }
         ],
       saldoTitipan:[
@@ -1161,7 +1161,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Reynold Pratama",
+      name:"Pelanggan Contoh 20",
       code:"R009",
       alamat:"Blok M",
       kota:"JKT",
@@ -1169,7 +1169,7 @@ const PJ_PELANGGAN = [
       pemilik:"Alex",
       nik:"12345",
       email:"reynold.p@pdj.com",
-      kontak:"Reynold",
+      kontak:"Pelanggan Contoh 18",
       flag:null,
       kodeSales:"SL004", namaSales:"Sales Junior 2",
       noKtp:"12345",
@@ -1185,11 +1185,11 @@ const PJ_PELANGGAN = [
       klasifikasi:"Project",
       fk:"F",
       status:"Aktif",
-      keterangan:"Data lengkap pelanggan Reynold Pratama",
+      keterangan:"Data lengkap pelanggan Pelanggan Contoh 20",
       alamatKirim:"Blok M",
       noNpwp:"09.020.021.22-119.023",
       jenisHarga:"Standar",
-      namaPajak:"Reynold Pratama",
+      namaPajak:"Pelanggan Contoh 20",
       kotaPajak:"JKT",
       plafon:100000000,
       plafonTemp:19000000,
@@ -1206,10 +1206,10 @@ const PJ_PELANGGAN = [
         ],
       alamatKirimList:[
           { namaPenerima:"Alex", alamatKirim:"Blok M", kota:"JKT", telepon:"5555", keterangan:"Alamat utama" },
-          { namaPenerima:"Penerima 20", alamatKirim:"Jl. Kirim No. 29", kota:"JKT", telepon:"Reynold", keterangan:"Cabang" }
+          { namaPenerima:"Penerima 20", alamatKirim:"Jl. Kirim No. 29", kota:"JKT", telepon:"Pelanggan Contoh 18", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.020.021.22-119.023", namaNpwp:"Reynold Pratama", alamat:"Blok M" },
+          { noNpwp:"09.020.021.22-119.023", namaNpwp:"Pelanggan Contoh 20", alamat:"Blok M" },
           { noNpwp:"09.024.025.000-219.000", namaNpwp:"Cabang JKT", alamat:"Blok M" }
         ],
       saldoTitipan:[
@@ -1222,7 +1222,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Sari Mart",
+      name:"Pelanggan Contoh 21",
       code:"S101",
       alamat:"Jl. Kenanga 22",
       kota:"Jakarta",
@@ -1250,7 +1250,7 @@ const PJ_PELANGGAN = [
       alamatKirim:"Jl. Kenanga 22",
       noNpwp:"09.021.022.23-120.024",
       jenisHarga:"Standar",
-      namaPajak:"Sari Mart",
+      namaPajak:"Pelanggan Contoh 21",
       kotaPajak:"Jakarta",
       plafon:105000000,
       plafonTemp:20000000,
@@ -1270,7 +1270,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 21", alamatKirim:"Jl. Kirim No. 30", kota:"Jakarta", telepon:"08123456789", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.021.022.23-120.024", namaNpwp:"Sari Mart", alamat:"Jl. Kenanga 22" },
+          { noNpwp:"09.021.022.23-120.024", namaNpwp:"Pelanggan Contoh 21", alamat:"Jl. Kenanga 22" },
           { noNpwp:"09.025.026.000-220.000", namaNpwp:"Cabang Jakarta", alamat:"Jl. Kenanga 22" }
         ],
       saldoTitipan:[
@@ -1283,7 +1283,7 @@ const PJ_PELANGGAN = [
         ]
   },
   {
-      name:"Toko Jaya Abadi",
+      name:"Pelanggan Contoh 22",
       code:"T201",
       alamat:"Jl. Sudirman 45",
       kota:"Bandung",
@@ -1307,11 +1307,11 @@ const PJ_PELANGGAN = [
       klasifikasi:"Distributor",
       fk:"K",
       status:"Aktif",
-      keterangan:"Data lengkap pelanggan Toko Jaya Abadi",
+      keterangan:"Data lengkap Pelanggan Contoh 05",
       alamatKirim:"Jl. Sudirman 45",
       noNpwp:"09.022.023.24-121.025",
       jenisHarga:"Standar",
-      namaPajak:"Toko Jaya Abadi",
+      namaPajak:"Pelanggan Contoh 22",
       kotaPajak:"Bandung",
       plafon:110000000,
       plafonTemp:21000000,
@@ -1331,7 +1331,7 @@ const PJ_PELANGGAN = [
           { namaPenerima:"Penerima 22", alamatKirim:"Jl. Kirim No. 31", kota:"Bandung", telepon:"08198765432", keterangan:"Cabang" }
         ],
       npwpList:[
-          { noNpwp:"09.022.023.24-121.025", namaNpwp:"Toko Jaya Abadi", alamat:"Jl. Sudirman 45" },
+          { noNpwp:"09.022.023.24-121.025", namaNpwp:"Pelanggan Contoh 22", alamat:"Jl. Sudirman 45" },
           { noNpwp:"09.026.027.000-221.000", namaNpwp:"Cabang Bandung", alamat:"Jl. Sudirman 45" }
         ],
       saldoTitipan:[
@@ -1344,3 +1344,10 @@ const PJ_PELANGGAN = [
         ]
   }
 ];
+
+// Daftar pelanggan untuk dropdown dokumen: state Katalog Pelanggan selama modul Penjualan terbuka
+// (window.PJ_PELANGGAN_LIVE, diisi PenjualanPage), selain itu seed. aktifSaja -> sembunyikan Non-aktif.
+function pjPelanggan(aktifSaja) {
+  const list = window.PJ_PELANGGAN_LIVE || PJ_PELANGGAN;
+  return aktifSaja ? list.filter(p => p.status !== 'Non-aktif') : list;
+}

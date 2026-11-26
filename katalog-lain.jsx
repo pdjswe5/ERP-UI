@@ -2,9 +2,9 @@
 
 // ---------- Mock data ----------
 const KL_SALESMAN = [
-  { kodeSales:'SL001', namaSales:'Affan Maulana', alamatSales:'Surabaya', telpon:'081234500001', email:'affan@pdj.co.id', targetSales:50000000, keterangan:'', aktif:true },
-  { kodeSales:'SL002', namaSales:'Bobby Santoso', alamatSales:'Surabaya', telpon:'081234500002', email:'bobby@pdj.co.id', targetSales:35000000, keterangan:'', aktif:true },
-  { kodeSales:'SL003', namaSales:'Charlie Reynold', alamatSales:'Sidoarjo', telpon:'081234500003', email:'charlie@pdj.co.id', targetSales:40000000, keterangan:'', aktif:true },
+  { kodeSales:'SL001', namaSales:'Andi Pratama', alamatSales:'Surabaya', telpon:'081234500001', email:'andi@pdj.co.id', targetSales:50000000, keterangan:'', aktif:true },
+  { kodeSales:'SL002', namaSales:'Bima Saputra', alamatSales:'Surabaya', telpon:'081234500002', email:'bima@pdj.co.id', targetSales:35000000, keterangan:'', aktif:true },
+  { kodeSales:'SL003', namaSales:'Citra Lestari', alamatSales:'Sidoarjo', telpon:'081234500003', email:'citra@pdj.co.id', targetSales:40000000, keterangan:'', aktif:true },
   { kodeSales:'SL004', namaSales:'Dewi Kartika', alamatSales:'Gresik', telpon:'081234500004', email:'dewi@pdj.co.id', targetSales:25000000, keterangan:'', aktif:false },
   { kodeSales:'SL005', namaSales:'Kevin Sales Baru', alamatSales:'', telpon:'', email:'', targetSales:0, keterangan:'', aktif:false },
 ];
@@ -69,11 +69,11 @@ const KL_AREA = [
 ];
 
 const KL_BRAND = [
-  { kodeBrand:'BR01', brand:'Solite', aktif:true },
-  { kodeBrand:'BR02', brand:'Alderon', aktif:true },
-  { kodeBrand:'BR03', brand:'Superroof', aktif:true },
-  { kodeBrand:'BR04', brand:'Onduline', aktif:true },
-  { kodeBrand:'BR05', brand:'Multiroof', aktif:false },
+  { kodeBrand:'BR01', brand:'Merek Atap A', aktif:true },
+  { kodeBrand:'BR02', brand:'Merek Atap B', aktif:true },
+  { kodeBrand:'BR03', brand:'Merek Atap C', aktif:true },
+  { kodeBrand:'BR04', brand:'Merek Atap D', aktif:true },
+  { kodeBrand:'BR05', brand:'Merek Atap E', aktif:false },
 ];
 
 // Sengaja tanpa kolom Kode terpisah (sesuai spesifikasi user) — `id` internal dipakai sbg keyField
@@ -131,10 +131,10 @@ const KL_TIPE = [
 ];
 
 const KL_MERK = [
-  { kodeMerk:'MK01', keterangan:'Solite', kelompok:'KW03', aktif:true },
-  { kodeMerk:'MK02', keterangan:'Alderon', kelompok:'KW02', aktif:true },
-  { kodeMerk:'MK03', keterangan:'Superroof', kelompok:'KW01', aktif:true },
-  { kodeMerk:'MK04', keterangan:'Onduline', kelompok:'KW03', aktif:false },
+  { kodeMerk:'MK01', keterangan:'Merek Atap A', kelompok:'KW03', aktif:true },
+  { kodeMerk:'MK02', keterangan:'Merek Atap B', kelompok:'KW02', aktif:true },
+  { kodeMerk:'MK03', keterangan:'Merek Atap C', kelompok:'KW01', aktif:true },
+  { kodeMerk:'MK04', keterangan:'Merek Atap D', kelompok:'KW03', aktif:false },
 ];
 
 const KL_BERAT = [
@@ -186,7 +186,7 @@ const KL_USER = [
 
 const ACTIVITY_LOG_KATALOG_LAIN = [
   { user:'pdjsw', action:'Melakukan Login:', detail:'Sistem Utama', time:'1 menit yang lalu', color:'var(--realisasi)' },
-  { user:'admin', action:'Mengubah Data Pemasok:', detail:'PT. Sinar Jaya', time:'22 menit yang lalu', color:'#f59e0b' },
+  { user:'admin', action:'Mengubah Data Pemasok:', detail:'PT. Pemasok Contoh E', time:'22 menit yang lalu', color:'#f59e0b' },
   { user:'operator_1', action:'Membuat Nota Penjualan:', detail:'INV-2026-4718', time:'1 jam yang lalu', color:'var(--realisasi)' },
   { user:'system', action:'Sinkronisasi Database:', detail:'Server Cloud Utama', time:'3 jam yang lalu', color:'var(--accent)' },
   { user:'admin', action:'Menghapus Batch Produksi:', detail:'PRD-2026-B4', time:'5 jam yang lalu', color:'var(--danger)' },
@@ -225,8 +225,22 @@ function KLPillTabs({ tabs, active, onSelect }) {
   );
 }
 
-function KLGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave }) {
+function KLGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave, keyField, rows }) {
   const isEdit = !!data;
+  const [err, setErr] = React.useState('');
+  useEscape(onClose);
+  // Validasi: field wajib terisi, kode unik saat tambah (kode dikunci saat edit agar tidak membuat baris ganda).
+  const trySave = () => {
+    for (const f of fields) {
+      if (!f.required) continue;
+      const v = form[f.key];
+      if (v === undefined || v === null || String(v).trim() === '') { setErr(`${f.label} wajib diisi.`); return; }
+    }
+    if (!isEdit && keyField && (rows || []).some(r => String(r[keyField]).trim().toLowerCase() === String(form[keyField] ?? '').trim().toLowerCase())) {
+      setErr(`Kode "${form[keyField]}" sudah dipakai.`); return;
+    }
+    onSave(form);
+  };
   const empty = Object.fromEntries(fields.map(f => [f.key, f.type === 'aktif' ? true : f.type === 'number' ? 0 : '']));
   const [form, setForm] = React.useState(data ? {...empty, ...data} : empty);
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
@@ -238,6 +252,7 @@ function KLGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave
           <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
         </div>
         <div className="modal-body">
+          {err && <div className="danger-form" style={{marginBottom:12}}>{err}</div>}
           <div className={`form-grid-${formCols}`} style={{gap:12}}>
             {fields.map(f => {
               const spanStyle = f.span ? {gridColumn:`span ${f.span}`} : {};
@@ -276,8 +291,8 @@ function KLGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave
                   <label>{f.label}{f.required && <span style={{color:'var(--danger)'}}> *</span>}</label>
                   <input
                     className={`input ${f.mono ? 'mono' : ''}`}
-                    type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : f.type === 'email' ? 'email' : 'text'}
-                    disabled={f.disabled}
+                    type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : f.type === 'email' ? 'email' : f.type === 'password' ? 'password' : 'text'}
+                    disabled={f.disabled || (isEdit && f.key === keyField)}
                     value={form[f.key]}
                     onChange={e=>set(f.key, f.type === 'number' ? +e.target.value : e.target.value)}
                   />
@@ -290,7 +305,7 @@ function KLGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave
           <div className="muted" style={{fontSize:12.5}}><kbd>Esc</kbd> untuk batal</div>
           <div className="right" style={{display:'flex', gap:8, flexWrap:'wrap'}}>
             <button className="btn" onClick={onClose}>Batal</button>
-            <button className="btn btn-primary" onClick={()=>onSave(form)}>{I.check()} Simpan</button>
+            <button className="btn btn-primary" onClick={trySave}>{I.check()} Simpan</button>
           </div>
         </div>
       </div>
@@ -309,7 +324,15 @@ function KLSimpleCatalog({ moduleTitle, addLabel='Tambah Data', initialRows, key
   const filtered = rows.filter(r => !q || listColumns.some(c => String(r[c.key] ?? '').toLowerCase().includes(q.toLowerCase())));
   const openAdd = () => { setModal(null); setShowModal(1); };
   const openEdit = (r) => { setModal(r); setShowModal(2); };
-  const save = (form) => {
+  const save = (input) => {
+    let form = input;
+    // Kode tidak ada di form (mis. No. Aktiva) → lanjutkan pola nomor terakhir, supaya key baris unik.
+    if (showModal !== 2 && !String(form[keyField] ?? '').trim()) {
+      const last = String(rows[rows.length - 1]?.[keyField] ?? 'NO-0');
+      const m = last.match(/^(.*?)(\d+)$/) || [null, last + '-', '0'];
+      const max = rows.reduce((mx, r) => { const k = String(r[keyField] ?? ''); return k.startsWith(m[1]) ? Math.max(mx, parseInt(k.slice(m[1].length), 10) || 0) : mx; }, 0);
+      form = { ...form, [keyField]: m[1] + String(max + 1).padStart(m[2].length, '0') };
+    }
     setRows(prev => showModal === 2 ? prev.map(r => r[keyField] === modal[keyField] ? form : r) : [...prev, form]);
     window.__erpToast && window.__erpToast(`${moduleTitle} berhasil disimpan.`);
     setShowModal(false); setModal(null);
@@ -347,7 +370,7 @@ function KLSimpleCatalog({ moduleTitle, addLabel='Tambah Data', initialRows, key
         </div>
         <div className="pager"><div>Menampilkan <b>1</b>–<b>{filtered.length}</b> dari <b>{filtered.length}</b></div></div>
       </div>
-      {showModal && <KLGenericModal moduleTitle={moduleTitle} data={modal} fields={fields} formCols={formCols} onClose={()=>setShowModal(false)} onSave={save} />}
+      {showModal && <KLGenericModal moduleTitle={moduleTitle} data={modal} fields={fields} formCols={formCols} keyField={keyField} rows={rows} onClose={()=>setShowModal(false)} onSave={save} />}
       {pendingDelete && (
         <ConfirmationModal
           title="Hapus Data?" message={`Data "${pendingDelete[keyField]}" akan dihapus permanen dari ${moduleTitle}.`}
@@ -440,6 +463,7 @@ function KLSatuanBarangPage() {
         { key:'aktif', label:'Status', render:v => klAktifPill(v) },
       ]}
       fields={[
+        { key:'kodeSatuan', label:'Kode Satuan', required:true, mono:true },
         { key:'namaSatuan', label:'Nama Satuan', required:true },
         { key:'keterangan', label:'Keterangan', type:'textarea', span:2 },
         { key:'aktif', type:'aktif' },
@@ -806,7 +830,7 @@ function KLUserPage() {
         { key:'kodeUser', label:'Kode User', required:true, mono:true },
         { key:'namaUser', label:'Nama User', required:true },
         { key:'grupUser', label:'Grup User', type:'select', required:true, options:()=>KL_GRUPUSER.map(g=>({value:g.kodeGrup, label:g.namaGrup})) },
-        { key:'password', label:'Password', mono:true },
+        { key:'password', label:'Password', mono:true, type:'password' },
         { key:'email', label:'Email', type:'email' },
         { key:'keterangan', label:'Keterangan', type:'textarea', span:2 },
         { key:'aktif', type:'aktif' },

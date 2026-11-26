@@ -58,6 +58,7 @@ function PrSlipGajiBody({ slip, orgInfo, periode }) {
 }
 
 function PrCetakSlipGaji({ batch, onClose }) {
+  useEscape(onClose);
   const orgInfo = (typeof PG_ORGANISASI !== 'undefined' && PG_ORGANISASI) || { nama:'PT. Pacific Data Jaya', alamat:'', kota:'', kodePos:'' };
   const [selected, setSelected] = React.useState(() => new Set(batch.slips.map(s => s.noInduk)));
   const [zoom, setZoom] = React.useState(100);
@@ -73,7 +74,7 @@ function PrCetakSlipGaji({ batch, onClose }) {
   const selectedSlips = batch.slips.filter(s => selected.has(s.noInduk));
 
   const doCetak = () => {
-    window.__erpToast && window.__erpToast(`Cetak dikirim ke printer (${selectedSlips.length} slip).`);
+    erpPrint();
     onClose();
   };
 
@@ -109,6 +110,7 @@ function PrCetakSlipGaji({ batch, onClose }) {
           <div className="cetak-preview-pane">
             <div className="cetak-toolbar">
               <span className="cetak-pageof">{selectedSlips.length} slip</span>
+              <ErpPaperSelect />
               <div style={{display:'flex', gap:4, alignItems:'center'}}>
                 <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.max(50,z-10))}>−</button>
                 <span className="cetak-pageof">{zoom}%</span>
@@ -137,3 +139,72 @@ function PrCetakSlipGaji({ batch, onClose }) {
     </div>
   );
 }
+
+// Cetak rekap tabel Payroll (Rekap Absensi, Register Gaji) — kerangka modal sama dengan Slip Gaji,
+// isi halaman memakai LapCetakPage (kop PT. Pacific Data Jaya + paginasi + timestamp) dari modul Laporan.
+function PrCetakRekapModal({ title, sub, docTitle, metaRight, infoLines, columns, rows, groupBy, footerRow, onClose }) {
+  useEscape(onClose);
+  const [zoom, setZoom] = React.useState(100);
+  return (
+    <div className="modal-backdrop">
+      <div className="modal cetak-modal" style={{maxWidth:1400, maxHeight:'92vh'}} onClick={e=>e.stopPropagation()}>
+        <div className="modal-head">
+          <div><h2>{title}</h2><div className="sub">{sub}</div></div>
+          <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
+        </div>
+        <div className="cetak-preview-pane" style={{flex:1, minHeight:0}}>
+          <div className="cetak-toolbar">
+            <span className="cetak-pageof">{rows.length || (groupBy || []).reduce((s,g)=>s+g.rows.length,0)} baris</span>
+            <ErpPaperSelect />
+            <div style={{display:'flex', gap:4, alignItems:'center'}}>
+              <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.max(50,z-10))}>−</button>
+              <span className="cetak-pageof">{zoom}%</span>
+              <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.min(150,z+10))}>+</button>
+            </div>
+          </div>
+          <div className="cetak-canvas cetak-canvas-scroll" style={{zoom: zoom/100}}>
+            <LapCetakPage docTitle={docTitle} metaRight={metaRight} infoLines={infoLines} columns={columns}
+              rows={rows} groupBy={groupBy} footerRow={footerRow} />
+          </div>
+        </div>
+        <div className="modal-foot">
+          <div className="muted" style={{fontSize:12.5}}><kbd>Esc</kbd> untuk tutup</div>
+          <div className="right" style={{display:'flex', gap:8}}>
+            <button className="btn" onClick={onClose}>Tutup</button>
+            <button className="btn btn-primary" onClick={()=>erpPrint()}>{I.print()} Cetak</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Register Gaji 1 batch penggajian: dikelompokkan per Bagian + subtotal, ditutup grand total.
+const PR_REGISTER_COLS = [
+  { key:'no', label:'No.', align:'right', width:'5%' }, { key:'noInduk', label:'No. Induk', width:'15%' }, { key:'nama', label:'Nama', width:'26%' },
+  { key:'pendapatan', label:'Total Pendapatan', align:'right', width:'18%' }, { key:'potongan', label:'Total Potongan', align:'right', width:'18%' },
+  { key:'terima', label:'Total Terima', align:'right', width:'18%' },
+];
+function PrCetakRegisterGaji({ batch, judul, onClose }) {
+  const byBagian = {};
+  batch.slips.forEach(s => { (byBagian[s.kodeBagian || '-'] = byBagian[s.kodeBagian || '-'] || []).push(s); });
+  const sum = (list, k) => list.reduce((t, s) => t + (+s[k] || 0), 0);
+  let no = 0;
+  const groupBy = Object.keys(byBagian).sort().map(kb => {
+    const list = byBagian[kb];
+    return {
+      label: `${kb} - ${PR_BAGIAN.find(b => b.kode === kb)?.nama || 'Tanpa Bagian'}`,
+      rows: list.map(s => ({ no: ++no, noInduk: s.noInduk, nama: s.nama, pendapatan: fmtRp(s.total), potongan: fmtRp(s.totalPotongan), terima: fmtRp(s.totalTerima) })),
+      footerRow: { nama: 'Sub Total', pendapatan: fmtRp(sum(list,'total')), potongan: fmtRp(sum(list,'totalPotongan')), terima: fmtRp(sum(list,'totalTerima')) },
+    };
+  });
+  const all = batch.slips;
+  return (
+    <PrCetakRekapModal title={`Cetak Register ${judul}`} sub={`Periode ${batch.periode}`} docTitle={`REGISTER ${judul.toUpperCase()}`}
+      metaRight={`Periode ${batch.periode}`} columns={PR_REGISTER_COLS} rows={[]} groupBy={groupBy}
+      footerRow={{ nama: 'GRAND TOTAL', pendapatan: fmtRp(sum(all,'total')), potongan: fmtRp(sum(all,'totalPotongan')), terima: fmtRp(sum(all,'totalTerima')) }}
+      onClose={onClose} />
+  );
+}
+window.PrCetakRekapModal = PrCetakRekapModal;
+window.PrCetakRegisterGaji = PrCetakRegisterGaji;

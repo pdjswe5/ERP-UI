@@ -15,5 +15,5 @@ function pbLineTotal(r) {
   const d1 = +r.DiscPros_Det || +r.Disc1 || 0;
   const d2 = +r.Disc2 || 0;
   const dRp = +r.DiscNilai_Det || +r.DiscRp || 0;
-  return jml * hrg * (1 - d1/100) * (1 - d2/100) - dRp;
+  return Math.max(0, jml * hrg * (1 - d1/100) * (1 - d2/100) - dRp);
 }

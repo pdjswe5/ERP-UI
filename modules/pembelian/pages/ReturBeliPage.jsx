@@ -1,6 +1,6 @@
 // Pembelian — halaman Retur Beli
 
-function ReturBeliPage({ rows, setRows }) {
+function ReturBeliPage({ rows, setRows, source }) {
   const columns = [
     { key:'No_Bukti', label:'No. Bukti', mono:true },
     { key:'Tgl_Bukti', label:'Tgl. Bukti' },
@@ -16,6 +16,7 @@ function ReturBeliPage({ rows, setRows }) {
   const [modalMode, setModalMode] = React.useState(null);
   const [confirmCancel, setConfirmCancel] = React.useState(null);
   const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow] = React.useState(null);
 
   const openAdd = () => { setModal(null); setModalMode(null); setShow(true); };
   const openView = (r) => { setModal(r); setModalMode('VIEW'); setShow(true); };
@@ -38,6 +39,7 @@ function ReturBeliPage({ rows, setRows }) {
 
   const cancelFromList = (reason) => {
     const updated = { ...confirmCancel, Batal:true, Alasan_Batal: reason || 'Dibatalkan oleh operator' };
+    if (source && source.onRealisasi && !erpIsLocked(confirmCancel)) source.onRealisasi(confirmCancel.Details, -1);
     setRows(prev => prev.map(r => r.No_Bukti===updated.No_Bukti ? updated : r));
     window.__erpToast && window.__erpToast('Retur Beli dibatalkan.');
     setConfirmCancel(null);
@@ -66,13 +68,16 @@ function ReturBeliPage({ rows, setRows }) {
         onView={openView}
         onEdit={openEdit}
         onCancelDoc={(r)=>setConfirmCancel(r)}
-        onCetak={()=>setShowCetak(true)}
+        onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
+        onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}}
         addLabel="Retur Baru"
         statusFilter={statusFilter}
       />
-      {showCetak && <PbCetakModal docLabel="Retur Beli" rows={rows} statusFilter={statusFilter} onClose={()=>setShowCetak(false)} />}
+      {showCetak && <PbCetakModal docLabel="Retur Beli" rows={rows} statusFilter={statusFilter} getGroupLabel={r=>r.Nama_Supp || pbSuppNama(r.Kode_Supp)} initialSelected={cetakRow ? [cetakRow.No_Bukti] : null} onClose={()=>{setShowCetak(false); setCetakRow(null);}} />}
       {show && (
         <PbModalShell
+          rows={rows}
+          source={source}
           title="Retur Beli"
           data={modal}
           tabs={returBeliModalTabs()}

@@ -10,7 +10,7 @@ function prAktifPill(aktif) { return <span className={`pill ${aktif ? 'approved'
 // Dipakai lintas halaman (Absensi, Produksi Harian, Penggajian) — ditaruh di sini (bukan di salah
 // satu halaman) supaya tidak bergantung urutan <script> antar halaman yang saling butuh helper ini.
 function prKaryawanLabel(noInduk) {
-  const k = PR_KARYAWAN.find(x => x.noInduk === noInduk);
+  const k = prKaryawan().find(x => x.noInduk === noInduk);
   return k ? `${k.noInduk} - ${k.nama}` : noInduk;
 }
 
@@ -46,6 +46,13 @@ function PrGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave
   const empty = Object.fromEntries(fields.map(f => [f.key, f.type === 'aktif' ? true : f.type === 'number' ? 0 : '']));
   const [form, setForm] = React.useState(data ? {...empty, ...data} : empty);
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
+  const [err, setErr] = React.useState('');
+  useEscape(onClose);
+  const trySave = () => {
+    const miss = fields.find(f => f.required && String(form[f.key] ?? '').trim() === '');
+    if (miss) { setErr(`${miss.label} wajib diisi.`); return; }
+    onSave(form);
+  };
   return (
     <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:720}}>
@@ -106,7 +113,8 @@ function PrGenericModal({ moduleTitle, data, fields, formCols=2, onClose, onSave
           <div className="muted" style={{fontSize:12.5}}><kbd>Esc</kbd> untuk batal</div>
           <div className="right" style={{display:'flex', gap:8}}>
             <button className="btn" onClick={onClose}>Batal</button>
-            <button className="btn btn-primary" onClick={()=>onSave(form)}>{I.check()} Simpan</button>
+            {err && <span className="danger-form">{err}</span>}
+            <button className="btn btn-primary" onClick={trySave}>{I.check()} Simpan</button>
           </div>
         </div>
       </div>

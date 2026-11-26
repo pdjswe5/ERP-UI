@@ -52,11 +52,11 @@ function BrandMark({ size = 32, color = '#fff' }) {
 
 // ---------- Notification data ----------
 const NOTIFS_DATA = [
-  { id:1, type:'approval', title:'Perlu Persetujuan',    msg:'PO-2026-0631 dari CV Bengkel Sentosa menunggu approval',   time:'14:22',          read:false },
+  { id:1, type:'approval', title:'Perlu Persetujuan',    msg:'PO-2026-0631 dari PT. Pemasok Contoh F menunggu approval',   time:'14:22',          read:false },
   { id:2, type:'info',     title:'Stock Opname Selesai', msg:'SO26040002 di Gudang Utama telah selesai',                 time:'13:08',          read:false },
   { id:3, type:'warning',  title:'Stok Kritis',          msg:'4 item barang berada di bawah minimum stock',             time:'11:45',          read:false },
   { id:4, type:'approval', title:'Perlu Verifikasi',     msg:'Kas Masuk KM-2026-0412 perlu verifikasi oleh manager',    time:'09:30',          read:true  },
-  { id:5, type:'info',     title:'PO Direalisasi',       msg:'PO-2026-0625 dari PT Indo Ban Prima sudah 100% diterima', time:'Kemarin · 17:30',read:true  },
+  { id:5, type:'info',     title:'PO Direalisasi',       msg:'PO-2026-0625 dari PT. Pemasok Contoh G sudah 100% diterima', time:'Kemarin · 17:30',read:true  },
   { id:6, type:'warning',  title:'Jatuh Tempo',          msg:'3 hutang supplier jatuh tempo dalam 3 hari',              time:'Kemarin · 09:12',read:true  },
 ];
 
@@ -329,7 +329,7 @@ const MODULE_SUBS = {
   home:      [],
   pembelian: [{ id:'pemasok', label:'Katalog Pemasok' }, { id:'pr', label:'Purchase Request' },
               { id:'rfq', label:'Request for Quotation' }, { id:'quotation', label:'Quotation' },
-              { id:'gr', label:'Goods Receive' }, { id:'po', label:'Purchase Order' },
+              { id:'po', label:'Purchase Order' }, { id:'gr', label:'Goods Receive' },
               { id:'beli', label:'Nota Pembelian' }, { id:'retur', label:'Retur Beli' }],
   sales:     [{ id:'katalog', label:'Katalog Pelanggan' }, { id:'konfirmasi', label:'Confirmation Order' },
                { id:'salesorder', label:'Sales Order' }, { id:'delivery', label:'Delivery Order' },
@@ -353,14 +353,11 @@ const MODULE_SUBS = {
     { id:'bbrekap', label:'Buku Besar (Rekap Total)' },
     // Cash & Bank
     { id:'kbg', label:'Kas, Bank & Giro' },
-    { id:'km',  label:'Kas Masuk' },
-    { id:'kk',  label:'Kas Keluar' },
-    { id:'bm',  label:'Bank Masuk' },
-    { id:'bk',  label:'Bank Keluar' },
-    { id:'tm',  label:'Transfer Masuk' },
-    { id:'tk',  label:'Transfer Keluar' },
-    { id:'gm',  label:'Giro Masuk' },
-    { id:'gk',  label:'Giro Keluar' },
+    // Masuk & Keluar digabung per menu (Debet/Kredit dalam satu daftar).
+    { id:'kas',      label:'Transaksi Kas' },
+    { id:'bank',     label:'Transaksi Bank' },
+    { id:'transfer', label:'Transfer Kas/Bank' },
+    { id:'giro',     label:'Transaksi Giro' },
     { id:'pp',  label:'Pelunasan Piutang' },
     { id:'ph',  label:'Pelunasan Hutang' },
   ],
@@ -613,7 +610,7 @@ function ModuleDashboard({ title, subtitle, sections, activityLog, onOpenSub, ac
   return (
     <div className="page" data-screen-label={title}>
       <div className="crumbs">
-        <a onClick={() => onOpenSub?.(null)} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
+        <a onClick={() => window.__erpGoHome ? window.__erpGoHome() : onOpenSub?.(null)} style={{cursor:'pointer'}}>Home</a><span className="sep">/</span>
         <span className="current">{title}</span>
       </div>
       <div className="page-head">
@@ -699,6 +696,7 @@ function Toast({ msg, kind = 'success' }) {
 
 // ---------- Confirmation Modal (Batalkan / Selesaikan Manual / dll) ----------
 function ConfirmationModal({ title, message, onConfirm, onCancel, confirmLabel='Konfirmasi', cancelLabel='Batal', confirmKind='danger', requireReason=true, zIndex=110 }) {
+  useEscape(onCancel);
   const [reason, setReason] = React.useState('');
   const canConfirm = !requireReason || reason.trim();
   return (
@@ -722,6 +720,7 @@ function ConfirmationModal({ title, message, onConfirm, onCancel, confirmLabel='
 
 // ---------- Item Picker Modal ----------
 function ItemPickerModal({ title, items, onConfirm, onCancel }) {
+  useEscape(onCancel);
   const [q, setQ] = React.useState('');
   const [selected, setSelected] = React.useState({});
   const [qtyMap, setQtyMap] = React.useState({});
@@ -828,6 +827,7 @@ function ScrollNavModal({
   showSelesai,
   xwide,
 }) {
+  useEscape(onClose);
   const bodyRef = React.useRef(null);
   const sectionRefs = React.useRef({});
   const [activeSection, setActiveSection] = React.useState(sections[0]?.id);
@@ -938,4 +938,209 @@ function ScrollNavModal({
   );
 }
 
-Object.assign(window, { I, BrandMark, TopBar, ModuleNav, MODULES, Toast, MultiTabNav, MODULE_SUBS, GROUP_COLORS, ModuleDashboard, ConfirmationModal, ItemPickerModal, ScrollNavModal });
+// Ukuran kertas cetak (dipilih dari toolbar tiap cetakan lewat ErpPaperSelect, berlaku untuk semua
+// cetakan sampai halaman di-refresh). Ukuran dalam mm, potret; dokumen landscape memutar kertasnya.
+const ERP_PAPER_SIZES = {
+  A4: { label:'A4 (210×297)', w:210, h:297 },
+  F4: { label:'F4 / Folio (215×330)', w:215, h:330 },
+  Letter: { label:'Letter (216×279)', w:216, h:279 },
+  Legal: { label:'Legal (216×356)', w:216, h:356 },
+  A5: { label:'A5 (148×210)', w:148, h:210 },
+};
+window.ERP_PAPER = window.ERP_PAPER || 'A4';
+function ErpPaperSelect() {
+  const [v, setV] = React.useState(window.ERP_PAPER);
+  return (
+    <label style={{display:'flex', alignItems:'center', gap:6, fontSize:12.5, color:'var(--text-3)'}}>
+      Kertas
+      <select className="select" style={{height:28, padding:'0 8px', fontSize:12.5, width:'auto'}} value={v}
+        onChange={e => { window.ERP_PAPER = e.target.value; setV(e.target.value); }}>
+        {Object.entries(ERP_PAPER_SIZES).map(([k, o]) => <option key={k} value={k}>{o.label}</option>)}
+      </select>
+    </label>
+  );
+}
+
+// Cetak sungguhan: salin semua .cetak-page dari pratinjau cetak yang paling atas (modal terbaru atau
+// halaman laporan) ke #print-root, lalu window.print(). CSS @media print (styles.css) hanya
+// menampilkan #print-root, jadi yang tercetak cuma dokumennya — bukan menu, filter, atau tombol.
+// Tiap halaman diskalakan (CSS zoom) supaya pas di kertas pilihan ERP_PAPER tanpa terpotong.
+function erpPrint(sourceEl) {
+  const canvases = document.querySelectorAll('.cetak-canvas');
+  const src = sourceEl || canvases[canvases.length - 1];
+  const pages = src ? src.querySelectorAll('.cetak-page') : [];
+  if (!pages.length) { window.__erpToast && window.__erpToast('Tidak ada dokumen untuk dicetak.'); return; }
+  let root = document.getElementById('print-root');
+  if (!root) { root = document.createElement('div'); root.id = 'print-root'; document.body.appendChild(root); }
+  root.innerHTML = '';
+  const paper = ERP_PAPER_SIZES[window.ERP_PAPER] || ERP_PAPER_SIZES.A4;
+  const MM = 96 / 25.4;
+  pages.forEach(p => {
+    const land = p.classList.contains('cetak-page-landscape');
+    const pw = (land ? paper.h : paper.w) * MM, ph = (land ? paper.w : paper.h) * MM;
+    const clone = p.cloneNode(true);
+    const w = p.offsetWidth, h = p.offsetHeight;
+    clone.style.zoom = Math.min(pw / w, ph / h, 2).toFixed(4);
+    root.appendChild(clone);
+  });
+  let st = document.getElementById('erp-page-style');
+  if (!st) { st = document.createElement('style'); st.id = 'erp-page-style'; document.head.appendChild(st); }
+  st.textContent = `@page { size: ${paper.w}mm ${paper.h}mm; margin: 0; } @page land { size: ${paper.h}mm ${paper.w}mm; margin: 0; }`;
+  const cleanup = () => { root.innerHTML = ''; window.removeEventListener('afterprint', cleanup); };
+  window.addEventListener('afterprint', cleanup);
+  window.print();
+}
+
+// ── Helper bersama dokumen transaksi ────────────────────────────────────────────────────────
+// Tanggal lokal (bukan toISOString yang bergeser ke UTC → mundur 1 hari di WIB).
+function todayLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+// Nomor bukti berurutan: <F/K><PREFIX><YY><MM><seq 4 digit>, seq = max nomor yang sudah ada + 1
+// untuk kombinasi awalan+bulan yang sama — tidak acak, jadi tidak bisa bentrok/menimpa dokumen lain.
+// `tgl` boleh ISO (yyyy-mm-dd) atau DD-MM-YYYY; kosong = hari ini.
+function erpNextDocNo(fk, prefix, tgl, rows, key) {
+  let iso = tgl || todayLocal();
+  if (/^\d{2}-\d{2}-\d{4}$/.test(iso)) { const [d, m, y] = iso.split('-'); iso = `${y}-${m}-${d}`; }
+  const head = `${fk || ''}${prefix}${iso.slice(2,4)}${iso.slice(5,7)}`;
+  const k = key || 'No_Bukti';
+  const max = (rows || []).reduce((mx, r) => {
+    const no = String((r && r[k]) || '');
+    if (!no.startsWith(head)) return mx;
+    const n = parseInt(no.slice(head.length), 10);
+    return isNaN(n) ? mx : Math.max(mx, n);
+  }, 0);
+  return head + String(max + 1).padStart(4, '0');
+}
+// Tanggal campuran DD-MM-YYYY (seed) / ISO (data baru) → ISO.
+function erpAnyToIso(v) {
+  if (!v) return '';
+  const s = String(v).slice(0, 10);
+  if (/^\d{2}-\d{2}-\d{4}$/.test(s)) { const [d, m, y] = s.split('-'); return `${y}-${m}-${d}`; }
+  return s;
+}
+// Ringkasan diskon header + PPN (Exclude: PPN ditambahkan; Include: harga sudah termasuk PPN).
+function erpCalcTotals(subtotal, discPct, discRp, ppn, ppnMode) {
+  const discAmt = subtotal * ((+discPct || 0) / 100) + (+discRp || 0);
+  const net = Math.max(0, subtotal - discAmt);
+  const p = (+ppn || 0) / 100;
+  const dpp = ppnMode === 'Include' ? net / (1 + p) : net;
+  const ppnAmt = ppnMode === 'Include' ? net - dpp : dpp * p;
+  return { discAmt, dpp, ppnAmt, total: dpp + ppnAmt };
+}
+// Validasi form dokumen (dipakai PbModalShell/PjModalShell): field `required` kosong, minimal 1
+// item, qty > 0, harga ≥ 0, diskon 0-100. Kembalikan pesan error pertama atau ''.
+function erpValidateDoc(form, tabs, opts) {
+  const o = opts || {};
+  for (const t of tabs) {
+    if (t.type !== 'fields') continue;
+    for (const f of t.fields) {
+      if (!f.required || f.readOnly || f.key === 'No_Bukti') continue;
+      if (f.disabledIf && f.disabledIf(form)) continue;
+      const v = form[f.key];
+      if (v === undefined || v === null || String(v).trim() === '') return `${f.label} wajib diisi.`;
+    }
+  }
+  const itemTabs = tabs.filter(t => t.type === 'items' && !t.optional);
+  for (const t of itemTabs) {
+    const rows = (form[t.itemsKey] || []).filter(r => !r._deleted);
+    if (t === itemTabs[0] && rows.length === 0) return `${t.label}: minimal 1 baris item.`;
+    for (const r of rows) {
+      const nama = r.Nama_Item || r.Nama_Brg || r.Kode_Item || r.Kode_Brg || 'item';
+      const qty = r.Jumlah ?? r.Qty;
+      if (qty !== undefined && !(+qty > 0)) return `${t.label}: qty "${nama}" harus lebih dari 0.`;
+      const hrg = r.Hrg_Sat ?? r.Harga;
+      if (hrg !== undefined && +hrg < 0) return `${t.label}: harga "${nama}" tidak boleh negatif.`;
+      for (const dk of ['DiscPros_Det', 'Disc1', 'Disc2']) if (r[dk] !== undefined && (+r[dk] < 0 || +r[dk] > 100)) return `${t.label}: diskon "${nama}" harus 0-100%.`;
+    }
+  }
+  if (o.discPct !== undefined && (+o.discPct < 0 || +o.discPct > 100)) return 'Diskon header harus 0-100%.';
+  return '';
+}
+// Seed memakai nama field DiscPros_Head/DiscNilai_Head/PPN_Include; modal memakai discPct/discRp/ppnMode.
+function erpMapSeedTotals(d) {
+  if (!d) return {};
+  const inc = d.PPN_Include ?? d.Ppn_Include;
+  const out = {};
+  if (d.DiscPros_Head !== undefined) out.discPct = +d.DiscPros_Head || 0;
+  if (d.DiscNilai_Head !== undefined || d.Disc_Rp !== undefined) out.discRp = +(d.DiscNilai_Head ?? d.Disc_Rp) || 0;
+  if (inc !== undefined) out.ppnMode = (inc === true || inc === 1 || inc === 'Y' || inc === 'Include') ? 'Include' : 'Exclude';
+  return out;
+}
+// Judul cetak per jenis dokumen (dulu semua dokumen tercetak "INVOICE").
+const ERP_DOC_TITLE = {
+  'Permintaan Pembelian':'PERMINTAAN PEMBELIAN', 'Request for Quotation':'PERMINTAAN PENAWARAN', 'Quotation':'PENAWARAN HARGA',
+  'Purchase Order':'PURCHASE ORDER', 'Goods Receive':'TANDA TERIMA BARANG', 'Nota Pembelian':'NOTA PEMBELIAN', 'Retur Beli':'RETUR PEMBELIAN',
+  'Confirmation Order':'KONFIRMASI ORDER', 'Sales Order':'SALES ORDER', 'Delivery Order':'SURAT JALAN', 'Invoice':'FAKTUR PENJUALAN', 'Sales Return':'RETUR PENJUALAN',
+};
+function erpDocTitle(docLabel) { return ERP_DOC_TITLE[docLabel] || String(docLabel || '').toUpperCase(); }
+// Dokumen tanpa nilai uang (permintaan & penerimaan barang) dicetak tanpa kolom harga.
+function erpDocHasHarga(docLabel) { return !['Permintaan Pembelian','Request for Quotation','Goods Receive','Delivery Order'].includes(docLabel); }
+// Tinggi elemen = sisa layar di bawah posisinya, supaya halaman tidak ikut ter-scroll (yang scroll
+// cukup isi di dalamnya, mis. pratinjau cetak laporan). Dihitung ulang saat resize.
+function useFillHeight(bottomGap) {
+  const ref = React.useRef(null);
+  const [h, setH] = React.useState(null);
+  React.useLayoutEffect(() => {
+    const calc = () => {
+      if (!ref.current) return;
+      const top = ref.current.getBoundingClientRect().top + window.scrollY;
+      const target = Math.max(360, window.innerHeight - top - (bottomGap ?? 16));
+      setH(target);
+      // Koreksi sisa luapan (padding bawah halaman dsb.) setelah tinggi baru dirender.
+      requestAnimationFrame(() => {
+        const se = document.scrollingElement;
+        const over = se.scrollHeight - se.clientHeight;
+        if (over > 0) setH(Math.max(360, target - over));
+      });
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
+  }, []);
+  return [ref, h];
+}
+// Esc menutup modal paling atas saja (stack), jadi Esc di popup konfirmasi tidak ikut menutup form di bawahnya.
+const ERP_ESC_STACK = [];
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || !ERP_ESC_STACK.length) return;
+  const top = ERP_ESC_STACK[ERP_ESC_STACK.length - 1];
+  top.current && top.current();
+});
+function useEscape(onClose) {
+  const ref = React.useRef(onClose);
+  ref.current = onClose;
+  React.useEffect(() => {
+    ERP_ESC_STACK.push(ref);
+    return () => { const i = ERP_ESC_STACK.lastIndexOf(ref); if (i >= 0) ERP_ESC_STACK.splice(i, 1); };
+  }, []);
+}
+// Pager list bersama (pola sama dengan TxPage Keuangan): const { pageRows, pager } = useErpPager(filtered);
+// lalu render pageRows di tbody dan {pager} di bawah tabel. Halaman kembali ke 1 kalau jumlah baris berubah.
+function useErpPager(list, perPage) {
+  const per = perPage || 10;
+  const [page, setPage] = React.useState(1);
+  React.useEffect(() => { setPage(1); }, [list.length]);
+  const totalPages = Math.max(1, Math.ceil(list.length / per));
+  const cur = Math.min(page, totalPages);
+  const pageRows = list.slice((cur - 1) * per, cur * per);
+  const pager = (
+    <div className="pager">
+      <div>Menampilkan <b>{list.length ? (cur - 1) * per + 1 : 0}</b>–<b>{Math.min(cur * per, list.length)}</b> dari <b>{list.length}</b></div>
+      <div style={{display:'flex', gap:6, alignItems:'center'}}>
+        <button className="btn btn-sm" disabled={cur <= 1} onClick={()=>setPage(cur - 1)}>‹ Sebelumnya</button>
+        <span className="muted" style={{fontSize:12.5}}>{cur} / {totalPages}</span>
+        <button className="btn btn-sm" disabled={cur >= totalPages} onClick={()=>setPage(cur + 1)}>Berikutnya ›</button>
+      </div>
+    </div>
+  );
+  return { pageRows, pager };
+}
+// Dokumen terkunci (tidak bisa diedit) bila Batal atau Status BATAL/SELESAI.
+function erpIsLocked(r) {
+  const st = String((r && r.Status) || '').toUpperCase();
+  return !!(r && (r.Batal || st === 'BATAL' || st === 'SELESAI'));
+}
+
+Object.assign(window, { useErpPager, ErpPaperSelect, ERP_PAPER_SIZES, useFillHeight, erpAnyToIso, erpDocTitle, erpDocHasHarga, erpMapSeedTotals, todayLocal, erpNextDocNo, erpCalcTotals, erpValidateDoc, useEscape, erpIsLocked, erpPrint, I, BrandMark, TopBar, ModuleNav, MODULES, Toast, MultiTabNav, MODULE_SUBS, GROUP_COLORS, ModuleDashboard, ConfirmationModal, ItemPickerModal, ScrollNavModal });

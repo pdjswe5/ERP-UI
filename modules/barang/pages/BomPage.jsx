@@ -238,13 +238,18 @@ function BomDialog({ data, onClose, onSave }) {
   );
 }
 
-function BomPage() {
-  const [rows, setRows] = React.useState(BRG_BOM_SEED);
+function BomPage(props) {
+  // State dipegang BarangPage (tidak hilang saat pindah sub-tab); fallback lokal bila dipakai mandiri.
+  const [rowsLocal, setRowsLocal] = React.useState(BRG_BOM_SEED);
+  const rows = (props && props.rows) || rowsLocal;
+  const setRows = (props && props.setRows) || setRowsLocal;
   const [modal, setModal] = React.useState(null);
   const [showModal, setShowModal] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(null);
 
   const save = (form) => {
+    if (!form.kodeBarangJadi) { window.__erpToast && window.__erpToast('Barang jadi wajib dipilih.'); return; }
+    if (showModal !== 2 && rows.some(r => r.kodeBarangJadi === form.kodeBarangJadi)) { window.__erpToast && window.__erpToast(`BOM untuk ${form.kodeBarangJadi} sudah ada — edit BOM yang lama.`); return; }
     setRows(prev => showModal === 2 ? prev.map(r => r.kodeBarangJadi === modal.kodeBarangJadi ? form : r) : [...prev, form]);
     window.__erpToast && window.__erpToast('BOM berhasil disimpan.');
     setShowModal(false); setModal(null);

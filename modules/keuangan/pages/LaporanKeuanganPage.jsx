@@ -1,8 +1,8 @@
 // Akuntan — 1 halaman generik dipakai 3x (Laba Rugi/Laporan Arus Kas/Neraca), dibedakan lewat
 // config `report` (dari AK_LAPORAN_LIST) yang menentukan field ringkasan, mode periode
 // (range/point), dan hasil hitung. Full CRUD (List + Modal, pola sama seperti menu lain), plus
-// tombol Cetak yang membuka AkCetakModal variant="pdf" — kerangka popup sama dengan Aktiva/Jurnal
-// (filter+checklist+zoom), tapi preview-nya iframe PDF referensi, bukan HTML digenerate dari data.
+// tombol Cetak yang membuka AkCetakModal variant="laporan" — kerangka popup sama dengan Aktiva/Jurnal
+// (filter+checklist+zoom); isi cetak = laporan HTML lengkap per akun (AkLaporanKeuanganCetak.jsx).
 
 function LaporanKeuanganList({ report, rows, onAdd, onEdit, onCetak, onCetakRow }) {
   const [q, setQ] = React.useState('');
@@ -11,6 +11,7 @@ function LaporanKeuanganList({ report, rows, onAdd, onEdit, onCetak, onCetakRow 
     .filter(r => !status || r.status === status)
     .filter(r => !q || r.no.toLowerCase().includes(q.toLowerCase()) || r.keterangan.toLowerCase().includes(q.toLowerCase()));
   const reset = () => { setQ(''); setStatus(''); };
+  const { pageRows, pager } = useErpPager(filtered);
   const colCount = 6 + report.fields.length;
 
   return (
@@ -49,7 +50,7 @@ function LaporanKeuanganList({ report, rows, onAdd, onEdit, onCetak, onCetakRow 
               {filtered.length === 0 && (
                 <tr><td colSpan={colCount} className="empty" style={{padding:'32px 16px', textAlign:'center', color:'var(--text-3)'}}>Belum ada data. Klik "Tambah Periode" untuk mulai.</td></tr>
               )}
-              {filtered.map(r => (
+              {pageRows.map(r => (
                 <tr key={r.no} onClick={()=>onEdit(r)}>
                   <td className="mono cell-link">{r.no}</td>
                   <td className="mono">{report.periodMode==='point' ? r.tglAkhir : `${r.tglAwal} s/d ${r.tglAkhir}`}</td>
@@ -68,6 +69,7 @@ function LaporanKeuanganList({ report, rows, onAdd, onEdit, onCetak, onCetakRow 
             </tbody>
           </table>
         </div>
+        {pager}
       </div>
     </>
   );
@@ -90,13 +92,21 @@ function LaporanKeuanganModal({ report, data, onClose, onSave }) {
   const result = report.compute(form);
   const isBalanceCheck = report.id === 'neraca';
 
-  const handleSave = () => onSave({ ...form, [report.resultKey]: result });
+  const [err, setErr] = React.useState('');
+  const handleSave = () => {
+    if (!form.tglAkhir || (report.periodMode === 'range' && !form.tglAwal)) return setErr('Tanggal wajib diisi.');
+    if (report.periodMode === 'range' && akToIso(form.tglAwal) > akToIso(form.tglAkhir)) return setErr('Tgl Awal tidak boleh setelah Tgl Akhir.');
+    if (!String(form.keterangan || '').trim()) return setErr('Keterangan wajib diisi.');
+    if (isBalanceCheck && result !== 0 && form.status === 'Final') return setErr('Neraca belum balance — tidak bisa disimpan sebagai Final.');
+    onSave({ ...form, [report.resultKey]: result });
+  };
 
   return (
     <AkModalShell title={isEdit ? `Edit ${report.label} — ${data.no}` : `Tambah ${report.label}`}
       sub={isEdit ? data.keterangan : `Catat ringkasan ${report.label.toLowerCase()} untuk 1 periode`}
       onClose={onClose} onSave={handleSave} saveLabel={isEdit?'Simpan Perubahan':'Simpan'}>
       <div className="form-section">
+        {err && <div className="danger-form" style={{marginBottom:10}}>{err}</div>}
         <div className="form-row-3">
           {report.periodMode === 'point' ? (
             <div className="field"><label>Tanggal *</label><input className="input" type="date" value={akToIso(form.tglAkhir)} onChange={e=>setDate('tglAkhir', e.target.value)}/></div>
@@ -156,8 +166,7 @@ function LaporanKeuanganPage({ reportId, rows, setRows }) {
         onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}} />
       {modal && <LaporanKeuanganModal report={report} data={modal.data} onClose={()=>setModal(null)} onSave={save} />}
       {showCetak && (
-        <AkCetakModal variant="pdf" docLabel={report.label} rows={rows} noKey="no" tglKey="tglAkhir"
-          pdfPath={`uploads/${report.file}`}
+        <AkCetakModal variant="laporan" reportId={report.id} docLabel={report.label} rows={rows} noKey="no" tglKey="tglAkhir"
           statusFilter={{ options: AK_STATUS_LAPORAN_OPTS.map(s => ({ value:s, label:s })), match:(r,v) => r.status === v }}
           initialSelected={cetakRow ? [cetakRow.no] : null}
           onClose={()=>{setShowCetak(false); setCetakRow(null);}} />

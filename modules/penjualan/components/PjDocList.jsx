@@ -34,7 +34,7 @@ function PjDocList({ title, sub, rows, columns, onAdd, onView, onEdit, onCancelD
             </select>
           </div>
         )}
-        <div className="filter-actions"><button className="btn" onClick={()=>setQ('')}>Reset</button></div>
+        <div className="filter-actions"><button className="btn" onClick={()=>{ setQ(''); setStatusVal(''); }}>Reset</button></div>
       </div></div>
       <div className="table-card">
         <div className="table-toolbar"><div className="table-toolbar-left"><b>Jumlah: {filtered.length}</b></div></div>
@@ -51,7 +51,7 @@ function PjDocList({ title, sub, rows, columns, onAdd, onView, onEdit, onCancelD
                   ))}
                   <td onClick={e=>e.stopPropagation()}>
                     <div className="row-actions">
-                      <button className="btn btn-icon btn-sm" title="Edit" onClick={()=>onEdit(r)}>{I.edit()}</button>
+                      <button className="btn btn-icon btn-sm" title={erpIsLocked(r) ? 'Dokumen batal/selesai tidak bisa diedit' : 'Edit'} disabled={erpIsLocked(r)} onClick={()=>onEdit(r)}>{I.edit()}</button>
                       {onCancelDoc && (
                         <button className="btn btn-icon btn-sm del" title={isCancelled(r) ? 'Sudah dibatalkan' : 'Batalkan Transaksi'} disabled={isCancelled(r)} onClick={()=>onCancelDoc(r)}>{I.fileX(14)}</button>
                       )}

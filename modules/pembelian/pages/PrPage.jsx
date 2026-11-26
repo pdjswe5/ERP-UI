@@ -87,6 +87,7 @@ function PrPage({ rows, setRows }) {
       )}
       {show && (
         <PbModalShell
+          rows={rows}
           title="Purchase Request"
           data={modal}
           tabs={prModalTabs()}

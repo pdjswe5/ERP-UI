@@ -1,6 +1,9 @@
 // Penjualan — halaman Sales Order
 
 function SalesOrderPage({ rows, setRows, konfirmasiList }) {
+  // Tabs (dan komponen picker di dalamnya) dibuat sekali per perubahan data sumber, bukan tiap render —
+  // kalau tidak, React me-remount picker/banner dan state-nya hilang setelah Simpan.
+  const tabs = React.useMemo(() => salesOrderTabs(konfirmasiList), [konfirmasiList]);
   const columns = [
     { key:'No_Bukti', label:'No. Bukti', mono:true },
     { key:'Tgl_Bukti', label:'Tgl. Bukti' },
@@ -94,9 +97,10 @@ function SalesOrderPage({ rows, setRows, konfirmasiList }) {
       )}
       {show && (
         <PjDocModal
+          rows={rows}
           title="Sales Order"
           data={modal}
-          tabs={salesOrderTabs(konfirmasiList)}
+          tabs={tabs}
           prefix="SO"
           showTotals
           showRealisasi

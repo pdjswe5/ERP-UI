@@ -1,6 +1,6 @@
 // Pembelian — halaman Quotation
 
-function QuotationPage({ rows, setRows }) {
+function QuotationPage({ rows, setRows, source }) {
   const columns = [
     { key:'No_Bukti', label:'No. Bukti', mono:true },
     { key:'Tgl_Bukti', label:'Tgl. Bukti' },
@@ -38,6 +38,7 @@ function QuotationPage({ rows, setRows }) {
 
   const cancelFromList = (reason) => {
     const updated = { ...confirmCancel, Status:'BATAL', Batal:true, Alasan_Batal: reason || 'Dibatalkan oleh operator' };
+    if (source && source.onRealisasi && !erpIsLocked(confirmCancel)) source.onRealisasi(confirmCancel.Details, -1);
     setRows(prev => prev.map(r => r.No_Bukti===updated.No_Bukti ? updated : r));
     window.__erpToast && window.__erpToast('Quotation dibatalkan.');
     setConfirmCancel(null);
@@ -92,10 +93,12 @@ function QuotationPage({ rows, setRows }) {
       )}
       {show && (
         <PbModalShell
+          rows={rows}
+          source={source}
           title="Quotation"
           data={modal}
           tabs={quotationModalTabs()}
-          prefix="KPN"
+          prefix="PN"
           showTotals
           initialMode={modalMode}
           xwide

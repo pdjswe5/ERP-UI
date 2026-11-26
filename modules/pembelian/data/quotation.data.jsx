@@ -17,7 +17,7 @@ function quotationItem(kode, qty, harga, disc1, discRp, realisasi=0, noBuktiFrom
 }
 
 function quotationHead(no, tgl, kodeSupp, ket, details, opts={}) {
-  const supp = PB_SUPPLIER.find(s => s.Kode_Supp === kodeSupp);
+  const supp = pbSupplier().find(s => s.Kode_Supp === kodeSupp);
   return {
     No_Bukti:no, Tgl_Bukti:tgl, Kode_Supp:kodeSupp, Nama_Supp: supp ? supp.Nama_Supp : kodeSupp,
     Keterangan:ket, Ppn:11, Ppn_Include:false, Disc: opts.disc ?? 0, Disc_Rp: opts.discRp ?? 0,
@@ -171,8 +171,8 @@ function quotationModalTabs() {
       { key:'No_Bukti', label:'No. Bukti', mono:true, readOnly:true },
       { key:'Tgl_Bukti', label:'Tgl. Bukti', type:'date', required:true },
       { key:'Nama_Supp', label:'Nama Supplier', type:'select', required:true, span:2,
-        options: () => PB_SUPPLIER.map(s => ({ value:s.Nama_Supp, label:s.Nama_Supp })),
-        onChange: (val, set) => { const s = PB_SUPPLIER.find(x => x.Nama_Supp === val); set('Kode_Supp', s ? s.Kode_Supp : ''); } },
+        options: () => pbSupplier(true).map(s => ({ value:s.Nama_Supp, label:s.Nama_Supp })),
+        onChange: (val, set) => { const s = pbSupplier().find(x => x.Nama_Supp === val); set('Kode_Supp', s ? s.Kode_Supp : ''); } },
       { key:'Kode_Supp', label:'Kode Supplier', mono:true, readOnly:true, span:1 },
       { key:'Keterangan', label:'Keterangan', type:'textarea', span:3 },
     ]},

@@ -147,7 +147,7 @@ function LapisPuTable({ rows, setRows, productOptions }) {
     [next[idx], next[j]] = [next[j], next[idx]];
     setRows(next);
   };
-  const add = () => setRows([...rows, { kodeBarang:'', _added:true }]);
+  const add = () => setRows([...rows, { _key: Date.now(), kodeBarang:'', _added:true }]);
   const namaOf = (kode) => productOptions.find(o => o.value === kode)?.label || '—';
   return (
     <div className="inline-table">
@@ -161,7 +161,7 @@ function LapisPuTable({ rows, setRows, productOptions }) {
           <tbody>
             {rows.length === 0 && <tr><td colSpan={4} className="empty">Belum ada lapisan.</td></tr>}
             {rows.map((r, idx) => (
-              <tr key={idx} className={`${r._deleted ? 'row-deleted' : ''} ${r._added ? 'row-added' : ''}`}
+              <tr key={r._key || `${r.kodeBarang}-${idx}`} className={`${r._deleted ? 'row-deleted' : ''} ${r._added ? 'row-added' : ''}`}
                 title={r._deleted ? 'Lapisan ini akan dihapus' : ''}>
                 <td className="mono" style={{textAlign:'center'}}>{idx+1}</td>
                 <td>
@@ -292,18 +292,25 @@ function BarangJadiModal({ data, allRows, onClose, onSave }) {
   );
 }
 
-function BarangJadiPage() {
-  const [rows, setRows] = React.useState(BARANG_JADI);
+function BarangJadiPage(props) {
+  // State dipegang BarangPage (tidak hilang saat pindah sub-tab); fallback lokal bila dipakai mandiri.
+  const [rowsLocal, setRowsLocal] = React.useState(BARANG_JADI);
+  const rows = (props && props.rows) || rowsLocal;
+  const setRows = (props && props.setRows) || setRowsLocal;
   const [modal, setModal] = React.useState(null);
   const [modalMode, setModalMode] = React.useState(null); // null | 'umum' | 'pu'
   const [confirmDelete, setConfirmDelete] = React.useState(null);
   const save = (form) => {
+    if (!modal && rows.some(r => String(r.kodeProduk).toUpperCase() === String(form.kodeProduk || '').trim().toUpperCase())) { window.__erpToast && window.__erpToast(`Kode ${form.kodeProduk} sudah dipakai.`); return; }
+    if (!String(form.kodeProduk || '').trim()) { window.__erpToast && window.__erpToast('Kode produk wajib diisi.'); return; }
     setRows(prev => modal ? prev.map(r => r.kodeProduk===modal.kodeProduk ? form : r) : [...prev, form]);
     window.__erpToast && window.__erpToast('Barang jadi berhasil disimpan.');
     setModalMode(null); setModal(null);
   };
   const openEdit = (r) => { setModal(r); setModalMode(r.kodeKategori === 'JADIPU' ? 'pu' : 'umum'); };
   const deleteRow = () => {
+    const pakai = brgDipakai(confirmDelete.kodeProduk, props && props.bomRows);
+    if (pakai) { window.__erpToast && window.__erpToast(`Tidak bisa dihapus: barang dipakai di ${pakai}.`); setConfirmDelete(null); return; }
     setRows(prev => prev.filter(r => r.kodeProduk !== confirmDelete.kodeProduk));
     window.__erpToast && window.__erpToast('Barang jadi berhasil dihapus.');
     setConfirmDelete(null);

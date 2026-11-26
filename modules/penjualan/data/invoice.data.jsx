@@ -9,7 +9,7 @@ function invItem(kode, jumlah, discPct, discRp, realisasi=0, deskripsi='') {
   return {
     Kode_Item:kode, Nama_Item: produk ? produk.name : '', Deskripsi:deskripsi,
     Jumlah:jumlah, Realisasi:realisasi, Konversi:1, Satuan:'PCS',
-    Hrg_Sat: produk ? (produk.hpp || produk.hargaBeli || 0) : 0,
+    Hrg_Sat: produk ? pjHargaJual(produk) : 0,
     DiscPros_Det:discPct, DiscNilai_Det:discRp,
   };
 }
@@ -19,7 +19,7 @@ function invBiayaItem(kode, nama, jumlah, harga, deskripsi='') {
 }
 
 function invHead(no, tgl, custCode, kreditTunai, tempo, ket, details, details2, opts={}) {
-  const cust = PJ_PELANGGAN.find(p => p.code === custCode);
+  const cust = pjPelanggan().find(p => p.code === custCode);
   const akun = opts.akunTunai ? PJ_KASBANK.find(k => k.kode === opts.akunTunai) : null;
   const gudang = opts.gudang ? PJ_GUDANG_LIST.find(g => g.kode === opts.gudang) : PJ_GUDANG_LIST[0];
   return {
@@ -111,8 +111,9 @@ function invoiceApplySoData(set, so) {
   set('Tempo', so.Tempo || 0);
   set('Tgl_Kirim', so.Tgl_Kirim || '');
   set('Alamat_Kirim', so.Alamat_Kirim || '');
-  set('Details', (so.Details || []).map(b => ({
-    Kode_Item:b.Kode_Item, Nama_Item:b.Nama_Item, Deskripsi:b.Deskripsi || '', Jumlah:b.Jumlah || 0, Realisasi:0,
+  // Yang ditagih hanya barang yang sudah dikirim (Realisasi SO dari Delivery Order), bukan qty pesanan penuh.
+  set('Details', (so.Details || []).filter(b => (+b.Realisasi || 0) > 0).map(b => ({
+    Kode_Item:b.Kode_Item, Nama_Item:b.Nama_Item, Deskripsi:b.Deskripsi || '', Jumlah:+b.Realisasi || 0, Realisasi:0,
     Konversi:1, Satuan:b.Satuan || 'PCS', Hrg_Sat:b.Hrg_Sat || 0, DiscPros_Det:b.DiscPros_Det || 0, DiscNilai_Det:b.DiscNilai_Det || 0,
   })));
   set('Details2', (so.Details2 || []).map(b => ({
@@ -210,9 +211,9 @@ function invoiceTabs(salesOrderList) {
       { key:'No_Bukti_From', label:'Ref. Sales Order', mono:true, lockOnEdit:true,
         type:'select', options: () => salesOrderList.map(s => ({ value:s.No_Bukti, label:s.No_Bukti })) },
       { key:'Nama_Cust', label:'Nama Customer', type:'select', required:true, span:2,
-        options: () => PJ_PELANGGAN.map(p => ({ value:p.name, label:p.name })),
+        options: () => pjPelanggan(true).map(p => ({ value:p.name, label:p.name })),
         onChange: (val, set) => {
-          const p = PJ_PELANGGAN.find(x => x.name === val);
+          const p = pjPelanggan().find(x => x.name === val);
           set('Kode_Cust', p ? p.code : '');
           set('Kode_Sales', p ? p.kodeSales || '' : '');
           set('Nama_Sales', p ? p.namaSales || '' : '');

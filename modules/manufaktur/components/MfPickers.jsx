@@ -4,6 +4,7 @@
 // ─── Shared Picker Shell ─────────────────────────────────────────────────────
 
 function MfPickerShell({ title, zIndex, width, onClose, children }) {
+  useEscape(onClose);
   return (
     <div className="modal-backdrop" style={{zIndex: zIndex || 200}}>
       <div className="modal" style={{maxWidth: width || 960, maxHeight:'72vh'}} onClick={e => e.stopPropagation()}>
@@ -576,7 +577,7 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
                   <div className="field">
                     <label>Satuan</label>
                     <select className="select" value={satuan} disabled={!kodeBarang} onChange={e => setSatuan(e.target.value)}>
-                      {MF_SATUAN_SPK.map(s => <option key={s}>{s}</option>)}
+                      {MF_SATUAN_OPTS.map(s => <option key={s}>{s}</option>)}
                     </select>
                   </div>
                   <div className="field">
@@ -783,7 +784,7 @@ function MfBarangJadiEntryModal({ data, bahanLines, onClose, onSave }) {
                         <td style={tdBahanS}>
                           <select className="select" style={{width:'100%', fontSize:12, padding:'3px 6px'}}
                             value={row.satuan} onChange={e => updateLocalBahan(row.id, 'satuan', e.target.value)}>
-                            {MF_SATUAN_SPK.map(s => <option key={s}>{s}</option>)}
+                            {MF_SATUAN_OPTS.map(s => <option key={s}>{s}</option>)}
                           </select>
                         </td>
                         <td style={{...tdBahanS, textAlign:'center'}}>

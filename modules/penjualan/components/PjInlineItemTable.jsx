@@ -26,7 +26,7 @@ function InlineTable({ title, columns, rows, setRows, addLabel, shortcut, disabl
     if (c.compute) {
       return <span className="cell num mono" style={{display:'block',padding:'4px 0'}}>{c.compute(r)}</span>;
     }
-    const lockedByFill = c.lockIfFilled && r[c.key];
+    const lockedByFill = c.lockIfFilled && r[c.key] && !r._added; // kunci hanya nilai bawaan dokumen sumber, bukan baris yang sedang diketik
     if (disabled || isLockedItemCol(c) || c.readOnly || lockedByFill || r._deleted) {
       let display = r[c.key];
       if (c.type === 'select') {
@@ -135,7 +135,7 @@ function PjItemTable({ title, rows, setRows, showRealisasi, disabled, onPickItem
     let row = { ...rows[idx], [key]: value };
     if (key === 'Kode_Item' && !row._deleted) {
       const found = pjBarangCatalog().find(b => b.code === value);
-      if (found) { row.Nama_Item = found.name; row.Satuan = found.unit || row.Satuan; row.Hrg_Sat = found.price || found.hpp || 0; }
+      if (found) { row.Nama_Item = found.name; row.Satuan = found.unit || row.Satuan; row.Hrg_Sat = pjHargaJual(found); }
     }
     const next = [...rows]; next[idx] = row; setRows(next);
   };

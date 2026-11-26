@@ -1,6 +1,9 @@
 // Penjualan — halaman Sales Return (Retur Jual)
 
 function SalesReturnPage({ rows, setRows, salesOrderList, invoiceList }) {
+  // Tabs (dan komponen picker di dalamnya) dibuat sekali per perubahan data sumber, bukan tiap render —
+  // kalau tidak, React me-remount picker/banner dan state-nya hilang setelah Simpan.
+  const tabs = React.useMemo(() => salesReturnTabs(salesOrderList, invoiceList), [salesOrderList, invoiceList]);
   const columns = [
     { key:'No_Bukti', label:'No. Bukti', mono:true },
     { key:'Tgl_Bukti', label:'Tgl. Bukti' },
@@ -93,9 +96,10 @@ function SalesReturnPage({ rows, setRows, salesOrderList, invoiceList }) {
       )}
       {show && (
         <PjDocModal
+          rows={rows}
           title="Sales Return"
           data={modal}
-          tabs={salesReturnTabs(salesOrderList, invoiceList)}
+          tabs={tabs}
           prefix="RJ"
           showTotals
           xwide

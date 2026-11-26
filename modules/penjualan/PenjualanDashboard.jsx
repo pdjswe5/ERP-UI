@@ -107,7 +107,7 @@ function PenjualanDashboard({ onOpenSub, onNavigate, pelanggan, konfirmasi, sale
             </div>
             <div className="timeline-item done">
               <div className="ti-when">Hari ini · 11:08</div>
-              <div className="ti-what"><b className="ti-who">Sistem</b> retur dari Toko Jaya Abadi disetujui · {fmtRp(1180000)}</div>
+              <div className="ti-what"><b className="ti-who">Sistem</b> retur dari Pelanggan Contoh 05 disetujui · {fmtRp(1180000)}</div>
             </div>
             <div className="timeline-item">
               <div className="ti-when">Kemarin · 16:30</div>

@@ -22,7 +22,7 @@ function returnBiayaItem(kode, nama, jumlah, harga, deskripsi='') {
 }
 
 function returnHead(no, tgl, custCode, kreditTunai, tempo, alasanRetur, ket, details, details2, opts={}) {
-  const cust = PJ_PELANGGAN.find(p => p.code === custCode);
+  const cust = pjPelanggan().find(p => p.code === custCode);
   const akun = opts.akunTunai ? PJ_KASBANK.find(k => k.kode === opts.akunTunai) : null;
   const gudang = opts.gudang ? PJ_GUDANG_LIST.find(g => g.kode === opts.gudang) : PJ_GUDANG_LIST[0];
   return {
@@ -103,18 +103,6 @@ function ReturSoItemPickerModal({ salesOrderList, form, onCancel, onConfirm }) {
   const [selected, setSelected] = React.useState({});
   const [qtyMap, setQtyMap] = React.useState({});
 
-  if (!form.Kode_Cust) {
-    return (
-      <div className="modal-backdrop" style={{zIndex:110}}>
-        <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:480}}>
-          <div className="modal-head"><h2>Pilih Barang dari Sales Order</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
-          <div className="modal-body"><div className="muted">Pilih Customer terlebih dahulu di tab Informasi Umum sebelum mengambil barang dari Sales Order.</div></div>
-          <div className="modal-foot"><div className="right"><button className="btn" onClick={onCancel}>Tutup</button></div></div>
-        </div>
-      </div>
-    );
-  }
-
   const candidates = React.useMemo(() => {
     const list = [];
     salesOrderList
@@ -134,6 +122,19 @@ function ReturSoItemPickerModal({ salesOrderList, form, onCancel, onConfirm }) {
     const ql = q.toLowerCase();
     return candidates.filter(c => c.so.No_Bukti.toLowerCase().includes(ql) || c.soRow.Kode_Item.toLowerCase().includes(ql) || (c.soRow.Nama_Item||'').toLowerCase().includes(ql));
   }, [candidates, q]);
+
+  // Early return SETELAH semua hook (Rules of Hooks).
+  if (!form.Kode_Cust) {
+    return (
+      <div className="modal-backdrop" style={{zIndex:110}}>
+        <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:480}}>
+          <div className="modal-head"><h2>Pilih Barang dari Sales Order</h2><button className="btn btn-icon" onClick={onCancel}>{I.x(16)}</button></div>
+          <div className="modal-body"><div className="muted">Pilih Customer terlebih dahulu di tab Informasi Umum sebelum mengambil barang dari Sales Order.</div></div>
+          <div className="modal-foot"><div className="right"><button className="btn" onClick={onCancel}>Tutup</button></div></div>
+        </div>
+      </div>
+    );
+  }
 
   const toggle = (rowKey) => {
     setSelected(prev => {
@@ -218,9 +219,9 @@ function salesReturnTabs(salesOrderList, invoiceList) {
       { key:'No_Jual', label:'Ref. Invoice', mono:true, lockOnEdit:true,
         type:'select', options: () => invoiceList.map(v => ({ value:v.No_Bukti, label:v.No_Bukti })) },
       { key:'Nama_Cust', label:'Nama Customer', type:'select', required:true, span:2,
-        options: () => PJ_PELANGGAN.map(p => ({ value:p.name, label:p.name })),
+        options: () => pjPelanggan(true).map(p => ({ value:p.name, label:p.name })),
         onChange: (val, set) => {
-          const p = PJ_PELANGGAN.find(x => x.name === val);
+          const p = pjPelanggan().find(x => x.name === val);
           set('Kode_Cust', p ? p.code : '');
           set('Kode_Sales', p ? p.kodeSales || '' : '');
           set('Nama_Sales', p ? p.namaSales || '' : '');

@@ -25,7 +25,7 @@ function lapRincianGroups(partners, items, pelunasanList, kodeKey, kodeDari, kod
       if (it[kodeKey] !== p.kode || it.jenis !== 'Nota') return false;
       const tglIso = lapDmyToIso(it.tgl);
       if (tglIso < tglAwalIso || tglIso > tglAkhirIso) return false;
-      const lunas = it.sisa <= 0;
+      const lunas = lapSisaNotaPer(it, pelunasanList, tglAkhirIso) <= 0;
       if (statusFilter === 'LUNAS' && !lunas) return false;
       if (statusFilter === 'BELUM' && lunas) return false;
       return true;
@@ -33,14 +33,15 @@ function lapRincianGroups(partners, items, pelunasanList, kodeKey, kodeDari, kod
     if (notas.length === 0) return;
 
     const rows = notas.map(it => {
-      const pembayaran = it.nilai - it.sisa;
-      grand.nilai += it.nilai; grand.pembayaran += pembayaran; grand.sisaNota += it.sisa;
+      const sisa = lapSisaNotaPer(it, pelunasanList, tglAkhirIso);
+      const pembayaran = it.nilai - sisa;
+      grand.nilai += it.nilai; grand.pembayaran += pembayaran; grand.sisaNota += sisa;
       return {
         tanggal: lapFmtTgl(lapDmyToIso(it.tgl)), nomor: it.noBukti, sales: p.sales || '-',
         jtTercetak: it.jthTempo ? lapFmtTgl(lapDmyToIso(it.jthTempo)) : '-',
         jtReal: it.jthTempo ? lapFmtTgl(lapDmyToIso(it.jthTempo)) : '-',
         tglLunas: (() => { const l = lapFindTglLunas(it.noBukti, it.sisa, pelunasanList); return l ? lapFmtTgl(l) : '-'; })(),
-        nilai: lapFmtNum(it.nilai), retur: lapFmtNum(0), pembayaran: lapFmtNum(pembayaran), sisaNota: lapFmtNum(it.sisa),
+        nilai: lapFmtNum(it.nilai), retur: lapFmtNum(0), pembayaran: lapFmtNum(pembayaran), sisaNota: lapFmtNum(sisa),
       };
     });
     const subNilai = notas.reduce((s,it)=>s+it.nilai,0);
@@ -74,8 +75,8 @@ function LaporanRincianNotaPage() {
 
   const isPiutang = jenisPartner === 'piutang';
   const partners = React.useMemo(() => isPiutang
-    ? PJ_PELANGGAN.map(p => ({ kode:p.code, nama:p.name, alamat:p.alamat, sales:p.namaSales, plafon:p.plafon, saldoTitipan:p.saldoTitipan }))
-    : PB_SUPPLIER.map(p => ({ kode:p.Kode_Supp, nama:p.Nama_Supp, alamat:p.Alamat, sales:null, plafon:p.Plafon, saldoTitipan:null })),
+    ? pjPelanggan(true).map(p => ({ kode:p.code, nama:p.name, alamat:p.alamat, sales:p.namaSales, plafon:p.plafon, saldoTitipan:p.saldoTitipan }))
+    : pbSupplier(true).map(p => ({ kode:p.Kode_Supp, nama:p.Nama_Supp, alamat:p.Alamat, sales:null, plafon:p.Plafon, saldoTitipan:null })),
   [isPiutang]);
 
   const { groups, grand } = React.useMemo(() => lapRincianGroups(
@@ -90,7 +91,7 @@ function LaporanRincianNotaPage() {
   const grandFooter = { tanggal:'', nomor:'', sales:'', jtTercetak:'', jtReal:'', tglLunas:'Grand Total',
     nilai: lapFmtNum(grand.nilai), retur: lapFmtNum(grand.retur), pembayaran: lapFmtNum(grand.pembayaran), sisaNota: lapFmtNum(grand.sisaNota) };
 
-  const doCetak = () => { window.__erpToast && window.__erpToast('Cetak dikirim ke printer.'); };
+  const doCetak = () => { erpPrint(); };
 
   return (
     <>

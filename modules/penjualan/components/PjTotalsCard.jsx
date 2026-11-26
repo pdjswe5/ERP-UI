@@ -1,10 +1,7 @@
 // Penjualan — ringkasan subtotal/disc/PPN/total dokumen (layout disamakan dengan PbTotalsCard milik Pembelian)
 
 function PjTotalsCard({ subtotal, discPct, setDiscPct, discRp, setDiscRp, ppn, setPpn, ppnMode, setPpnMode }) {
-  const discAmt = subtotal * ((discPct||0)/100) + (+discRp || 0);
-  const dpp = Math.max(0, subtotal - discAmt);
-  const ppnAmt = ppnMode === 'Exclude' ? dpp * ((ppn||0)/100) : 0;
-  const total = ppnMode === 'Exclude' ? dpp + ppnAmt : dpp;
+  const { dpp, ppnAmt, total } = erpCalcTotals(subtotal, discPct, discRp, ppn, ppnMode);
   return (
     <div className="panel" style={{position:'sticky', top:16}}>
       <div style={{fontWeight:700, fontSize:12.5, letterSpacing:'.04em', color:'var(--primary)', background:'var(--primary-50)', padding:'8px 12px', borderRadius:6, marginBottom:12}}>RINGKASAN</div>

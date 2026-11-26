@@ -12,7 +12,7 @@ function poItem(kode, jumlah, harga, disc1, discRp, realisasi=0, noBuktiFrom='',
     Jumlah:jumlah, Satuan: produk ? produk.satuan : 'PCS', Hrg_Sat:harga,
     DiscPros_Det:disc1, DiscNilai_Det:discRp, Qty_Realisasi:realisasi,
     Kode_PurchasingORG:orgKode, Ket_PurchasingORG: org ? org.nama : '',
-    Kode_Konversi:1, Konversi:1, No_Bukti_From:noBuktiFrom, No_Id_From: noBuktiFrom ? 1 : 0, Jenis_Dok_From: noBuktiFrom ? 'PP' : '',
+    Kode_Konversi:1, Konversi:1, No_Bukti_From:noBuktiFrom, No_Id_From: noBuktiFrom ? 1 : 0, Jenis_Dok_From: noBuktiFrom ? 'PN' : '',
   };
 }
 
@@ -25,7 +25,7 @@ function poBiayaItem(kodeAkun, jumlah, satuan, harga, disc1, discRp, realisasi=0
 }
 
 function poHead(no, tgl, kodeSupp, noReferensi, kreditTunai, tempo, ket, details, details2, opts={}) {
-  const supp = PB_SUPPLIER.find(s => s.Kode_Supp === kodeSupp);
+  const supp = pbSupplier().find(s => s.Kode_Supp === kodeSupp);
   return {
     No_Bukti:no, Tgl_Bukti:tgl, No_Referensi:noReferensi, Kode_Supp:kodeSupp, Nama_Supp: supp ? supp.Nama_Supp : kodeSupp,
     PPN:11, PPN_Include:false, DiscPros_Head:0, DiscNilai_Head:0, Kredit_Tunai:kreditTunai, Tempo:tempo, Keterangan:ket,
@@ -191,8 +191,8 @@ function poModalTabs() {
       { key:'No_Bukti', label:'No. Bukti', mono:true, readOnly:true },
       { key:'Tgl_Bukti', label:'Tgl. Bukti', type:'date', required:true },
       { key:'Nama_Supp', label:'Nama Supplier', type:'select', required:true, span:2,
-        options: () => PB_SUPPLIER.map(s => ({ value:s.Nama_Supp, label:s.Nama_Supp })),
-        onChange: (val, set) => { const s = PB_SUPPLIER.find(x => x.Nama_Supp === val); set('Kode_Supp', s ? s.Kode_Supp : ''); } },
+        options: () => pbSupplier(true).map(s => ({ value:s.Nama_Supp, label:s.Nama_Supp })),
+        onChange: (val, set) => { const s = pbSupplier().find(x => x.Nama_Supp === val); set('Kode_Supp', s ? s.Kode_Supp : ''); } },
       { key:'Kode_Supp', label:'Kode Supplier', mono:true, readOnly:true, span:1 },
       { key:'No_Referensi', label:'No. Referensi', mono:true, lockOnEdit:true },
       { key:'Kredit_Tunai', label:'Kredit/Tunai', type:'select', options:[{value:'TUNAI',label:'Tunai'},{value:'KREDIT',label:'Kredit'}], lockOnEdit:true },

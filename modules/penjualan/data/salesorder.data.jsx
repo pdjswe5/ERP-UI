@@ -18,7 +18,7 @@ function soItem(kode, jumlah, disc1, discRp, realisasi=0, deskripsi='') {
   return {
     Kode_Item:kode, Nama_Item: bj ? bj.namaProduk : (produk ? produk.name : ''), Deskripsi:deskripsi,
     Jumlah:jumlah, Realisasi:realisasi, Konversi:1, Satuan:'PCS',
-    Hrg_Sat: bj ? (bj.hppStandar || 0) : (produk ? (produk.hpp || produk.hargaBeli || 0) : 0),
+    Hrg_Sat: bj ? pjHargaJual({ hpp: bj.hppStandar }) : (produk ? pjHargaJual(produk) : 0),
     DiscPros_Det:disc1, DiscNilai_Det:discRp,
   };
 }
@@ -28,7 +28,7 @@ function soJasaItem(kode, nama, jumlah, harga, deskripsi='') {
 }
 
 function soHead(no, tgl, custCode, salesName, kreditTunai, tempo, ket, details, details2, opts={}) {
-  const cust = PJ_PELANGGAN.find(p => p.code === custCode);
+  const cust = pjPelanggan().find(p => p.code === custCode);
   const salesIdx = PJ_SALES_LIST.indexOf(salesName);
   const kasbank = opts.kasbank ? PJ_KASBANK.find(k => k.kode === opts.kasbank) : null;
   return {
@@ -210,7 +210,7 @@ function soStatusPill(row) {
 // "Buat SO dari KO" — mengambil semua data relevan dari 1 dokumen Konfirmasi Penjualan (KO) dan
 // menuangkannya ke form SO yang sedang dibuat (hanya berlaku saat CREATE, sebelum SO disimpan).
 function soApplyKoData(set, ko) {
-  const custByCode = PJ_PELANGGAN.find(p => p.code === ko.kodeCustomer) || PJ_PELANGGAN.find(p => p.name === ko.customer);
+  const custByCode = pjPelanggan().find(p => p.code === ko.kodeCustomer) || pjPelanggan().find(p => p.name === ko.customer);
   const salesMatch = PJ_SALES.find(s => s.nama === ko.sales);
   const iu = ko.informasiUmum || {};
   const bayar = ko.pembayaran || {};
@@ -332,9 +332,9 @@ function salesOrderTabs(konfirmasiList) {
       { key:'No_Bukti', label:'No. Bukti', mono:true, readOnly:true },
       { key:'Tgl_Bukti', label:'Tgl. Bukti', type:'date', required:true },
       { key:'Nama_Cust', label:'Nama Customer', type:'select', required:true, span:2,
-        options: () => PJ_PELANGGAN.map(p => ({ value:p.name, label:p.name })),
+        options: () => pjPelanggan(true).map(p => ({ value:p.name, label:p.name })),
         onChange: (val, set) => {
-          const p = PJ_PELANGGAN.find(x => x.name === val);
+          const p = pjPelanggan().find(x => x.name === val);
           set('Kode_Cust', p ? p.code : '');
           set('Kode_Sales', p ? p.kodeSales || '' : '');
           set('Nama_Sales', p ? p.namaSales || '' : '');

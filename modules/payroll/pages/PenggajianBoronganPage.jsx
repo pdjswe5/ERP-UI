@@ -1,7 +1,7 @@
 // Payroll — Proses Penggajian Borongan: agregasi Transaksi Produksi Harian per karyawan dalam 1
 // periode = Upah Borongan, ditambah base dari Komponen Gaji aktif (Gaji/Tunj Jabatan/Premi Bulanan)
 // + field penyesuaian manual (Bonus/Kompensasi, Dedikasi, Loyalitas, Cuti Thn, Kebijakan, Pot Upah —
-// diisi user SETELAH diproses, spt kolom² di "RepGajiB Halim.pdf") dikurangi BPJS TK/Kes, Pot PPh,
+// diisi user SETELAH diproses, spt kolom² laporan gaji borongan) dikurangi BPJS TK/Kes, Pot PPh,
 // SPSI/Sosial -> Total Terima. Tabel hasil dikelompokkan per Bagian dgn baris Sub Total (struktur
 // persis PDF referensi). Cetak Slip individual REUSE PrCetakSlipGaji yang sama dgn Penggajian
 // Absensi (field slip sudah digeneralisasi jadi pendapatan/potongan) — laporan grouped-per-Bagian
@@ -20,8 +20,9 @@ function prComputeBoronganBase(karyawan, mutasiRows, produksiHarianRows, periode
     noInduk: karyawan.noInduk, nama: karyawan.nama, kodeBagian: mutasi?.kodeBagian || '',
     jumlahEntriProduksi: produksiPeriode.length, upahBorongan,
     gaji, tunjJabatan: mutasi?.tunjJabatan || 0, premiBln: kb.premiBulanan || 0,
-    bpjsTk: gaji * ((mutasi?.potBpjsTkPct || 0) / 100), bpjsKes: gaji * ((mutasi?.potBpjsKesPct || 0) / 100),
-    potPph: gaji * ((mutasi?.pph || 0) / 100), potSpsi: mutasi?.potSpsi || 0,
+    // Dasar potongan borongan = gaji pokok + total upah borongan periode itu (bukan gaji pokok saja).
+    bpjsTk: Math.round((gaji + upahBorongan) * ((mutasi?.potBpjsTkPct || 0) / 100)), bpjsKes: Math.round((gaji + upahBorongan) * ((mutasi?.potBpjsKesPct || 0) / 100)),
+    potPph: Math.round((gaji + upahBorongan) * ((mutasi?.pph || 0) / 100)), potSpsi: mutasi?.potSpsi || 0,
     bonus:0, dedikasi:0, loyalitas:0, cutiThn:0, kebijakan:0, potUpah:0,
   };
 }
@@ -52,6 +53,7 @@ function PayrollPenggajianBoronganPage({ rows, setRows, karyawanRows, mutasiRows
   const [kodeBagian, setKodeBagian] = React.useState('');
   const [preview, setPreview] = React.useState(null);
   const [cetakBatch, setCetakBatch] = React.useState(null);
+  const [registerBatch, setRegisterBatch] = React.useState(null);
 
   const proses = () => {
     const eligible = karyawanRows.filter(k => produksiHarianRows.some(p => p.noInduk === k.noInduk && p.tanggal.startsWith(periode)));
@@ -65,7 +67,9 @@ function PayrollPenggajianBoronganPage({ rows, setRows, karyawanRows, mutasiRows
 
   const simpan = () => {
     if (!preview || preview.length === 0) { window.__erpToast && window.__erpToast('Belum ada slip untuk disimpan.'); return; }
-    const batch = { id: Date.now(), periode, kodeBagian, tglProses: new Date().toISOString().slice(0,10), slips: preview.map(r => prBoronganSlip(r, periode)) };
+    const bentrok = rows.find(b => b.periode === periode && (!b.kodeBagian || !kodeBagian || b.kodeBagian === kodeBagian));
+    if (bentrok) { window.__erpToast && window.__erpToast(`Periode ${periode}${bentrok.kodeBagian ? ' bagian ' + bentrok.kodeBagian : ''} sudah pernah diproses.`); return; }
+    const batch = { id: Date.now(), periode, kodeBagian, tglProses: todayLocal(), slips: preview.map(r => prBoronganSlip(r, periode)) };
     setRows(prev => [batch, ...prev]);
     window.__erpToast && window.__erpToast(`Penggajian Borongan periode ${periode} berhasil disimpan.`);
     setPreview(null);
@@ -164,7 +168,7 @@ function PayrollPenggajianBoronganPage({ rows, setRows, karyawanRows, mutasiRows
                   <td>{b.kodeBagian ? (PR_BAGIAN.find(x=>x.kode===b.kodeBagian)?.nama || b.kodeBagian) : 'Semua Bagian'}</td>
                   <td>{b.slips.length}</td>
                   <td className="num">{fmtRp(totalTerimaBatch(b))}</td>
-                  <td><button className="btn btn-icon btn-sm" title="Cetak" onClick={()=>setCetakBatch(b)}>{I.print()}</button></td>
+                  <td><div className="row-actions"><button className="btn btn-icon btn-sm" title="Cetak Slip" onClick={()=>setCetakBatch(b)}>{I.print()}</button><button className="btn btn-icon btn-sm" title="Cetak Register Gaji" onClick={()=>setRegisterBatch(b)}>{I.list ? I.list(14) : I.print()}</button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -173,6 +177,7 @@ function PayrollPenggajianBoronganPage({ rows, setRows, karyawanRows, mutasiRows
       </div>
 
       {cetakBatch && <PrCetakSlipGaji batch={cetakBatch} onClose={()=>setCetakBatch(null)} />}
+      {registerBatch && <PrCetakRegisterGaji batch={registerBatch} judul="Gaji Borongan" onClose={()=>setRegisterBatch(null)} />}
     </>
   );
 }

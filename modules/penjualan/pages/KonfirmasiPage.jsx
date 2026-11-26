@@ -5,7 +5,7 @@
 // Didefinisikan di top-level (bukan di dalam komponen modal) supaya identitasnya stabil antar render —
 // kalau didefinisikan di dalam body komponen, tiap keystroke bikin instance baru dan React remount
 // elemen <input>-nya sehingga focus hilang setelah 1 huruf.
-function Fld({ label, value, onChange, required, span, mono, type='text', options, locked }) {
+function KoFld({ label, value, onChange, required, span, mono, type='text', options, locked }) {
   const spanStyle = span ? {gridColumn:`span ${span}`} : {};
   if (locked) {
     return (
@@ -57,7 +57,8 @@ function KonfirmasiPenjualan({ rows, onAdd, onView, onEdit, onCancel, onCetak, o
     return true;
   });
 
-  const isLocked = (k) => k.status === 'BATAL' || k.status === 'SELESAI MANUAL';
+  const isLocked = (k) => k.status === 'BATAL' || k.status === 'SELESAI MANUAL' || koComputeStatus(k) === 'SELESAI';
+  const { pageRows, pager } = useErpPager(filtered);
   const reset = () => { setQ(''); setNoBukti(''); setTglDari(''); setTglSampai(''); setCustomer(''); setStatus(''); };
 
   return (
@@ -127,7 +128,7 @@ function KonfirmasiPenjualan({ rows, onAdd, onView, onEdit, onCancel, onCetak, o
               </tr>
             </thead>
             <tbody>
-              {filtered.map(k => {
+              {pageRows.map(k => {
                 const locked = isLocked(k);
                 return (
                   <tr key={k.noBukti}>
@@ -157,6 +158,7 @@ function KonfirmasiPenjualan({ rows, onAdd, onView, onEdit, onCancel, onCetak, o
             </tbody>
           </table>
         </div>
+        {pager}
       </div>
     </>
   );
@@ -295,16 +297,18 @@ function KonfirmasiBarangDetailModal({ jenisBarang, tipeBarang, data, onClose, o
   );
 }
 
-function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
+function KonfirmasiPenjualanModal({ rows, data, initialMode, onClose, onSave }) {
   // initialMode="EDIT" membuka langsung dalam mode edit (dipakai tombol Edit di list), tanpa itu default VIEW.
-  const [mode, setMode] = React.useState(data ? (initialMode === 'EDIT' ? 'EDIT' : 'VIEW') : 'CREATE');
+  const koLocked = (d) => d && /BATAL|SELESAI/.test(String(d.status || '').toUpperCase());
+  const [mode, setMode] = React.useState(data ? (initialMode === 'EDIT' && !koLocked(data) ? 'EDIT' : 'VIEW') : 'CREATE');
   const isCreate = mode === 'CREATE';
   const isView = mode === 'VIEW';
   const isEdit = mode === 'EDIT';
 
   const buildEmpty = () => ({
     noBukti: '',
-    tglBukti: '2026-07-11',
+    tglBukti: todayLocal(),
+    tglDari: todayLocal(),
     noReferensi: '',
     customer: '',
     kodeCustomer: '',
@@ -363,12 +367,9 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
   const set = (k,v) => setForm(f => ({ ...f, [k]: v }));
 
   const subtotal = form.barang.reduce((s, r) => s + pjLineTotal(r), 0) + form.biaya.reduce((s, r) => s + pjLineTotal(r), 0);
-  const discAmt = subtotal * ((form.discPct||0)/100) + (+form.discRp || 0);
-  const dpp = Math.max(0, subtotal - discAmt);
-  const ppnAmt = form.ppnMode === 'Exclude' ? dpp * ((form.ppn||0)/100) : 0;
-  const grandTotal = form.ppnMode === 'Exclude' ? dpp + ppnAmt : dpp;
+  const { discAmt, dpp, ppnAmt, total: grandTotal } = erpCalcTotals(subtotal, form.discPct, form.discRp, form.ppn, form.ppnMode);
 
-  const isLocked = form.status === 'BATAL' || form.status === 'SELESAI MANUAL';
+  const isLocked = koLocked(form);
   const disabled = isView || isLocked;
   const [pickerBiaya, setPickerBiaya] = React.useState(false);
   const [barangDetail, setBarangDetail] = React.useState(null); // { jenisBarang, editIndex } | null
@@ -415,11 +416,23 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
     setMode('VIEW');
   };
 
+  const [saveError, setSaveError] = React.useState('');
+  useEscape(onClose);
   const handleSave = (andClose=false) => {
+    const live = (arr) => (arr || []).filter(r => !r._deleted);
+    let err = '';
+    if (noBuktiLocked) err = 'Pilih No. Bukti (ketik F atau K) terlebih dahulu.';
+    else if (!form.tglBukti) err = 'Tanggal bukti wajib diisi.';
+    else if (!String(form.customer || form.kodeCustomer || '').trim()) err = 'Customer wajib diisi.';
+    else if (live(form.barang).length === 0) err = 'Minimal 1 barang.';
+    else if (live(form.barang).concat(live(form.biaya)).some(r => !(+r.Jumlah > 0))) err = 'Qty setiap baris harus lebih dari 0.';
+    else if (live(form.barang).concat(live(form.biaya)).some(r => +r.Hrg_Sat < 0)) err = 'Harga tidak boleh negatif.';
+    else if (+form.discPct < 0 || +form.discPct > 100) err = 'Diskon header harus 0-100%.';
+    setSaveError(err);
+    if (err) return;
     let saved = form;
     if (isCreate) {
-      const fullNo = (noBuktiRaw[0] || '') + 'KO' + new Date().toISOString().slice(2,4) + new Date().toISOString().slice(5,7) + String(Math.floor(Math.random()*9000)+1000);
-      saved = { ...form, noBukti: fullNo };
+      saved = { ...form, noBukti: erpNextDocNo(noBuktiRaw[0], 'KO', form.tglBukti, rows, 'noBukti') };
       setForm(saved);
     }
     // Filter out soft-deleted items dari kedua tab (Barang & Non-Produk/Biaya)
@@ -463,12 +476,13 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
           <div className="modal-body modal-body-scroll" ref={modalBodyRef}>
             <div className="scroll-modal-layout with-side">
               <div className="scroll-modal-main">
+                {saveError && <div className="danger-form" style={{marginBottom:12}}>{saveError}</div>}
                 {isLocked && (
                   <div className="alasan-section" style={{marginBottom:16}}>
                     <h3>{form.status==='BATAL'?'Alasan Batal':'Alasan Selesai'}</h3>
                     <div className={`alasan-box ${form.status==='BATAL'?'batal':'selesai'}`}>
                       <span className="icon">{form.status==='BATAL'?I.x(16):I.check(16)}</span>
-                      <span>{form.Alasan_Status || (form.status==='BATAL'?'Transaksi dibatalkan':'Transaksi diselesaikan manual')}</span>
+                      <span>{form.alasanBatal || form.alasanSelesai || form.Alasan_Status || (form.status==='BATAL'?'Transaksi dibatalkan':'Transaksi diselesaikan manual')}</span>
                     </div>
                   </div>
                 )}
@@ -507,43 +521,43 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
                     ) : (
                       <div className="view-field"><label>No. Bukti</label><div className="view-value mono">{form.noBukti}</div></div>
                     )}
-                    <Fld label="Tgl. Bukti" required type="date" value={form.tglBukti} onChange={v=>setForm(f=>({...f,tglBukti:v}))} locked={gated} />
-                    <Fld label="No. Ref" value={form.informasiUmum.noRef} onChange={v=>setInfo({noRef:v})} locked={gated} />
-                    <Fld label="Estimasi Tgl. kirim" required type="date" value={form.informasiUmum.estimasiKirim} onChange={v=>setInfo({estimasiKirim:v})} locked={gated} />
+                    <KoFld label="Tgl. Bukti" required type="date" value={form.tglBukti} onChange={v=>setForm(f=>({...f,tglBukti:v}))} locked={gated} />
+                    <KoFld label="No. Ref" value={form.informasiUmum.noRef} onChange={v=>setInfo({noRef:v})} locked={gated} />
+                    <KoFld label="Estimasi Tgl. kirim" required type="date" value={form.informasiUmum.estimasiKirim} onChange={v=>setInfo({estimasiKirim:v})} locked={gated} />
 
-                    <Fld label="Customer" required type="select" options={PJ_PELANGGAN.map(p=>p.name)} value={form.customer} onChange={v=>{ const p=PJ_PELANGGAN.find(x=>x.name===v); setForm(f=>({...f,customer:v,kodeCustomer:p?p.code:''})); }} locked={gated} />
-                    <Fld label="Kode Customer" locked mono value={form.kodeCustomer} />
-                    <Fld label="Klasifikasi" required type="select" options={PJ_KLASIFIKASI_LIST} value={form.informasiUmum.klasifikasi} onChange={v=>setInfo({klasifikasi:v})} locked={gated} />
-                    <Fld label="Attn - PIC" required value={form.informasiUmum.attn} onChange={v=>setInfo({attn:v})} locked={gated} />
+                    <KoFld label="Customer" required type="select" options={pjPelanggan(true).map(p=>p.name)} value={form.customer} onChange={v=>{ const p=pjPelanggan().find(x=>x.name===v); setForm(f=>({...f,customer:v,kodeCustomer:p?p.code:''})); }} locked={gated} />
+                    <KoFld label="Kode Customer" locked mono value={form.kodeCustomer} />
+                    <KoFld label="Klasifikasi" required type="select" options={PJ_KLASIFIKASI_LIST} value={form.informasiUmum.klasifikasi} onChange={v=>setInfo({klasifikasi:v})} locked={gated} />
+                    <KoFld label="Attn - PIC" required value={form.informasiUmum.attn} onChange={v=>setInfo({attn:v})} locked={gated} />
 
-                    <Fld label="Sales" required type="select" options={PJ_SALES.map(s=>s.nama)} value={form.sales} onChange={v=>{ const s=PJ_SALES.find(x=>x.nama===v); setForm(f=>({...f,sales:v,kodeSales:s?s.kode:''})); }} locked={gated} />
-                    <Fld label="Kode Sales" locked mono value={form.kodeSales} />
-                    <Fld label="Telepon / HP" value={form.informasiUmum.telepon} onChange={v=>setInfo({telepon:v})} locked={gated} />
-                    <Fld label="Email" type="email" value={form.informasiUmum.email} onChange={v=>setInfo({email:v})} locked={gated} />
-                    <Fld label="Nama & HP Penerima" value={form.informasiUmum.namaHpPenerima} onChange={v=>setInfo({namaHpPenerima:v})} locked={gated} />
-                    <Fld label="Jenis Kendaraan" value={form.informasiUmum.jenisKendaraan} onChange={v=>setInfo({jenisKendaraan:v})} locked={gated} />
+                    <KoFld label="Sales" required type="select" options={PJ_SALES.map(s=>s.nama)} value={form.sales} onChange={v=>{ const s=PJ_SALES.find(x=>x.nama===v); setForm(f=>({...f,sales:v,kodeSales:s?s.kode:''})); }} locked={gated} />
+                    <KoFld label="Kode Sales" locked mono value={form.kodeSales} />
+                    <KoFld label="Telepon / HP" value={form.informasiUmum.telepon} onChange={v=>setInfo({telepon:v})} locked={gated} />
+                    <KoFld label="Email" type="email" value={form.informasiUmum.email} onChange={v=>setInfo({email:v})} locked={gated} />
+                    <KoFld label="Nama & HP Penerima" value={form.informasiUmum.namaHpPenerima} onChange={v=>setInfo({namaHpPenerima:v})} locked={gated} />
+                    <KoFld label="Jenis Kendaraan" value={form.informasiUmum.jenisKendaraan} onChange={v=>setInfo({jenisKendaraan:v})} locked={gated} />
 
-                    <Fld label="Incoterm" required type="select" options={PJ_INCOTERM_LIST} value={form.informasiUmum.incoterm} onChange={v=>setInfo({incoterm:v})} locked={gated} />
+                    <KoFld label="Incoterm" required type="select" options={PJ_INCOTERM_LIST} value={form.informasiUmum.incoterm} onChange={v=>setInfo({incoterm:v})} locked={gated} />
 
-                    <Fld label="Alamat Customer" type="textarea" span={2} value={form.informasiUmum.alamatCustomer} onChange={v=>setInfo({alamatCustomer:v})} locked={gated} />
-                    <Fld label="Keterangan" type="textarea" span={2} value={form.informasiUmum.keterangan} onChange={v=>setInfo({keterangan:v})} locked={gated} />
+                    <KoFld label="Alamat Customer" type="textarea" span={2} value={form.informasiUmum.alamatCustomer} onChange={v=>setInfo({alamatCustomer:v})} locked={gated} />
+                    <KoFld label="Keterangan" type="textarea" span={2} value={form.informasiUmum.keterangan} onChange={v=>setInfo({keterangan:v})} locked={gated} />
 
-                    <Fld label="Alamat Pengiriman / ambil" type="textarea" span={2} value={form.informasiUmum.alamatPengiriman} onChange={v=>setInfo({alamatPengiriman:v})} locked={gated} />
+                    <KoFld label="Alamat Pengiriman / ambil" type="textarea" span={2} value={form.informasiUmum.alamatPengiriman} onChange={v=>setInfo({alamatPengiriman:v})} locked={gated} />
                   </div>
                 </div>
 
                 <div ref={bayarRef} className="panel scroll-section" style={{marginBottom:16}}>
                   <h3>Pembayaran</h3>
                   <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:12}}>
-                    <Fld label="Cara Bayar" required type="select" options={PJ_CARA_BAYAR} value={form.caraBayar} onChange={v=>setForm(f=>({...f,caraBayar:v}))} locked={gated} />
-                    <Fld label="Tempo (Hari)" type="number" mono value={form.pembayaran.tempo} onChange={v=>setBayar({tempo:v})} locked={gated} />
-                    <Fld label="Payment 1 / DP" type="number" mono value={form.pembayaran.dp} onChange={v=>setBayar({dp:v})} locked={gated} />
+                    <KoFld label="Cara Bayar" required type="select" options={PJ_CARA_BAYAR} value={form.caraBayar} onChange={v=>setForm(f=>({...f,caraBayar:v}))} locked={gated} />
+                    <KoFld label="Tempo (Hari)" type="number" mono value={form.pembayaran.tempo} onChange={v=>setBayar({tempo:v})} locked={gated} />
+                    <KoFld label="Payment 1 / DP" type="number" mono value={form.pembayaran.dp} onChange={v=>setBayar({dp:v})} locked={gated} />
 
-                    <Fld label="Akun Pembayaran" required type="select" options={PJ_AKUN_TUNAI} value={form.pembayaran.akun} onChange={v=>setBayar({akun:v})} locked={gated} />
-                    <Fld label="Berlaku Sampai" type="date" value={form.pembayaran.berlakuSampai} onChange={v=>setBayar({berlakuSampai:v})} locked={gated} />
-                    <Fld label="Payment 2" type="number" mono value={form.pembayaran.payment2} onChange={v=>setBayar({payment2:v})} locked={gated} />
+                    <KoFld label="Akun Pembayaran" required type="select" options={PJ_AKUN_TUNAI} value={form.pembayaran.akun} onChange={v=>setBayar({akun:v})} locked={gated} />
+                    <KoFld label="Berlaku Sampai" type="date" value={form.pembayaran.berlakuSampai} onChange={v=>setBayar({berlakuSampai:v})} locked={gated} />
+                    <KoFld label="Payment 2" type="number" mono value={form.pembayaran.payment2} onChange={v=>setBayar({payment2:v})} locked={gated} />
 
-                    <Fld label="Payment 3" type="number" mono value={form.pembayaran.payment3} onChange={v=>setBayar({payment3:v})} locked={gated} />
+                    <KoFld label="Payment 3" type="number" mono value={form.pembayaran.payment3} onChange={v=>setBayar({payment3:v})} locked={gated} />
                   </div>
                 </div>
 
@@ -713,12 +727,12 @@ function KonfirmasiPenjualanModal({ data, initialMode, onClose, onSave }) {
           onCancel={()=>setConfirmModal(null)}
           onConfirm={(reason)=>{
             if (confirmModal.kind==='batal') {
-              const updated = { ...form, status:'BATAL' };
+              const updated = { ...form, status:'BATAL', alasanBatal: reason };
               setForm(updated);
               onSave && onSave(updated);
               window.__erpToast && window.__erpToast('Transaksi dibatalkan.');
             } else if (confirmModal.kind==='selesai') {
-              const updated = { ...form, status:'SELESAI MANUAL' };
+              const updated = { ...form, status:'SELESAI MANUAL', alasanSelesai: reason };
               setForm(updated);
               onSave && onSave(updated);
               window.__erpToast && window.__erpToast('Transaksi diselesaikan manual.');
@@ -752,7 +766,6 @@ function KonfirmasiPage({ rows, setRows }) {
 
   const save = (form) => {
     setRows(prev => prev.some(k => k.noBukti === form.noBukti) ? prev.map(k => k.noBukti===form.noBukti ? form : k) : [form, ...prev]);
-    closeModal();
   };
   const cancelRow = (reason) => {
     setRows(prev => prev.map(k => k.noBukti===confirmCancel.noBukti ? {...k, status:'BATAL', alasanBatal: reason} : k));
@@ -772,7 +785,7 @@ function KonfirmasiPage({ rows, setRows }) {
           initialSelected={cetakRow ? [cetakRow.noBukti] : null}
           onClose={()=>{setShowCetak(false); setCetakRow(null);}} />
       )}
-      {show && <KonfirmasiPenjualanModal data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} />}
+      {show && <KonfirmasiPenjualanModal rows={rows} data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} />}
       {confirmCancel && (
         <ConfirmationModal
           title="Batalkan Transaksi"

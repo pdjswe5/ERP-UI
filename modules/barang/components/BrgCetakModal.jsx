@@ -169,6 +169,7 @@ function BrgCetakRegisterBody({ lines, docLabel, orgInfo, tglRangeLabel, columns
 }
 
 function BrgCetakModal({ docLabel, rows, columns, getItems, getGroupLabel, groupLabelText='Gudang', initialSelected, onClose }) {
+  useEscape(onClose);
   const orgInfo = (typeof PG_ORGANISASI !== 'undefined' && PG_ORGANISASI) || { nama:'PT. Pacific Data Jaya', alamat:'', kota:'', telpon:'', email:'', noNpwp:'' };
   const [tglAwal, setTglAwal] = React.useState('');
   const [tglAkhir, setTglAkhir] = React.useState('');
@@ -200,7 +201,7 @@ function BrgCetakModal({ docLabel, rows, columns, getItems, getGroupLabel, group
   });
   const toggleOne = (no) => setSelected(prev => { const next = new Set(prev); next.has(no) ? next.delete(no) : next.add(no); return next; });
 
-  const selectedRows = rows.filter(r => selected.has(r.noBukti));
+  const selectedRows = filtered.filter(r => selected.has(r.noBukti));
   const registerLines = previewMode === 'register' ? brgBuildRegisterLines(selectedRows, itemsOf, labelOf) : [];
   const registerPages = previewMode === 'register' ? brgChunk(registerLines, BRG_REGISTER_ROWS_PER_PAGE) : [[]];
   const registerTotalItems = React.useMemo(() => registerLines.filter(ln => ln.type === 'item').length, [registerLines]);
@@ -215,7 +216,7 @@ function BrgCetakModal({ docLabel, rows, columns, getItems, getGroupLabel, group
       })();
 
   const doCetak = () => {
-    window.__erpToast && window.__erpToast(`Cetak dikirim ke printer (${selectedRows.length} dokumen).`);
+    erpPrint();
     onClose();
   };
 
@@ -270,6 +271,7 @@ function BrgCetakModal({ docLabel, rows, columns, getItems, getGroupLabel, group
           <div className="cetak-preview-pane">
             <div className="cetak-toolbar">
               <span className="cetak-pageof">{selectedRows.length===0 ? '0 halaman' : previewMode==='register' ? `${totalPages} halaman` : `${selectedRows.length} dokumen`}</span>
+              <ErpPaperSelect />
               <div style={{display:'flex', gap:4, alignItems:'center'}}>
                 <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.max(50,z-10))}>−</button>
                 <span className="cetak-pageof">{zoom}%</span>

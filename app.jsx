@@ -109,6 +109,8 @@ function App({ session, onLogout, t, setTweak }) {
     if (subId !== null) openSubTab(modId, subId);
     else activateGroup(modId);
   };
+  // Dipakai breadcrumb "Home" di ModuleDashboard (komponen itu tidak menerima onNavigate).
+  window.__erpGoHome = () => navigateTo('home');
 
   // Called by module pages: null = back to dashboard, string = open sub-tab
   const onSubChange = (modId, subId) => {
@@ -135,7 +137,6 @@ function App({ session, onLogout, t, setTweak }) {
     if (g === 'payroll')    return <PayrollPage     activeSub={sub} onSubChange={id => onSubChange('payroll', id)}    onNavigate={navigateTo} />;
     if (g === 'laporan')    return <LaporanPage     activeSub={sub} onSubChange={id => onSubChange('laporan', id)}    onNavigate={navigateTo} />;
     if (g === 'pengaturan')  return <PengaturanPage  activeSub={sub} onSubChange={id => onSubChange('pengaturan', id)}  onNavigate={navigateTo} />;
-    if (g === 'inventory')   return <InventoryPage   activeSub={sub} onSubChange={id => onSubChange('inventory', id)}   onNavigate={navigateTo} />;
     return null;
   };
 
@@ -181,7 +182,6 @@ function App({ session, onLogout, t, setTweak }) {
         <TweakSection label="Navigation" />
         <TweakButton label="Go to Dashboard"       onClick={() => activateGroup('home')} />
         <TweakButton label="Go to Pembelian"       onClick={() => activateGroup('pembelian')} secondary />
-        <TweakButton label="Go to Inventory"       onClick={() => activateGroup('inventory')} secondary />
         <TweakButton label="Go to Pelanggan"       onClick={() => activateGroup('sales')} secondary />
         <TweakButton label="Go to Keuangan"        onClick={() => activateGroup('keuangan')} secondary />
       </TweaksPanel>

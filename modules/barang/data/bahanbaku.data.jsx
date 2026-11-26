@@ -9,7 +9,7 @@ const BB_WARNA_CODES = BRG_WARNA_OPTS.map(w => w.kode);
 const BB_AZ_CODES = BRG_AZ_OPTS.map(a => a.kode);
 const BB_YIELD_CODES = BRG_YIELD_OPTS.map(y => y.kode);
 const BB_SATUAN_CODES = BRG_SATUAN_OPTS;
-const BB_SUPPLIERS = ['PT Sinar Jaya', 'AG Steel', 'Bogowonto Metal', 'PT Baja Makmur', 'CV Logam Sejahtera', 'PT Metal Perkasa', 'UD Sumber Rejeki', 'PT Cahaya Logam'];
+const BB_SUPPLIERS = ['PT. Pemasok Contoh E', 'PT. Pemasok Contoh A', 'PT. Pemasok Contoh F', 'PT. Pemasok Contoh G', 'CV. Pemasok Contoh H', 'PT. Pemasok Contoh I', 'UD. Pemasok Contoh J', 'PT. Pemasok Contoh K'];
 const BB_LEBAR_STEPS = [500, 750, 900, 914, 1000, 1219];
 
 function bbNama(opts, kode) { return opts.find(o => o.kode === kode)?.nama || ''; }

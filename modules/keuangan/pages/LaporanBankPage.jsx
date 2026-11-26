@@ -29,18 +29,18 @@ function akBankGroups(kbgRows, allEvents, tglAwalIso, tglAkhirIso) {
     };
   });
 }
-function LaporanBankPage({ kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows }) {
+function LaporanBankPage({ kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows, giroMasukRows, giroKeluarRows }) {
   const [tglAwal, setTglAwal] = React.useState('2026-04-01');
   const [tglAkhir, setTglAkhir] = React.useState('2026-07-31');
 
   const allEvents = React.useMemo(() => akBbAllEvents({
     kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows,
-    transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows,
-  }), [kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows]);
+    transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows, giroMasukRows, giroKeluarRows,
+  }), [kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows, giroMasukRows, giroKeluarRows]);
 
   const groups = React.useMemo(() => akBankGroups(kbgRows, allEvents, tglAwal, tglAkhir), [kbgRows, allEvents, tglAwal, tglAkhir]);
 
-  const doCetak = () => { window.__erpToast && window.__erpToast('Cetak dikirim ke printer.'); };
+  const doCetak = () => { erpPrint(); };
 
   return (
     <>

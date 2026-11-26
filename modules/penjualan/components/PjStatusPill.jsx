@@ -6,7 +6,7 @@ function pjLineTotal(r) {
   const hrg = +r.Hrg_Sat || 0;
   const d1 = +r.DiscPros_Det || 0;
   const dRp = +r.DiscNilai_Det || 0;
-  return jml * hrg * (1 - d1/100) - dRp;
+  return Math.max(0, jml * hrg * (1 - d1/100) - dRp);
 }
 
 function pjDocStatusPill(v) {

@@ -32,7 +32,7 @@ function akBbDetilGroups(akunRows, kbgRows, allEvents, kodeDari, kodeSampai, tgl
     });
 }
 
-function LaporanBukuBesarDetailPage({ akunRows, kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows }) {
+function LaporanBukuBesarDetailPage({ akunRows, kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows, giroMasukRows, giroKeluarRows }) {
   const [tglAwal, setTglAwal] = React.useState('2026-04-01');
   const [tglAkhir, setTglAkhir] = React.useState('2026-07-31');
   const [kodeDari, setKodeDari] = React.useState('');
@@ -40,14 +40,14 @@ function LaporanBukuBesarDetailPage({ akunRows, kbgRows, kasMasukRows, kasKeluar
 
   const allEvents = React.useMemo(() => akBbAllEvents({
     kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows,
-    transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows,
-  }), [kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows]);
+    transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows, giroMasukRows, giroKeluarRows,
+  }), [kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows, giroMasukRows, giroKeluarRows]);
 
   const groups = React.useMemo(() => akBbDetilGroups(akunRows, kbgRows, allEvents, kodeDari, kodeSampai, tglAwal, tglAkhir),
     [akunRows, kbgRows, allEvents, kodeDari, kodeSampai, tglAwal, tglAkhir]);
 
   const sorted = React.useMemo(() => [...akunRows].sort((a,b) => a.kode.localeCompare(b.kode)), [akunRows]);
-  const doCetak = () => { window.__erpToast && window.__erpToast('Cetak dikirim ke printer.'); };
+  const doCetak = () => { erpPrint(); };
 
   return (
     <>

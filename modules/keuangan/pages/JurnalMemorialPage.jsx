@@ -17,6 +17,7 @@ function JurnalMemorial({ rows, onAdd, onEdit, onCetak, onCetakRow }) {
     return true;
   });
   const reset = () => { setQ(''); setPeriode(''); setStatus(''); };
+  const { pageRows, pager } = useErpPager(filtered);
 
   return (
     <>
@@ -53,7 +54,7 @@ function JurnalMemorial({ rows, onAdd, onEdit, onCetak, onCetakRow }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(j => (
+              {pageRows.map(j => (
                 <tr key={j.no} onClick={()=>onEdit(j)}>
                   <td onClick={e=>e.stopPropagation()}><input type="checkbox" className="cb"/></td>
                   <td className="mono">{j.tgl}</td>
@@ -74,6 +75,7 @@ function JurnalMemorial({ rows, onAdd, onEdit, onCetak, onCetakRow }) {
             </tbody>
           </table>
         </div>
+        {pager}
       </div>
     </>
   );
@@ -82,7 +84,7 @@ function JurnalMemorial({ rows, onAdd, onEdit, onCetak, onCetakRow }) {
 function JurnalModal({ data, akunRows, onClose, onSave }) {
   const isEdit = !!data;
   const [form, setForm] = React.useState(() => ({
-    tgl: akToIso(data?.tgl) || new Date().toISOString().slice(0,10),
+    tgl: akToIso(data?.tgl) || todayLocal(),
     no: data?.no || '',
     desc: data?.desc || '',
     status: data?.status || 'Draft',
@@ -100,7 +102,15 @@ function JurnalModal({ data, akunRows, onClose, onSave }) {
   const totalK = lines.reduce((s,l)=>s+(+l.k||0), 0);
   const balanced = totalD === totalK && totalD > 0;
 
-  const handleSave = () => onSave({ ...form, tgl: akFromIso(form.tgl), total: totalD, lines });
+  const handleSave = () => {
+    const used = lines.filter(l => +l.d || +l.k || l.akun);
+    if (!form.tgl || !String(form.desc || '').trim()) { window.__erpToast && window.__erpToast('Tanggal dan deskripsi wajib diisi.'); return; }
+    if (used.some(l => !l.akun)) { window.__erpToast && window.__erpToast('Setiap baris jurnal wajib memilih akun.'); return; }
+    if (used.some(l => +l.d && +l.k)) { window.__erpToast && window.__erpToast('Satu baris hanya boleh debet ATAU kredit.'); return; }
+    if (!balanced) { window.__erpToast && window.__erpToast('Total debet harus sama dengan total kredit.'); return; }
+    // Tombol "Simpan & Posting" (jurnal baru) benar-benar mem-posting; edit mempertahankan status lama.
+    onSave({ ...form, status: isEdit ? form.status : 'Posted', tgl: akFromIso(form.tgl), total: totalD, lines: used });
+  };
 
   return (
     <AkModalShell wide title={isEdit?`Edit Jurnal — ${data.no}`:'Jurnal Memorial'}

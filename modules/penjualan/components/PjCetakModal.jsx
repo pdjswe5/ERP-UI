@@ -68,8 +68,13 @@ function pjChunk(lines, size) {
   return out.length ? out : [[]];
 }
 
-function PjCetakBuktiBody({ no, docLabel, orgInfo, items, groupLabel, tglLabel, isBatal }) {
+function PjCetakBuktiBody({ row, no, docLabel, orgInfo, items, groupLabel, tglLabel, isBatal }) {
   const subTotal = items.reduce((s,it) => s + (it.total || 0), 0);
+  const r = row || {};
+  const m = { ...erpMapSeedTotals(r), ...r };
+  const ppnPct = r.PPN ?? r.Ppn ?? r.ppn ?? 11;
+  const tot = erpCalcTotals(subTotal, m.discPct, m.discRp, ppnPct, m.ppnMode);
+  const hasHarga = erpDocHasHarga(docLabel);
   return (
     <div className="cetak-doc">
       {isBatal && <div className="cetak-watermark">BATAL</div>}
@@ -81,7 +86,7 @@ function PjCetakBuktiBody({ no, docLabel, orgInfo, items, groupLabel, tglLabel, 
         {orgInfo.email && <div>Email : {orgInfo.email}</div>}
       </div>
       <div className="cetak-title-block">
-        <div className="cetak-title-spaced">INVOICE</div>
+        <div className="cetak-title-spaced">{erpDocTitle(docLabel)}</div>
         <div className="cetak-title-no">No. {no}</div>
       </div>
       <div className="cetak-info-grid">
@@ -95,7 +100,7 @@ function PjCetakBuktiBody({ no, docLabel, orgInfo, items, groupLabel, tglLabel, 
         </div>
       </div>
       <table className="cetak-table">
-        <thead><tr><th style={{width:28}}>No</th><th>Nama Barang</th><th style={{width:80}}>Satuan</th><th style={{width:80}}>Kuantum</th><th style={{width:110}}>Harga Satuan</th><th style={{width:110}}>Jumlah</th></tr></thead>
+        <thead><tr><th style={{width:28}}>No</th><th>Nama Barang</th><th style={{width:80}}>Satuan</th><th style={{width:80}}>Kuantum</th>{hasHarga && <><th style={{width:110}}>Harga Satuan</th><th style={{width:110}}>Jumlah</th></>}</tr></thead>
         <tbody>
           {items.length === 0 && <tr><td colSpan={6} className="empty">Tidak ada item.</td></tr>}
           {items.map((it,i) => (
@@ -104,8 +109,8 @@ function PjCetakBuktiBody({ no, docLabel, orgInfo, items, groupLabel, tglLabel, 
               <td>{it.nama}</td>
               <td>{it.satuan}</td>
               <td className="num">{it.jumlah}</td>
-              <td className="num">{fmtRp(it.hrgSatuan)}</td>
-              <td className="num">{fmtRp(it.total)}</td>
+              {hasHarga && <><td className="num">{fmtRp(it.hrgSatuan)}</td>
+              <td className="num">{fmtRp(it.total)}</td></>}
             </tr>
           ))}
         </tbody>
@@ -114,10 +119,17 @@ function PjCetakBuktiBody({ no, docLabel, orgInfo, items, groupLabel, tglLabel, 
         <div className="cetak-sign">
           <div className="cetak-sign-box"><div className="line" /><div>Hormat kami,</div></div>
         </div>
-        <div className="cetak-summary">
-          <div>Sub Total<span>{fmtRp(subTotal)}</span></div>
-          <div className="grand">Grand Total<span>{fmtRp(subTotal)}</span></div>
-        </div>
+        {hasHarga ? (
+          <div className="cetak-summary">
+            <div>Sub Total<span>{fmtRp(subTotal)}</span></div>
+            {tot.discAmt > 0 && <div>Diskon<span>({fmtRp(Math.round(tot.discAmt))})</span></div>}
+            <div>DPP<span>{fmtRp(Math.round(tot.dpp))}</span></div>
+            <div>PPN {ppnPct}%{m.ppnMode === 'Include' ? ' (Include)' : ''}<span>{fmtRp(Math.round(tot.ppnAmt))}</span></div>
+            <div className="grand">Grand Total<span>{fmtRp(Math.round(tot.total))}</span></div>
+          </div>
+        ) : (
+          <div className="cetak-summary"><div className="grand">Jumlah Item<span>{items.length}</span></div></div>
+        )}
       </div>
       <div className="cetak-timestamp">Dicetak pada {pjFmtTgl(new Date().toISOString())} {new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator</div>
     </div>
@@ -192,6 +204,7 @@ function PjCetakModal({
   docLabel, rows, statusFilter, getItems, getGroupLabel, initialSelected, onClose,
   noBuktiKey='No_Bukti', tglBuktiKey='Tgl_Bukti', statusKey='Status', batalKey='Batal', itemsKey='Details',
 }) {
+  useEscape(onClose);
   const orgInfo = (typeof PG_ORGANISASI !== 'undefined' && PG_ORGANISASI) || { nama:'PT. Pacific Data Jaya', alamat:'', kota:'', telpon:'', email:'', noNpwp:'' };
   const getNo = (r) => r[noBuktiKey];
   const getTgl = (r) => r[tglBuktiKey];
@@ -225,7 +238,7 @@ function PjCetakModal({
   });
   const toggleOne = (no) => setSelected(prev => { const next = new Set(prev); next.has(no) ? next.delete(no) : next.add(no); return next; });
 
-  const selectedRows = rows.filter(r => selected.has(getNo(r)));
+  const selectedRows = filtered.filter(r => selected.has(getNo(r)));
   const registerLines = previewMode === 'register' ? pjBuildRegisterLines(selectedRows, itemsOf, labelOf, isBatalRow, getNo, getTgl) : [];
   const registerPages = previewMode === 'register' ? pjChunk(registerLines, PJ_REGISTER_ROWS_PER_PAGE) : [[]];
   const registerGrandTotal = React.useMemo(() => registerLines.reduce((s, ln) => s + (ln.type === 'item' ? (ln.item.total || 0) : 0), 0), [registerLines]);
@@ -240,7 +253,7 @@ function PjCetakModal({
       })();
 
   const doCetak = () => {
-    window.__erpToast && window.__erpToast(`Cetak dikirim ke printer (${selectedRows.length} dokumen).`);
+    erpPrint();
     onClose();
   };
 
@@ -296,6 +309,7 @@ function PjCetakModal({
           <div className="cetak-preview-pane">
             <div className="cetak-toolbar">
               <span className="cetak-pageof">{selectedRows.length===0 ? '0 halaman' : previewMode==='register' ? `${totalPages} halaman` : `${selectedRows.length} dokumen`}</span>
+              <ErpPaperSelect />
               <div style={{display:'flex', gap:4, alignItems:'center'}}>
                 <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.max(50,z-10))}>−</button>
                 <span className="cetak-pageof">{zoom}%</span>
@@ -315,7 +329,7 @@ function PjCetakModal({
               ) : (
                 selectedRows.map((row, idx) => (
                   <div className="cetak-page" key={getNo(row) || idx} style={{transform:`scale(${zoom/100})`}}>
-                    <PjCetakBuktiBody no={getNo(row)} docLabel={docLabel} orgInfo={orgInfo}
+                    <PjCetakBuktiBody row={row} no={getNo(row)} docLabel={docLabel} orgInfo={orgInfo}
                       items={itemsOf(row)} groupLabel={labelOf(row)}
                       tglLabel={pjFmtTgl(getTgl(row))} isBatal={isBatalRow(row)} />
                   </div>

@@ -95,7 +95,7 @@ function AkunBBModal({ data, onClose, onSave }) {
       <div className="form-section">
         <div className="form-row">
           <div className="field"><label>Nama Akun *</label><input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Contoh: KAS BESAR"/></div>
-          <div className="field"><label>Kode Akun *</label><input className="input mono" value={form.kode} onChange={e=>set('kode',e.target.value)} placeholder="0000.000"/></div>
+          <div className="field"><label>Kode Akun *</label><input className="input mono" value={form.kode} disabled={isEdit} onChange={e=>set('kode',e.target.value)} placeholder="0000.000"/></div>
         </div>
         <div className="form-row-3">
           <div className="field"><label>Tipe</label>
@@ -123,6 +123,8 @@ function KatalogAkunPage({ rows, setRows }) {
   const [modal, setModal] = React.useState(null); // null | {} (create) | {data} (edit)
 
   const save = (form) => {
+    if (!String(form.kode || '').trim()) { window.__erpToast && window.__erpToast('Kode akun wajib diisi.'); return; }
+    if (!modal?.data && !modal?.kode && rows.some(r => r.kode === form.kode) && !(modal && modal.kode === form.kode)) { window.__erpToast && window.__erpToast(`Kode akun ${form.kode} sudah dipakai.`); return; }
     setRows(prev => prev.some(r => r.kode === form.kode) ? prev.map(r => r.kode === form.kode ? form : r) : [...prev, form]);
     setModal(null);
     window.__erpToast && window.__erpToast('Data berhasil disimpan.');

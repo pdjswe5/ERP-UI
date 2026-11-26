@@ -1,6 +1,6 @@
 // Pembelian — halaman Goods Receive (GR)
 
-function GrPage({ rows, setRows }) {
+function GrPage({ rows, setRows, source }) {
   const columns = [
     { key:'No_Bukti', label:'No. Bukti', mono:true },
     { key:'Tgl_Bukti', label:'Tgl. Bukti' },
@@ -15,6 +15,7 @@ function GrPage({ rows, setRows }) {
   const [modalMode, setModalMode] = React.useState(null);
   const [confirmCancel, setConfirmCancel] = React.useState(null);
   const [showCetak, setShowCetak] = React.useState(false);
+  const [cetakRow, setCetakRow] = React.useState(null);
 
   const openAdd = () => { setModal(null); setModalMode(null); setShow(true); };
   const openView = (r) => { setModal(r); setModalMode('VIEW'); setShow(true); };
@@ -37,6 +38,7 @@ function GrPage({ rows, setRows }) {
 
   const cancelFromList = (reason) => {
     const updated = { ...confirmCancel, Status:'BATAL', Batal:true, Alasan_Batal: reason || 'Dibatalkan oleh operator' };
+    if (source && source.onRealisasi && !erpIsLocked(confirmCancel)) source.onRealisasi(confirmCancel.Details, -1);
     setRows(prev => prev.map(r => r.No_Bukti===updated.No_Bukti ? updated : r));
     window.__erpToast && window.__erpToast('Goods Receive dibatalkan.');
     setConfirmCancel(null);
@@ -78,17 +80,20 @@ function GrPage({ rows, setRows }) {
         onView={openView}
         onEdit={openEdit}
         onCancelDoc={(r)=>setConfirmCancel(r)}
-        onCetak={()=>setShowCetak(true)}
+        onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
+        onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}}
         addLabel="GR Baru"
         statusFilter={statusFilter}
       />
-      {showCetak && <PbCetakModal docLabel="Goods Receive" rows={rows} statusFilter={statusFilter} onClose={()=>setShowCetak(false)} />}
+      {showCetak && <PbCetakModal docLabel="Goods Receive" rows={rows} statusFilter={statusFilter} getGroupLabel={r=>r.Nama_Supp || pbSuppNama(r.Kode_Supp)} initialSelected={cetakRow ? [cetakRow.No_Bukti] : null} onClose={()=>{setShowCetak(false); setCetakRow(null);}} />}
       {show && (
         <PbModalShell
+          rows={rows}
+          source={source}
           title="Goods Receive"
           data={modal}
           tabs={grModalTabs()}
-          prefix="FTB"
+          prefix="TB"
           showTotals
           initialMode={modalMode}
           xwide

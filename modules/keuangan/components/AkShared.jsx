@@ -20,6 +20,7 @@ function AkHeader({ title, sub, onAdd, addLabel='Tambah', extra }) {
 }
 
 function AkModalShell({ title, sub, onClose, onSave, children, saveLabel='Simpan', wide=false, saveDisabled=false, maxWidth }) {
+  useEscape(onClose);
   return (
     <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth: maxWidth || (wide?1100:680)}}>

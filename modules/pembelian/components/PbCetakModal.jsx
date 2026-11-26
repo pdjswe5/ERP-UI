@@ -29,12 +29,13 @@ function pbFmtTgl(iso) {
 // karena semua baris barangnya (Details) konsisten pakai Kode_Item/Nama_Item/Satuan, & Qty atau
 // Jumlah (baris biaya). Kategori Bahan Baku/Jadi/Lain diambil dari PB_PRODUK (master.data.jsx).
 function pbCetakDefaultItems(row) {
-  return (row.Details || []).map(d => {
+  // Harga diambil dari dokumen (Harga/Hrg_Sat) — bukan harga master; total baris memakai diskon baris.
+  return [...(row.Details || []), ...(row.Details2 || [])].map(d => {
     const jumlah = d.Qty ?? d.Jumlah ?? 0;
-    const hrgSatuan = +d.Hrg_Sat || PB_PRODUK.find(p => p.kode === d.Kode_Item)?.harga || 0;
+    const hrgSatuan = +(d.Harga ?? d.Hrg_Sat) || 0;
     return {
-      kode: d.Kode_Item, nama: d.Nama_Item, jumlah, satuan: d.Satuan,
-      jenis: pbProdukJenis(d.Kode_Item), hrgSatuan, total: hrgSatuan * jumlah,
+      kode: d.Kode_Item || d.Kode_Biaya || '', nama: d.Nama_Item || d.Nama_Biaya || d.Keterangan || '', jumlah, satuan: d.Satuan || '',
+      jenis: pbProdukJenis(d.Kode_Item), hrgSatuan, total: pbLineTotal(d),
     };
   });
 }
@@ -46,10 +47,12 @@ function pbCetakDefaultItems(row) {
 // dokumen tanpa harga (PR/RFQ/GR) tetap fallback ke Qty polos + Ringkasan Item Bahan Baku/Jadi/Lain.
 function PbCetakBuktiBody({ row, docLabel, orgInfo, getItems, groupLabel }) {
   const items = getItems(row);
-  const hasHarga = items.some(it => (it.hrgSatuan || 0) > 0);
+  const hasHarga = erpDocHasHarga(docLabel);
   const counts = { BAKU:0, JADI:0, LAIN:0 };
   items.forEach(it => { counts[it.jenis === 'BAKU' || it.jenis === 'JADI' ? it.jenis : 'LAIN']++; });
   const subTotal = items.reduce((s,it) => s + (it.total || 0), 0);
+  const m = { ...erpMapSeedTotals(row), ...row };
+  const tot = erpCalcTotals(subTotal, m.discPct, m.discRp, row.PPN ?? row.Ppn ?? 11, m.ppnMode);
   const isBatal = !!(row.Batal || row.Status === 'BATAL');
   return (
     <div className="cetak-doc">
@@ -63,7 +66,7 @@ function PbCetakBuktiBody({ row, docLabel, orgInfo, getItems, groupLabel }) {
         {orgInfo.noNpwp && <div>NPWP {orgInfo.noNpwp}</div>}
       </div>
       <div className="cetak-title-block">
-        <div className="cetak-title-spaced">INVOICE</div>
+        <div className="cetak-title-spaced">{erpDocTitle(docLabel)}</div>
         <div className="cetak-title-no">No. {row.No_Bukti}</div>
       </div>
       <div className="cetak-info-grid">
@@ -106,12 +109,15 @@ function PbCetakBuktiBody({ row, docLabel, orgInfo, getItems, groupLabel }) {
       <div className="cetak-foot">
         <div className="cetak-sign">
           <div className="cetak-sign-box"><div className="line" /><div>Disetujui</div></div>
-          <div className="cetak-sign-box"><div className="line" /><div>Pemohon</div><b>PDJ Administrator</b></div>
+          <div className="cetak-sign-box"><div className="line" /><div>{docLabel === 'Permintaan Pembelian' ? 'Pemohon' : 'Dibuat oleh'}</div><b>PDJ Administrator</b></div>
         </div>
         {hasHarga ? (
           <div className="cetak-summary">
             <div>Sub Total<span>{fmtRp(subTotal)}</span></div>
-            <div className="grand">Grand Total<span>{fmtRp(subTotal)}</span></div>
+            {tot.discAmt > 0 && <div>Diskon<span>({fmtRp(Math.round(tot.discAmt))})</span></div>}
+            <div>DPP<span>{fmtRp(Math.round(tot.dpp))}</span></div>
+            <div>PPN {row.PPN ?? row.Ppn ?? 11}%{m.ppnMode === 'Include' ? ' (Include)' : ''}<span>{fmtRp(Math.round(tot.ppnAmt))}</span></div>
+            <div className="grand">Grand Total<span>{fmtRp(Math.round(tot.total))}</span></div>
           </div>
         ) : (
           <div className="cetak-summary">
@@ -231,6 +237,7 @@ function pbChunk(lines, size) {
 }
 
 function PbCetakModal({ docLabel, rows, statusFilter, getItems, getGroupLabel, initialSelected, onClose }) {
+  useEscape(onClose);
   const orgInfo = (typeof PG_ORGANISASI !== 'undefined' && PG_ORGANISASI) || { nama:'PT. Pacific Data Jaya', alamat:'', kota:'', telpon:'', email:'', noNpwp:'' };
   const [tglAwal, setTglAwal] = React.useState('');
   const [tglAkhir, setTglAkhir] = React.useState('');
@@ -258,7 +265,7 @@ function PbCetakModal({ docLabel, rows, statusFilter, getItems, getGroupLabel, i
   });
   const toggleOne = (no) => setSelected(prev => { const next = new Set(prev); next.has(no) ? next.delete(no) : next.add(no); return next; });
 
-  const selectedRows = rows.filter(r => selected.has(r.No_Bukti));
+  const selectedRows = filtered.filter(r => selected.has(r.No_Bukti));
   const itemsOf = (r) => (getItems || pbCetakDefaultItems)(r);
   const labelOf = (r) => (getGroupLabel ? getGroupLabel(r) : '');
   const registerLines = previewMode === 'register' ? pbBuildRegisterLines(selectedRows, itemsOf, labelOf) : [];
@@ -280,7 +287,7 @@ function PbCetakModal({ docLabel, rows, statusFilter, getItems, getGroupLabel, i
       })();
 
   const doCetak = () => {
-    window.__erpToast && window.__erpToast(`Cetak dikirim ke printer (${selectedRows.length} dokumen).`);
+    erpPrint();
     onClose();
   };
 
@@ -336,6 +343,7 @@ function PbCetakModal({ docLabel, rows, statusFilter, getItems, getGroupLabel, i
           <div className="cetak-preview-pane">
             <div className="cetak-toolbar">
               <span className="cetak-pageof">{selectedRows.length===0 ? '0 halaman' : previewMode==='register' ? `${totalPages} halaman` : `${selectedRows.length} dokumen`}</span>
+              <ErpPaperSelect />
               <div style={{display:'flex', gap:4, alignItems:'center'}}>
                 <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.max(50,z-10))}>−</button>
                 <span className="cetak-pageof">{zoom}%</span>

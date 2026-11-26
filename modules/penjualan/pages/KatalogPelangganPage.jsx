@@ -11,7 +11,7 @@ function pelangganStatusPill(status) {
 // Didefinisikan di top-level (bukan di dalam komponen modal) supaya identitasnya stabil antar render —
 // kalau didefinisikan di dalam body komponen, tiap keystroke bikin instance baru dan React remount
 // elemen <input>-nya sehingga focus hilang setelah 1 huruf.
-function Fld({ label, value, onChange, locked, required, span, mono, type='text', options }) {
+function PjKatFld({ label, value, onChange, locked, required, span, mono, type='text', options }) {
   const spanStyle = span ? {gridColumn:`span ${span}`} : {};
   if (locked) {
     return (
@@ -245,61 +245,61 @@ function PelangganModal({ data, initialMode, onClose, onSave }) {
           <div ref={dasarRef} className="panel" style={{marginBottom:16}}>
             <h3>Informasi Dasar</h3>
             <div className="form-grid-4" style={{gap:12}}>
-              <Fld label="Kode Customer" required mono locked={mode!=='CREATE'} value={form.code} onChange={v=>set('code',v)} />
-              <Fld label="Nama Customer" required locked={isView} value={form.name} onChange={v=>set('name',v)} />
+              <PjKatFld label="Kode Customer" required mono locked={mode!=='CREATE'} value={form.code} onChange={v=>set('code',v)} />
+              <PjKatFld label="Nama Customer" required locked={isView} value={form.name} onChange={v=>set('name',v)} />
               {fieldsDisabled ? (
-                <Fld label="Nama Salesman" locked value={form.namaSales} />
+                <PjKatFld label="Nama Salesman" locked value={form.namaSales} />
               ) : (
                 <div className="field"><label>Nama Salesman</label><select className="select" value={form.namaSales} onChange={e=>{ const v=e.target.value; set('namaSales', v); const s=PJ_SALES.find(x=>x.nama===v); set('kodeSales', s?s.kode:''); }}><option value="">— Pilih —</option>{PJ_SALES.map(s=><option key={s.kode} value={s.nama}>{s.nama}</option>)}</select></div>
               )}
-              <Fld label="Kode Salesman" locked mono value={form.kodeSales} />
+              <PjKatFld label="Kode Salesman" locked mono value={form.kodeSales} />
 
-              <Fld label="No. KTP" mono locked={fieldsDisabled} value={form.noKtp} onChange={v=>set('noKtp',v)} />
-              <Fld label="Nama KTP" locked={fieldsDisabled} value={form.namaKtp} onChange={v=>set('namaKtp',v)} />
-              <Fld label="Tgl. Lahir" type="datetime-local" locked={fieldsDisabled} value={form.tglLahir} onChange={v=>set('tglLahir',v)} />
-              <Fld label="Owner" locked={fieldsDisabled} value={form.owner} onChange={v=>set('owner',v)} />
+              <PjKatFld label="No. KTP" mono locked={fieldsDisabled} value={form.noKtp} onChange={v=>set('noKtp',v)} />
+              <PjKatFld label="Nama KTP" locked={fieldsDisabled} value={form.namaKtp} onChange={v=>set('namaKtp',v)} />
+              <PjKatFld label="Tgl. Lahir" type="datetime-local" locked={fieldsDisabled} value={form.tglLahir} onChange={v=>set('tglLahir',v)} />
+              <PjKatFld label="Owner" locked={fieldsDisabled} value={form.owner} onChange={v=>set('owner',v)} />
 
-              <Fld label="Nama Pemesan" locked={fieldsDisabled} value={form.namaPemesan} onChange={v=>set('namaPemesan',v)} />
-              <Fld label="Kode Gabungan" mono locked={fieldsDisabled} value={form.kodeGabungan} onChange={v=>set('kodeGabungan',v)} />
-              <Fld label="Area" required type="select" options={['Jabodetabek','Jawa Barat','Jawa Timur','Jawa Tengah','Sumatera']} locked={fieldsDisabled} value={form.area} onChange={v=>set('area',v)} />
-              <Fld label="Golongan" required type="select" options={['Baik','Blokir','Blacklist']} locked={fieldsDisabled} value={form.golongan} onChange={v=>set('golongan',v)} />
+              <PjKatFld label="Nama Pemesan" locked={fieldsDisabled} value={form.namaPemesan} onChange={v=>set('namaPemesan',v)} />
+              <PjKatFld label="Kode Gabungan" mono locked={fieldsDisabled} value={form.kodeGabungan} onChange={v=>set('kodeGabungan',v)} />
+              <PjKatFld label="Area" required type="select" options={['Jabodetabek','Jawa Barat','Jawa Timur','Jawa Tengah','Sumatera']} locked={fieldsDisabled} value={form.area} onChange={v=>set('area',v)} />
+              <PjKatFld label="Golongan" required type="select" options={['Baik','Blokir','Blacklist']} locked={fieldsDisabled} value={form.golongan} onChange={v=>set('golongan',v)} />
 
-              <Fld label="Klasifikasi" type="select" options={PJ_KLASIFIKASI_LIST} locked={fieldsDisabled} value={form.klasifikasi} onChange={v=>set('klasifikasi',v)} />
-              <Fld label="Kota" locked={fieldsDisabled} value={form.kota} onChange={v=>set('kota',v)} />
-              <Fld label="Kode Pos" mono locked={fieldsDisabled} value={form.kodePos} onChange={v=>set('kodePos',v)} />
-              <Fld label="Fax" mono locked={fieldsDisabled} value={form.fax} onChange={v=>set('fax',v)} />
+              <PjKatFld label="Klasifikasi" type="select" options={PJ_KLASIFIKASI_LIST} locked={fieldsDisabled} value={form.klasifikasi} onChange={v=>set('klasifikasi',v)} />
+              <PjKatFld label="Kota" locked={fieldsDisabled} value={form.kota} onChange={v=>set('kota',v)} />
+              <PjKatFld label="Kode Pos" mono locked={fieldsDisabled} value={form.kodePos} onChange={v=>set('kodePos',v)} />
+              <PjKatFld label="Fax" mono locked={fieldsDisabled} value={form.fax} onChange={v=>set('fax',v)} />
 
-              <Fld label="Telepon" mono locked={fieldsDisabled} value={form.tel} onChange={v=>set('tel',v)} />
-              <Fld label="Email" type="email" locked={fieldsDisabled} value={form.email} onChange={v=>set('email',v)} />
-              <Fld label="Kontak" locked={fieldsDisabled} value={form.kontak} onChange={v=>set('kontak',v)} />
-              <Fld label="FK" type="select" options={[{value:'F',label:'F'},{value:'K',label:'K'}]} locked={fieldsDisabled} value={form.fk} onChange={v=>set('fk',v)} />
+              <PjKatFld label="Telepon" mono locked={fieldsDisabled} value={form.tel} onChange={v=>set('tel',v)} />
+              <PjKatFld label="Email" type="email" locked={fieldsDisabled} value={form.email} onChange={v=>set('email',v)} />
+              <PjKatFld label="Kontak" locked={fieldsDisabled} value={form.kontak} onChange={v=>set('kontak',v)} />
+              <PjKatFld label="FK" type="select" options={[{value:'F',label:'F'},{value:'K',label:'K'}]} locked={fieldsDisabled} value={form.fk} onChange={v=>set('fk',v)} />
 
-              <Fld label="Status" type="select" options={['Aktif','Non-aktif']} locked={fieldsDisabled} value={form.status} onChange={v=>set('status',v)} />
-              <Fld label="Alamat" type="textarea" span={3} locked={fieldsDisabled} value={form.alamat} onChange={v=>set('alamat',v)} />
+              <PjKatFld label="Status" type="select" options={['Aktif','Non-aktif']} locked={fieldsDisabled} value={form.status} onChange={v=>set('status',v)} />
+              <PjKatFld label="Alamat" type="textarea" span={3} locked={fieldsDisabled} value={form.alamat} onChange={v=>set('alamat',v)} />
 
-              <Fld label="Keterangan" type="textarea" span={4} locked={fieldsDisabled} value={form.keterangan} onChange={v=>set('keterangan',v)} />
-              <Fld label="Alamat Kirim" type="textarea" span={4} locked={fieldsDisabled} value={form.alamatKirim} onChange={v=>set('alamatKirim',v)} />
+              <PjKatFld label="Keterangan" type="textarea" span={4} locked={fieldsDisabled} value={form.keterangan} onChange={v=>set('keterangan',v)} />
+              <PjKatFld label="Alamat Kirim" type="textarea" span={4} locked={fieldsDisabled} value={form.alamatKirim} onChange={v=>set('alamatKirim',v)} />
             </div>
           </div>
 
           <div ref={pajakRef} className="panel" style={{marginBottom:16}}>
             <h3>Pajak & Kredit</h3>
             <div className="form-grid-4" style={{gap:12}}>
-              <Fld label="No. NPWP" mono span={2} locked={fieldsDisabled} value={form.noNpwp} onChange={v=>set('noNpwp',v)} />
-              <Fld label="Jenis Harga" required type="select" options={['Standar','Khusus','Grosir']} locked={fieldsDisabled} value={form.jenisHarga} onChange={v=>set('jenisHarga',v)} />
-              <Fld label="Nama Pajak" locked={fieldsDisabled} value={form.namaPajak} onChange={v=>set('namaPajak',v)} />
+              <PjKatFld label="No. NPWP" mono span={2} locked={fieldsDisabled} value={form.noNpwp} onChange={v=>set('noNpwp',v)} />
+              <PjKatFld label="Jenis Harga" required type="select" options={['Standar','Khusus','Grosir']} locked={fieldsDisabled} value={form.jenisHarga} onChange={v=>set('jenisHarga',v)} />
+              <PjKatFld label="Nama Pajak" locked={fieldsDisabled} value={form.namaPajak} onChange={v=>set('namaPajak',v)} />
 
-              <Fld label="Kota Pajak" locked={fieldsDisabled} value={form.kotaPajak} onChange={v=>set('kotaPajak',v)} />
-              <Fld label="Plafon" type="number" mono locked={fieldsDisabled} value={form.plafon} onChange={v=>set('plafon',v)} />
-              <Fld label="Plafon Temp" type="number" mono locked={fieldsDisabled} value={form.plafonTemp} onChange={v=>set('plafonTemp',v)} />
-              <Fld label="TOP Real (hari)" type="number" mono locked={fieldsDisabled} value={form.tempo} onChange={v=>set('tempo',v)} />
+              <PjKatFld label="Kota Pajak" locked={fieldsDisabled} value={form.kotaPajak} onChange={v=>set('kotaPajak',v)} />
+              <PjKatFld label="Plafon" type="number" mono locked={fieldsDisabled} value={form.plafon} onChange={v=>set('plafon',v)} />
+              <PjKatFld label="Plafon Temp" type="number" mono locked={fieldsDisabled} value={form.plafonTemp} onChange={v=>set('plafonTemp',v)} />
+              <PjKatFld label="TOP Real (hari)" type="number" mono locked={fieldsDisabled} value={form.tempo} onChange={v=>set('tempo',v)} />
 
-              <Fld label="TOP Lama (Hari)" type="number" mono locked={fieldsDisabled} value={form.tempoLama} onChange={v=>set('tempoLama',v)} />
-              <Fld label="TOP Cetak (Hari)" type="number" mono locked={fieldsDisabled} value={form.tempoKom} onChange={v=>set('tempoKom',v)} />
-              <Fld label="Virtual AC" mono span={2} locked={fieldsDisabled} value={form.virtualAc} onChange={v=>set('virtualAc',v)} />
+              <PjKatFld label="TOP Lama (Hari)" type="number" mono locked={fieldsDisabled} value={form.tempoLama} onChange={v=>set('tempoLama',v)} />
+              <PjKatFld label="TOP Cetak (Hari)" type="number" mono locked={fieldsDisabled} value={form.tempoKom} onChange={v=>set('tempoKom',v)} />
+              <PjKatFld label="Virtual AC" mono span={2} locked={fieldsDisabled} value={form.virtualAc} onChange={v=>set('virtualAc',v)} />
 
-              <Fld label="Alamat Pajak" type="textarea" span={4} locked={fieldsDisabled} value={form.alamatPajak} onChange={v=>set('alamatPajak',v)} />
-              <Fld label="Alamat Tagih" type="textarea" span={4} locked={fieldsDisabled} value={form.alamatTagih} onChange={v=>set('alamatTagih',v)} />
+              <PjKatFld label="Alamat Pajak" type="textarea" span={4} locked={fieldsDisabled} value={form.alamatPajak} onChange={v=>set('alamatPajak',v)} />
+              <PjKatFld label="Alamat Tagih" type="textarea" span={4} locked={fieldsDisabled} value={form.alamatTagih} onChange={v=>set('alamatTagih',v)} />
             </div>
           </div>
 
@@ -416,6 +416,14 @@ function KatalogPelangganPage({ rows, setRows }) {
   const closeModal = () => { setShow(false); setModal(null); setModalMode(null); };
 
   const save = (form, andClose=true) => {
+    if (!String(form.code || '').trim() || !String(form.name || '').trim()) {
+      window.__erpToast && window.__erpToast('Kode dan Nama Customer wajib diisi.');
+      return 'Kode dan Nama Customer wajib diisi.';
+    }
+    if (!modal && rows.some(p => String(p.code).toUpperCase() === String(form.code).toUpperCase())) {
+      window.__erpToast && window.__erpToast(`Kode pelanggan ${form.code} sudah dipakai — data tidak disimpan.`);
+      return `Kode pelanggan ${form.code} sudah dipakai.`;
+    }
     setRows(prev => prev.some(p => p.code === form.code) ? prev.map(p => p.code===form.code ? form : p) : [form, ...prev]);
     window.__erpToast && window.__erpToast('Data berhasil disimpan.');
     if (andClose) closeModal();

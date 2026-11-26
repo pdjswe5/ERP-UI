@@ -21,7 +21,7 @@ function MfManufakturDashboard({ onOpenSub, spkRows, produksiRows, bpblRows, rpb
   // sebelum diurutkan kronologis. Hasil Produksi tidak punya tanggal sendiri, di-resolve dari SPK
   // rujukannya (noSpk). Planning Schedule semuanya di 1 tanggal yg sama (seed), jadi trennya pakai
   // jam mulai (dalam hari itu) sebagai sumbu-X, bukan tanggal.
-  const produksiWithTgl = produksiRows.map(r => ({ ...r, _tgl: MF_SPK_SEED.find(s=>s.no===r.noSpk)?.tgl || '' })).filter(r => r._tgl);
+  const produksiWithTgl = produksiRows.map(r => ({ ...r, _tgl: spkRows.find(s=>s.no===r.noSpk)?.tgl || '' })).filter(r => r._tgl);
 
   const kpis = [
     { label:'SPK Aktif', value: spkAktif.length, sub:`dari ${spkRows.length} total SPK`,
@@ -91,6 +91,19 @@ function ManufakturPage({ activeSub, onSubChange, onNavigate }) {
     showToast('Data berhasil disimpan.');
   };
 
+  // Hasil Produksi disimpan → status SPK ikut maju: 'Realisasi' bila sebagian barang jadi sudah
+  // diproduksi, 'Selesai' bila semua barang jadi SPK itu sudah punya Hasil Produksi.
+  const saveProduksi = (form) => {
+    const nextHp = produksiRows.some(r => r.no === form.no) ? produksiRows.map(r => r.no === form.no ? form : r) : [...produksiRows, form];
+    setSpkRows(prev => prev.map(spk => {
+      if (spk.no !== form.noSpk || spk.Batal) return spk;
+      const bjIds = (spk.bjLines || []).filter(b => !b._deleted).map(b => b.id);
+      const done = bjIds.filter(id => nextHp.some(h => !h.Batal && h.noSpk === spk.no && h.bjLineId === id)).length;
+      return { ...spk, status: bjIds.length && done >= bjIds.length ? 'Selesai' : 'Realisasi' };
+    }));
+    saveToRows(setProduksiRows)(form);
+  };
+
   // SPK: Batalkan via ConfirmationModal (dipicu dari ikon list atau tombol "Batalkan SPK" di dalam dialog VIEW)
   const cancelSpkFromModal = (row) => { setModal(null); setConfirmCancelSpk(row); };
   const confirmCancelSpkNow = (reason) => {
@@ -147,12 +160,12 @@ function ManufakturPage({ activeSub, onSubChange, onNavigate }) {
         onAdd={() => setModal({type:'rpbl', data:null})}
         onEdit={r  => setModal({type:'rpbl', data:r})} />}
       {activeSub === 'planning' && <MfPlanningScheduleList rows={planningRows} setRows={setPlanningRows} spkRows={spkRows}
-        onSelesai={(completed) => setProduksiRows(prev => [...prev, ...mfBuildHpRecordsFromPlanning(completed, spkRows)])} />}
+        onSelesai={(completed) => setProduksiRows(prev => [...prev, ...mfBuildHpRecordsFromPlanning(completed, spkRows, prev)])} />}
 
-      {modal?.type === 'spk'      && <MfSpkDialog           data={modal.data} initialMode={spkModalMode} onClose={() => setModal(null)} onSave={saveToRows(setSpkRows)} onCancelDoc={cancelSpkFromModal} />}
-      {modal?.type === 'produksi' && <MfHasilProduksiDialog data={modal.data} spkRows={spkRows} onClose={() => setModal(null)} onSave={saveToRows(setProduksiRows)} />}
-      {modal?.type === 'bpbl' && <MfPemakaianBarangDialog type="bpbl" data={modal.data} spkRows={spkRows} onClose={() => setModal(null)} onSave={saveToRows(setBpblRows)} />}
-      {modal?.type === 'rpbl' && <MfPemakaianBarangDialog type="rpbl" data={modal.data} spkRows={spkRows} onClose={() => setModal(null)} onSave={saveToRows(setRpblRows)} />}
+      {modal?.type === 'spk'      && <MfSpkDialog rows={spkRows} data={modal.data} initialMode={spkModalMode} onClose={() => setModal(null)} onSave={saveToRows(setSpkRows)} onCancelDoc={cancelSpkFromModal} />}
+      {modal?.type === 'produksi' && <MfHasilProduksiDialog rows={produksiRows} data={modal.data} spkRows={spkRows} onClose={() => setModal(null)} onSave={saveProduksi} />}
+      {modal?.type === 'bpbl' && <MfPemakaianBarangDialog rows={bpblRows} type="bpbl" data={modal.data} spkRows={spkRows} onClose={() => setModal(null)} onSave={saveToRows(setBpblRows)} />}
+      {modal?.type === 'rpbl' && <MfPemakaianBarangDialog rows={rpblRows} type="rpbl" data={modal.data} spkRows={spkRows} onClose={() => setModal(null)} onSave={saveToRows(setRpblRows)} />}
 
       {confirmCancelSpk && (
         <ConfirmationModal

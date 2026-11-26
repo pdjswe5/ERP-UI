@@ -3,7 +3,7 @@
 // terintegrasi penuh (spt referensi asli — transaksi PRODUK dari Manufaktur, JUAL dari Penjualan)
 // namun tetap gunakan data dummy", supaya tidak perlu rekonsiliasi kode barang/gudang lintas 3 modul
 // yang saat ini memang tidak sinkron. Tipe transaksi & vocab kolom (PRODUK/JUAL/KOREKSI/PAKAI,
-// Stock Real vs Available, grouping per Tebal) persis dokumen referensi user (uploads/laporan).
+// Stock Real vs Available, grouping per Tebal) persis dokumen referensi user .
 
 const LAP_STOK_LOKASI = [
   { kode:'GJ', nama:'Gudang Barang Jadi' },
@@ -13,15 +13,15 @@ const LAP_STOK_LOKASI = [
 const LAP_STOK_ITEMS = [
   { kode:'RL020SHSLKW2091401800', nama:'KW2 0.20MM X 914MM X 18.00M SILVER',                 satuan:'ROL', tebal:0.20, lokasi:'GJ' },
   { kode:'GB020ATBRNON080000180', nama:'BJLA 0.20MM X 800MM X 1.80M BLUE RESINE',             satuan:'LBR', tebal:0.20, lokasi:'GJ' },
-  { kode:'AS1025ATSLKW2075000600', nama:'KW2 ATAP SALJU PU4CM 0.25MM X 750MM X 6.00M SILVER', satuan:'LBR', tebal:0.25, lokasi:'GJ' },
-  { kode:'RL025SHBOKW2091405500', nama:'KW2 0.25MM X 914MM X 55.00M BIRU BOGOWONTO',          satuan:'ROL', tebal:0.25, lokasi:'GJ' },
-  { kode:'TR025ATHMNON075000600', nama:'DIAMOND TR5-75 0.25MM X 750MM X 6.00M HITAM BATUBARA', satuan:'LBR', tebal:0.25, lokasi:'GJ' },
+  { kode:'AS1025ATSLKW2075000600', nama:'KW2 ATAP PU4CM 0.25MM X 750MM X 6.00M SILVER', satuan:'LBR', tebal:0.25, lokasi:'GJ' },
+  { kode:'RL025SHBOKW2091405500', nama:'KW2 0.25MM X 914MM X 55.00M BIRU LAUT',          satuan:'ROL', tebal:0.25, lokasi:'GJ' },
+  { kode:'TR025ATHMNON075000600', nama:'PROFIL TR5-75 0.25MM X 750MM X 6.00M HITAM BATUBARA', satuan:'LBR', tebal:0.25, lokasi:'GJ' },
   { kode:'GB030ATSGKW2080000180', nama:'KW2 0.30MM X 800MM X 1.80M SILVER GREY',              satuan:'LBR', tebal:0.30, lokasi:'GJ' },
   { kode:'WA1030NKSLNON004000300', nama:'WALL ANGLE 2 X 2 X 3.00 M LIPAT',                     satuan:'BTG', tebal:0.30, lokasi:'GJ' },
   { kode:'TR030ATSGKW2075000180', nama:'KW2 0.30MM X 750MM X 1.80M SILVER GREY',              satuan:'LBR', tebal:0.30, lokasi:'GJ' },
   { kode:'RL035SHHBKW2091403000', nama:'KW2 0.35MM X 914MM X 30.00M HIJAU BORNEO',            satuan:'ROL', tebal:0.35, lokasi:'GJ' },
-  { kode:'SP035ATRONON068000071', nama:'DIAMOND SP9-68 0.35MM X 680MM X 0.71M ROKANSTONE',    satuan:'LBR', tebal:0.35, lokasi:'GJ' },
-  { kode:'RG040TRSGNON00600', nama:'RENG 32 DIAMOND 0.40MM X 6.00M SILVER GREY',              satuan:'BTG', tebal:0.40, lokasi:'GJ' },
+  { kode:'SP035ATRONON068000071', nama:'PROFIL SP9-68 0.35MM X 680MM X 0.71M ROKANSTONE',    satuan:'LBR', tebal:0.35, lokasi:'GJ' },
+  { kode:'RG040TRSGNON00600', nama:'RENG 32 PROFIL 0.40MM X 6.00M SILVER GREY',              satuan:'BTG', tebal:0.40, lokasi:'GJ' },
   { kode:'FL040NKHBNON030400240', nama:'FLASHING 0.40MM X 304MM X 2.40M H. BORNEO',           satuan:'LBR', tebal:0.40, lokasi:'GJ' },
   { kode:'BB040091470550', nama:'BAHAGIA BIRU BROMO TEBAL 0.40 LEBAR 914 MM AZ 70 G-550',     satuan:'LBR', tebal:0.40, lokasi:'GB' },
   { kode:'AA0450914100550', nama:'BAHAN ABU ANGKOLA TEBAL 0.45 LEBAR 914 MM AZ 100 G-550',    satuan:'LBR', tebal:0.45, lokasi:'GB' },
@@ -32,7 +32,7 @@ const LAP_STOK_ITEMS = [
 function lapAddDaysStok(iso, n) {
   const d = new Date(iso + 'T00:00:00');
   d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; // lokal, bukan UTC (toISOString mundur 1 hari di WIB)
 }
 function lapNoBuktiStok(prefix, iso, seq) {
   const [y, m] = iso.split('-');
@@ -47,7 +47,7 @@ function lapBuildStokTrxSetahun() {
   let seq = 1;
   LAP_STOK_ITEMS.forEach((item, ii) => {
     const saldoAwal = 40 + (ii * 17) % 90;
-    trx.push({ id:`LS-${String(seq++).padStart(4,'0')}`, tanggal:'2026-01-01', kodeItem:item.kode, lokasi:item.lokasi,
+    trx.push({ id:`LS-${String(seq++).padStart(4,'0')}`, tanggal:'2025-12-31', kodeItem:item.kode, lokasi:item.lokasi,
       nomorBukti:'', keterangan:'Saldo Awal', tipe:'OPNAME', resetTo: saldoAwal });
 
     for (let bulan = 0; bulan < 7; bulan++) {
@@ -92,3 +92,17 @@ function lapStokReserved(kodeItem) {
   for (let i = 0; i < kodeItem.length; i++) h = (h * 31 + kodeItem.charCodeAt(i)) % 23;
   return h;
 }
+
+// Harga pokok rata-rata (Rp/satuan) & stok minimum per item — dummy deterministik dari kode item,
+// dipakai kolom nilai (Rp) Kartu/Posisi/Rekap Stok dan status "Di bawah minimum" Posisi Stok.
+function lapStokHash(kode, mod) {
+  let h = 7;
+  for (let i = 0; i < kode.length; i++) h = (h * 33 + kode.charCodeAt(i)) % 100003;
+  return h % mod;
+}
+function lapStokHarga(item) {
+  const base = { ROL: 1450000, LBR: 68000, BTG: 42000 }[item.satuan] || 50000;
+  return Math.round(base * (0.8 + item.tebal) * (1 + lapStokHash(item.kode, 30) / 100) / 100) * 100;
+}
+function lapStokMin(item) { return 20 + lapStokHash(item.kode, 5) * 10; }
+const LAP_STOK_JENIS_LABEL = { PRODUK:'Hasil Produksi', JUAL:'Penjualan', KOREKSI:'Koreksi', PAKAI:'Pemakaian', OPNAME:'Stok Opname' };

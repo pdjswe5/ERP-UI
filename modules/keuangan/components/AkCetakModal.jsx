@@ -325,9 +325,9 @@ function AkCetakPelunasanBuktiBody({ row, orgInfo, isPiutang, docLabel }) {
         </tbody>
       </table>
       <table className="cetak-table" style={{marginTop:10}}>
-        <thead><tr><th style={{width:100}}>Metode</th><th>Akun</th><th className="num" style={{width:110}}>Masuk</th><th className="num" style={{width:110}}>Keluar</th></tr></thead>
+        <thead><tr><th style={{width:100}}>Metode</th><th>Akun</th><th className="num" style={{width:110}}>{isPiutang ? 'Masuk' : 'Bayar'}</th><th className="num" style={{width:110}}>{isPiutang ? 'Keluar' : 'Kembali'}</th></tr></thead>
         <tbody>
-          {penerimaan.length === 0 && <tr><td colSpan={4} className="empty">Tidak ada penerimaan.</td></tr>}
+          {penerimaan.length === 0 && <tr><td colSpan={4} className="empty">Tidak ada {isPiutang ? 'penerimaan' : 'pembayaran'}.</td></tr>}
           {penerimaan.map((p,i) => (
             <tr key={i}>
               <td>{p.metode}</td>
@@ -399,7 +399,200 @@ function AkCetakPelunasanRegisterBody({ rows, docLabel, orgInfo, tglRangeLabel, 
   );
 }
 
-function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, statusFilter, getGroupLabel, pdfPath, initialSelected, isPiutang, onClose }) {
+// Bukti Kas/Bank Masuk-Keluar, Transfer, dan Giro (variant="kasbank").
+const AK_KB_TITLE = { km:'BUKTI KAS MASUK', kk:'BUKTI KAS KELUAR', bm:'BUKTI BANK MASUK', bk:'BUKTI BANK KELUAR',
+  tm:'BUKTI TRANSFER ANTAR KAS/BANK', tk:'BUKTI TRANSFER ANTAR KAS/BANK', gm:'BUKTI GIRO MASUK', gk:'BUKTI GIRO KELUAR' };
+function AkCetakKasBankBody({ row, orgInfo, kbKind: kbKindProp }) {
+  // Menu Kas/Bank/Transfer/Giro sudah digabung: jenis (masuk/keluar) dibaca dari baris (_kind).
+  const kbKind = row._kind || kbKindProp;
+  const isTransfer = kbKind === 'tm' || kbKind === 'tk';
+  const isGiro = kbKind === 'gm' || kbKind === 'gk';
+  const masuk = ['km','bm','tm','gm'].includes(kbKind);
+  const lines = isTransfer
+    ? [['Dari Akun', row.dari], ['Ke Akun', row.ke], ['Keterangan', row.deskripsi]]
+    : isGiro
+    ? [[masuk ? 'Diterima Dari' : 'Dibayar Kepada', row.dari || row.untuk], ['No. Giro', row.noGiro], ['Bank', row.bank], ['Jatuh Tempo', row.jthTempo], ['Akun Bukukan', row.akunBukukan], ['Catatan', row.catatan]]
+    : [[masuk ? 'Diterima Dari' : 'Dibayar Kepada', row.dari || row.untuk], ['Akun', row.akun], ['Keterangan', row.deskripsi]];
+  const batal = row.Batal || row.status === 'Batal';
+  return (
+    <div className="cetak-doc">
+      {batal && <div className="cetak-watermark">BATAL</div>}
+      <div className="cetak-letterhead">
+        <b>{orgInfo.nama}</b>
+        <div>{orgInfo.alamat}</div>
+        <div>{orgInfo.kota}{orgInfo.kodePos ? `, ${orgInfo.kodePos}` : ''}</div>
+        {orgInfo.telpon && <div>Tel. {orgInfo.telpon}</div>}
+      </div>
+      <div className="cetak-title-block">
+        <div className="cetak-title-spaced">{AK_KB_TITLE[kbKind] || 'BUKTI KAS/BANK'}</div>
+        <div className="cetak-title-no">No. {row.no}</div>
+      </div>
+      <div className="cetak-info-grid">
+        <div />
+        <div className="cetak-meta-col">
+          <div className="cetak-meta-row"><span>Tanggal</span><span>: {akFmtTgl(row.tgl)}</span></div>
+          <div className="cetak-meta-row"><span>Status</span><span>: {row.status || '—'}</span></div>
+        </div>
+      </div>
+      <table className="cetak-table">
+        <tbody>
+          {lines.filter(l => l[1]).map(([k, v]) => (
+            <tr key={k}><td style={{width:170, fontWeight:600}}>{k}</td><td>{v}</td></tr>
+          ))}
+          <tr><td style={{fontWeight:700}}>Jumlah</td><td className="num" style={{fontWeight:700, fontSize:14}}>{fmtRp(row.nominal)}</td></tr>
+        </tbody>
+      </table>
+      <div className="cetak-foot">
+        <div className="cetak-sign">
+          <div className="cetak-sign-box"><div className="line" /><div>Dibuat oleh</div></div>
+          <div className="cetak-sign-box"><div className="line" /><div>Disetujui oleh</div></div>
+          <div className="cetak-sign-box"><div className="line" /><div>{masuk ? 'Penyetor' : 'Penerima'}</div></div>
+        </div>
+      </div>
+      <div className="cetak-timestamp">Dicetak pada {akFmtTglNow()} oleh PDJ Administrator</div>
+    </div>
+  );
+}
+
+// ── Buku Kas / Buku Bank / Register Transfer & Giro (variant="kasbank", mode Tabel) ──────────────
+// Format mengikuti buku kas yang lazim (Jurnal.id, Accurate, cash book akuntansi): per akun ditampilkan
+// Saldo Awal → baris transaksi berurutan tanggal (Tanggal | No. Bukti | Keterangan | Dari/Untuk |
+// Penerimaan (Debet) | Pengeluaran (Kredit) | Saldo berjalan) → Jumlah & Saldo Akhir. Masuk dan keluar
+// berada dalam SATU tabel. Penutup: ringkasan total + tanda tangan Dibuat/Diperiksa/Disetujui.
+// Transaksi Batal tidak ikut dicetak (dan tidak memengaruhi saldo).
+const AK_BUKU_KAS_ROWS = 26; // A4 tegak
+const AK_BUKU_KAS_MODE = { km:'kas', kk:'kas', bm:'bank', bk:'bank', tm:'transfer', tk:'transfer', gm:'giro', gk:'giro' };
+const AK_BUKU_KAS_TITLE = { kas:'BUKU KAS', bank:'BUKU BANK', transfer:'REGISTER TRANSFER KAS/BANK', giro:'REGISTER GIRO' };
+const akKbAktif = (r) => !(r.Batal || r.status === 'Batal');
+
+// 1 baris transaksi → entri buku per akun. Transfer menghasilkan 2 entri (keluar dari akun asal, masuk ke
+// akun tujuan); giro dikelompokkan per jenis (Terima / Bayar).
+function akKbEntries(r) {
+  const k = r._kind; const n = +r.nominal || 0;
+  const base = { tglIso: akToIso(r.tgl), tgl: r.tgl, no: r.no, ket: r.deskripsi || '', status: r.status };
+  if (k === 'tm' || k === 'tk') return [
+    { ...base, akun: r.ke,   pihak: `Dari ${r.dari}`, masuk: n, keluar: 0 },
+    { ...base, akun: r.dari, pihak: `Ke ${r.ke}`,     masuk: 0, keluar: n },
+  ];
+  if (k === 'gm' || k === 'gk') return [{ ...base, akun: k === 'gm' ? 'GIRO TERIMA (DARI PELANGGAN)' : 'GIRO BAYAR (KE SUPPLIER)',
+    pihak: r.dari || r.untuk, ket: [r.noGiro, r.bank, r.jthTempo ? `JT ${r.jthTempo}` : ''].filter(Boolean).join(' · '),
+    masuk: k === 'gm' ? n : 0, keluar: k === 'gk' ? n : 0 }];
+  return [{ ...base, akun: r.akun, pihak: r.dari || r.untuk, masuk: k.endsWith('m') ? n : 0, keluar: k.endsWith('m') ? 0 : n }];
+}
+
+// `allRows` = semua baris menu (untuk saldo awal), `extraRows` = transfer (dipakai Buku Kas/Bank agar
+// pemindahan saldo antar akun ikut tercatat di buku akun yang bersangkutan).
+function akBukuKasBuild(selectedRows, allRows, extraRows, mode) {
+  const showSaldo = mode === 'kas' || mode === 'bank';
+  const sel = selectedRows.filter(akKbAktif);
+  const selNo = new Set(sel.map(r => r.no));
+  const selEntries = sel.flatMap(akKbEntries);
+  const kbg = (typeof window !== 'undefined' && window.KAS_BANK_GIRO_LIVE) || (typeof KAS_BANK_GIRO !== 'undefined' ? KAS_BANK_GIRO : []);
+  // Urut per kode akun (KAS BESAR 1000.005, KAS KECIL 1 1000.011, …); akun tanpa kode di belakang.
+  const kodeOf = (nama) => kbg.find(a => a.nama === nama)?.kode || (nama.startsWith('GIRO TERIMA') ? '~1' : nama.startsWith('GIRO BAYAR') ? '~2' : `~${nama}`);
+  const akunList = [...new Set(selEntries.map(e => e.akun))].sort((a, b) => kodeOf(a).localeCompare(kodeOf(b)));
+  const dates = selEntries.map(e => e.tglIso).sort();
+  const start = dates[0], end = dates[dates.length - 1];
+  const extraEntries = showSaldo ? (extraRows || []).filter(akKbAktif).flatMap(akKbEntries).filter(e => akunList.includes(e.akun)) : [];
+  const inPeriod = [...selEntries, ...extraEntries.filter(e => e.tglIso >= start && e.tglIso <= end)]
+    .sort((a, b) => a.tglIso.localeCompare(b.tglIso) || String(a.no).localeCompare(String(b.no)));
+  const preSources = [...(allRows || []).filter(r => akKbAktif(r) && !selNo.has(r.no)).flatMap(akKbEntries), ...extraEntries];
+  const lines = []; const grand = { masuk:0, keluar:0, saldoAwal:0, saldoAkhir:0 };
+  akunList.forEach(akun => {
+    const master = kbg.find(a => a.nama === akun);
+    let saldo = showSaldo
+      ? (master?.saldo || 0) + preSources.filter(e => e.akun === akun && e.tglIso < start).reduce((s, e) => s + e.masuk - e.keluar, 0)
+      : null;
+    lines.push({ type:'group', label: master ? `${master.kode} — ${akun}` : akun });
+    if (showSaldo) { lines.push({ type:'saldo', label:'Saldo Awal', saldo }); grand.saldoAwal += saldo; }
+    let m = 0, k = 0;
+    inPeriod.filter(e => e.akun === akun).forEach(e => {
+      m += e.masuk; k += e.keluar;
+      if (showSaldo) saldo += e.masuk - e.keluar;
+      lines.push({ type:'row', e, saldo });
+    });
+    lines.push({ type:'sub', label: showSaldo ? 'Jumlah & Saldo Akhir' : 'Jumlah', masuk:m, keluar:k, saldo });
+    grand.masuk += m; grand.keluar += k; if (showSaldo) grand.saldoAkhir += saldo;
+  });
+  return { lines, grand, showSaldo, batal: selectedRows.length - sel.length };
+}
+
+function AkCetakBukuKasBody({ lines, mode, orgInfo, tglRangeLabel, pageInfo, isLastPage, build }) {
+  const { grand, showSaldo, batal } = build;
+  const lblIn = mode === 'giro' ? 'Terima' : 'Penerimaan (Debet)';
+  const lblOut = mode === 'giro' ? 'Bayar' : 'Pengeluaran (Kredit)';
+  const cols = showSaldo ? 7 : 6;
+  // Sel tabel tanpa awalan "Rp" (satuan ditulis sekali di header) supaya kolom angka bisa sempit.
+  const rp = (v) => (+v || 0).toLocaleString('id-ID');
+  const num = (v) => v ? rp(v) : '';
+  return (
+    <div className="cetak-doc">
+      <div className="cetak-kop">
+        <div className="cetak-kop-left">
+          <b>{orgInfo.nama}</b>
+          <div>{orgInfo.alamat}</div>
+          <div>{orgInfo.kota}{orgInfo.kodePos ? `, ${orgInfo.kodePos}` : ''}</div>
+        </div>
+        <div className="cetak-kop-center">{AK_BUKU_KAS_TITLE[mode]}</div>
+        <div className="cetak-kop-right">Periode<br/>{tglRangeLabel}</div>
+      </div>
+      <div style={{fontSize:11, textAlign:'right', marginTop:6}}>Dalam Rupiah</div>
+      <table className="cetak-table cetak-bukukas">
+        <thead><tr>
+          <th style={{width:'10.5%'}}>Tanggal</th><th style={{width:'13.5%'}}>No. Bukti</th><th>Keterangan</th><th style={{width: showSaldo ? '18%' : '22%'}}>Dari / Untuk</th>
+          <th style={{width:'11%'}}>{lblIn}</th><th style={{width:'11%'}}>{lblOut}</th>
+          {showSaldo && <th style={{width:'12%'}}>Saldo</th>}
+        </tr></thead>
+        <tbody>
+          {lines.map((ln, i) => {
+            if (ln.type === 'group') return <tr key={i} className="cetak-register-group"><td colSpan={cols}><b>{ln.label}</b>{ln.continuation && <span className="cetak-lanjutan"> (lanjutan)</span>}</td></tr>;
+            if (ln.type === 'saldo') return <tr key={i}><td colSpan={cols - 1} style={{fontStyle:'italic'}}>{ln.label}</td><td className="num" style={{fontWeight:600}}>{rp(ln.saldo)}</td></tr>;
+            if (ln.type === 'sub') return (
+              <tr key={i} style={{fontWeight:700, borderTop:'1.5px solid #333'}}>
+                <td colSpan={4} style={{textAlign:'right'}}>{ln.label}</td>
+                <td className="num">{rp(ln.masuk)}</td><td className="num">{rp(ln.keluar)}</td>
+                {showSaldo && <td className="num">{rp(ln.saldo)}</td>}
+              </tr>
+            );
+            const e = ln.e;
+            return (
+              <tr key={i}>
+                <td>{akFmtTgl(e.tgl)}</td><td>{e.no}</td><td>{e.ket}</td><td>{e.pihak}</td>
+                <td className="num">{num(e.masuk)}</td><td className="num">{num(e.keluar)}</td>
+                {showSaldo && <td className="num">{rp(ln.saldo)}</td>}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {isLastPage && (
+        <div className="cetak-foot">
+          <div className="cetak-sign">
+            <div className="cetak-sign-box"><div className="line" /><div>Dibuat oleh</div></div>
+            <div className="cetak-sign-box"><div className="line" /><div>Diperiksa oleh</div></div>
+            <div className="cetak-sign-box"><div className="line" /><div>Disetujui oleh</div></div>
+          </div>
+          <div className="cetak-summary">
+            {showSaldo && <div>Saldo Awal<span>{fmtRp(grand.saldoAwal)}</span></div>}
+            <div>Total {mode === 'giro' ? 'Terima' : 'Penerimaan'}<span>{fmtRp(grand.masuk)}</span></div>
+            <div>Total {mode === 'giro' ? 'Bayar' : 'Pengeluaran'}<span>{fmtRp(grand.keluar)}</span></div>
+            {showSaldo
+              ? <div className="grand">Saldo Akhir<span>{fmtRp(grand.saldoAkhir)}</span></div>
+              : <div className="grand">Selisih<span>{fmtRp(grand.masuk - grand.keluar)}</span></div>}
+          </div>
+        </div>
+      )}
+      <div className="cetak-timestamp">
+        Halaman {pageInfo.current} dari {pageInfo.total}
+        {isLastPage && batal > 0 && ` — ${batal} transaksi Batal tidak dicetak`}
+        {isLastPage && ` — Dicetak pada ${akFmtTglNow()} ${new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator`}
+      </div>
+    </div>
+  );
+}
+
+function AkCetakModal({ variant, reportId, kbKind, docLabel, rows, extraRows, noKey, tglKey, akunRows, statusFilter, getGroupLabel, initialSelected, isPiutang, onClose }) {
+  useEscape(onClose);
   const orgInfo = (typeof PG_ORGANISASI !== 'undefined' && PG_ORGANISASI) || { nama:'PT. Pacific Data Jaya', alamat:'', kota:'', telpon:'', email:'', noNpwp:'' };
   const [tglAwal, setTglAwal] = React.useState('');
   const [tglAkhir, setTglAkhir] = React.useState('');
@@ -408,7 +601,9 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
   const [statusVal, setStatusVal] = React.useState('');
   const [search, setSearch] = React.useState('');
   const [selected, setSelected] = React.useState(() => new Set(initialSelected && initialSelected.length ? initialSelected : rows.map(r => r[noKey])));
-  const [previewMode, setPreviewMode] = React.useState('bukti'); // 'bukti' | 'register'
+  // Kas/Bank/Transfer/Giro: tombol Cetak header → tabel buku (masuk & keluar dalam satu tabel); cetak
+  // per baris → bukti transaksi. Keduanya bisa ditukar lewat tombol di panel kiri.
+  const [previewMode, setPreviewMode] = React.useState(variant === 'kasbank' && !(initialSelected && initialSelected.length === 1) ? 'register' : 'bukti'); // 'bukti' | 'register'
   const [zoom, setZoom] = React.useState(100);
 
   const filtered = rows.filter(r => {
@@ -428,11 +623,16 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
   });
   const toggleOne = (no) => setSelected(prev => { const next = new Set(prev); next.has(no) ? next.delete(no) : next.add(no); return next; });
 
-  const selectedRows = rows.filter(r => selected.has(r[noKey]));
+  const selectedRows = filtered.filter(r => selected.has(r[noKey]));
 
-  const registerLines = variant === 'jurnal' && previewMode === 'register' ? akBuildJurnalRegisterLines(selectedRows) : [];
+  const kbMode = AK_BUKU_KAS_MODE[kbKind] || 'kas';
+  const bukuKas = variant === 'kasbank' && previewMode === 'register' ? akBukuKasBuild(selectedRows, rows, extraRows, kbMode) : null;
+  const registerLines = variant === 'jurnal' && previewMode === 'register' ? akBuildJurnalRegisterLines(selectedRows)
+    : bukuKas ? bukuKas.lines : [];
   const registerPages = previewMode === 'register'
-    ? (variant === 'jurnal' ? akChunk(registerLines, AK_REGISTER_ROWS_PER_PAGE) : akChunkFlat(selectedRows, AK_REGISTER_ROWS_PER_PAGE))
+    ? (variant === 'jurnal' ? akChunk(registerLines, AK_REGISTER_ROWS_PER_PAGE)
+      : bukuKas ? akChunk(registerLines, AK_BUKU_KAS_ROWS)
+      : akChunkFlat(selectedRows, AK_REGISTER_ROWS_PER_PAGE))
     : [[]];
   const totalPages = previewMode === 'register' ? registerPages.length : Math.max(1, selectedRows.length);
 
@@ -461,7 +661,7 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
       })();
 
   const doCetak = () => {
-    window.__erpToast && window.__erpToast(`Cetak dikirim ke printer (${selectedRows.length} dokumen).`);
+    erpPrint();
     onClose();
   };
 
@@ -508,7 +708,13 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
                 ))}
               </div>
             </div>
-            {variant !== 'pdf' && (
+            {variant === 'kasbank' && (
+              <div style={{display:'flex', gap:8, marginTop:12}}>
+                <button className={`btn ${previewMode==='register' ? 'btn-primary' : 'btn-soft'}`} style={{flex:1, justifyContent:'center'}} onClick={()=>setPreviewMode('register')}>{I.print()} {{ kas:'Buku Kas', bank:'Buku Bank', transfer:'Register Transfer', giro:'Register Giro' }[kbMode]}</button>
+                <button className={`btn ${previewMode==='bukti' ? 'btn-primary' : 'btn-soft'}`} style={{flex:1, justifyContent:'center'}} onClick={()=>setPreviewMode('bukti')}>{I.print()} Bukti ({selectedRows.length})</button>
+              </div>
+            )}
+            {variant !== 'laporan' && variant !== 'kasbank' && (
               <div style={{display:'flex', gap:8, marginTop:12}}>
                 <button className={`btn ${previewMode==='bukti' ? 'btn-primary' : 'btn-soft'}`} style={{flex:1, justifyContent:'center'}} onClick={()=>setPreviewMode('bukti')}>{I.print()} Bukti ({selectedRows.length})</button>
                 <button className={`btn ${previewMode==='register' ? 'btn-primary' : 'btn-soft'}`} style={{flex:1, justifyContent:'center'}} onClick={()=>setPreviewMode('register')}>{I.print()} Register ({selectedRows.length})</button>
@@ -519,9 +725,10 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
           <div className="cetak-preview-pane">
             <div className="cetak-toolbar">
               <span className="cetak-pageof">
-                {variant === 'pdf' ? 'Pratinjau dokumen referensi' : selectedRows.length===0 ? '0 halaman' : previewMode==='register' ? `${totalPages} halaman` : `${selectedRows.length} dokumen`}
+                {variant === 'laporan' ? `${selectedRows.length} periode` : selectedRows.length===0 ? '0 halaman' : previewMode==='register' ? `${totalPages} halaman` : `${selectedRows.length} dokumen`}
               </span>
-              {variant !== 'pdf' && (
+              <ErpPaperSelect />
+              {(
                 <div style={{display:'flex', gap:4, alignItems:'center'}}>
                   <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.max(50,z-10))}>−</button>
                   <span className="cetak-pageof">{zoom}%</span>
@@ -529,21 +736,20 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
                 </div>
               )}
             </div>
-            <div className="cetak-canvas" style={variant === 'pdf' ? {padding:16, alignItems:'flex-start'} : null}>
+            <div className="cetak-canvas cetak-canvas-scroll" style={{'--lap-zoom': zoom/100}}>
               {selectedRows.length === 0 ? (
                 <div className="empty" style={{padding:'60px 0'}}>Belum ada dokumen dipilih untuk dicetak.</div>
-              ) : variant === 'pdf' ? (
-                // Lebar selalu 100% mengikuti batas pane preview (bukan dibatasi lebih kecil), tinggi
-                // mengikuti aspect-ratio supaya proporsinya tetap seperti dokumen portrait — bukan
-                // width:100%+height:100% independen (itu bikin kotak ikut bentuk jendela browser:
-                // di layar pendek/lebar kotaknya jadi landscape pendek, PDF viewer Chrome pun melebarkan
-                // bar hitam kiri-kanan supaya halaman portrait tetap muat). Kalau hasil tingginya lebih
-                // panjang dari pane yang kelihatan, tinggal discroll (.cetak-canvas sudah overflow:auto).
-                <div style={{width:'100%', aspectRatio:'0.75', background:'#fff', boxShadow:'var(--shadow-lg)'}}>
-                  <iframe src={encodeURI(pdfPath)} title={docLabel} style={{width:'100%', height:'100%', border:'none', display:'block'}} />
-                </div>
+              ) : variant === 'laporan' ? (
+                selectedRows.map(row => <AkLaporanKeuanganPage key={row[noKey]} reportId={reportId} row={row} allRows={rows} orgInfo={orgInfo} />)
               ) : previewMode === 'register' ? (
-                variant === 'jurnal' ? (
+                variant === 'kasbank' ? (
+                  registerPages.map((lines, idx) => (
+                    <div className="cetak-page" key={idx} style={{transform:`scale(${zoom/100})`}}>
+                      <AkCetakBukuKasBody lines={lines} mode={kbMode} orgInfo={orgInfo} tglRangeLabel={tglRangeLabel}
+                        pageInfo={{current:idx+1, total:totalPages}} isLastPage={idx === totalPages-1} build={bukuKas} />
+                    </div>
+                  ))
+                ) : variant === 'jurnal' ? (
                   registerPages.map((lines, idx) => (
                     <div className="cetak-page" key={idx} style={{transform:`scale(${zoom/100})`}}>
                       <AkCetakJurnalRegisterBody lines={lines} docLabel={docLabel} orgInfo={orgInfo} tglRangeLabel={tglRangeLabel}
@@ -570,6 +776,8 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
                   <div className="cetak-page" key={row[noKey] || idx} style={{transform:`scale(${zoom/100})`}}>
                     {variant === 'jurnal'
                       ? <AkCetakJurnalBuktiBody row={row} orgInfo={orgInfo} akunRows={akunRows} groupLabel={getGroupLabel ? getGroupLabel(row) : row.pembuat} />
+                      : variant === 'kasbank'
+                      ? <AkCetakKasBankBody row={row} orgInfo={orgInfo} kbKind={kbKind} />
                       : variant === 'pelunasan'
                       ? <AkCetakPelunasanBuktiBody row={row} orgInfo={orgInfo} isPiutang={isPiutang} docLabel={docLabel} />
                       : <AkCetakAktivaBuktiBody row={row} orgInfo={orgInfo} />}
@@ -583,7 +791,7 @@ function AkCetakModal({ variant, docLabel, rows, noKey, tglKey, akunRows, status
           <div className="muted" style={{fontSize:12.5}}><kbd>Esc</kbd> untuk tutup</div>
           <div className="right" style={{display:'flex', gap:8}}>
             <button className="btn" onClick={onClose}>Tutup</button>
-            <button className="btn btn-primary" onClick={doCetak} disabled={selectedRows.length===0}>{I.print()} Cetak ({selectedRows.length}x)</button>
+            <button className="btn btn-primary" onClick={doCetak} disabled={selectedRows.length===0}>{I.print()} {previewMode === 'register' && variant === 'kasbank' ? `Cetak (${totalPages} hal.)` : `Cetak (${selectedRows.length}x)`}</button>
           </div>
         </div>
       </div>

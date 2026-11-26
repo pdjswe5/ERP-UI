@@ -59,12 +59,31 @@ function PayrollAbsensiPage({ rows, setRows, karyawanRows, mutasiRows }) {
       return { tanggal, rows: list, counts };
     });
   }, [filtered]);
+  const [showRekap, setShowRekap] = React.useState(false);
+  // Rekap per karyawan untuk baris yang lolos filter (dicetak dikelompokkan per Bagian).
+  const rekapGroups = React.useMemo(() => {
+    const byKyw = {};
+    filtered.forEach(r => {
+      const k = byKyw[r.noInduk] = byKyw[r.noInduk] || { noInduk:r.noInduk, nama:r.nama, kodeBagian:r.kodeBagian || '-', c:{} };
+      k.c[r.status] = (k.c[r.status] || 0) + 1;
+    });
+    const byBagian = {};
+    Object.values(byKyw).forEach(k => { (byBagian[k.kodeBagian] = byBagian[k.kodeBagian] || []).push(k); });
+    let no = 0;
+    return Object.keys(byBagian).sort().map(kb => ({
+      label: `${kb} - ${PR_BAGIAN.find(b => b.kode === kb)?.nama || 'Tanpa Bagian'}`,
+      rows: byBagian[kb].sort((a,b)=>a.nama.localeCompare(b.nama)).map(k => ({ no: ++no, noInduk:k.noInduk, nama:k.nama,
+        ...Object.fromEntries(PR_ABSENSI_STATUS.map(st => [st, k.c[st] || 0])), total: Object.values(k.c).reduce((a,b)=>a+b,0) })),
+    }));
+  }, [filtered]);
+  // Pager per tanggal (1 halaman = 10 tanggal).
+  const { pageRows: pageGroups, pager } = useErpPager(groups);
 
   const expandAll = () => setExpandedDates(new Set(groups.map(g=>g.tanggal)));
   const collapseAll = () => setExpandedDates(new Set());
 
   const fields = [
-    { key:'noInduk', label:'Karyawan', type:'select', required:true, span:2, options:()=>PR_KARYAWAN.map(k=>({value:k.noInduk, label:`${k.noInduk} - ${k.nama}`})) },
+    { key:'noInduk', label:'Karyawan', type:'select', required:true, span:2, options:()=>prKaryawan(true).map(k=>({value:k.noInduk, label:`${k.noInduk} - ${k.nama}`})) },
     { key:'tanggal', label:'Tanggal', type:'date', required:true },
     { key:'status', label:'Status', type:'select', required:true, options:()=>PR_ABSENSI_STATUS.map(s=>({value:s, label:s})) },
     { key:'jamMasuk', label:'Jam Masuk', mono:true },
@@ -77,6 +96,8 @@ function PayrollAbsensiPage({ rows, setRows, karyawanRows, mutasiRows }) {
   // cuma utk tampilan & tidak boleh ikut kesimpan balik ke PR_ABSENSI lewat modal Edit.
   const openEdit = (r) => { setModal(rows.find(x => x.id === r.id) || r); setShowModal(true); };
   const save = (form) => {
+    if (!form.noInduk || !form.tanggal) { window.__erpToast && window.__erpToast('Karyawan dan tanggal wajib diisi.'); return; }
+    if (rows.some(r => r.noInduk === form.noInduk && r.tanggal === form.tanggal && (!modal || r.id !== modal.id))) { window.__erpToast && window.__erpToast('Karyawan ini sudah diabsen pada tanggal tersebut.'); return; }
     setRows(prev => modal ? prev.map(r => r.id === modal.id ? { ...form, id: modal.id } : r) : [...prev, { ...form, id: `${form.noInduk}-${form.tanggal}-${Date.now()}` }]);
     window.__erpToast && window.__erpToast('Absensi berhasil disimpan.');
     setShowModal(false); setModal(null);
@@ -122,6 +143,7 @@ function PayrollAbsensiPage({ rows, setRows, karyawanRows, mutasiRows }) {
         <div className="table-toolbar">
           <div className="table-toolbar-left"><b>{groups.length} tanggal</b> <span className="muted">· {filtered.length} entri</span></div>
           <div style={{display:'flex', gap:8}}>
+            <button className="btn btn-sm" onClick={()=>setShowRekap(true)} disabled={filtered.length===0}>{I.print()} Cetak Rekap</button>
             <button className="btn btn-sm" onClick={expandAll}>Buka Semua</button>
             <button className="btn btn-sm" onClick={collapseAll}>Tutup Semua</button>
           </div>
@@ -131,7 +153,7 @@ function PayrollAbsensiPage({ rows, setRows, karyawanRows, mutasiRows }) {
             <thead><tr><th style={{width:36}}></th><th>Tanggal</th><th>Jumlah Entri</th><th>Rekap Status</th></tr></thead>
             <tbody>
               {groups.length===0 && <tr><td colSpan={4} className="empty">Tidak ada data.</td></tr>}
-              {groups.map(g => {
+              {pageGroups.map(g => {
                 const isOpen = expandedDates.has(g.tanggal);
                 return (
                   <React.Fragment key={g.tanggal}>
@@ -196,7 +218,15 @@ function PayrollAbsensiPage({ rows, setRows, karyawanRows, mutasiRows }) {
             </tbody>
           </table>
         </div>
+        {pager}
       </div>
+      {showRekap && (
+        <PrCetakRekapModal title="Cetak Rekap Absensi" sub={`${filtered.length} entri absensi sesuai filter`} docTitle="REKAP ABSENSI KARYAWAN"
+          metaRight={`Periode ${tglAwal || 'awal'} s/d ${tglAkhir || 'akhir'}`}
+          columns={[{ key:'no', label:'No.', align:'right', width:'5%' }, { key:'noInduk', label:'No. Induk', width:'15%' }, { key:'nama', label:'Nama', width:'25%' },
+            ...PR_ABSENSI_STATUS.map(st => ({ key:st, label:st, align:'right' })), { key:'total', label:'Total', align:'right' }]}
+          rows={[]} groupBy={rekapGroups} onClose={()=>setShowRekap(false)} />
+      )}
       {showModal && <PrGenericModal moduleTitle="Absensi" data={modal} fields={fields} formCols={2} onClose={()=>{setShowModal(false); setModal(null);}} onSave={save} />}
       {pendingDelete && (
         <ConfirmationModal

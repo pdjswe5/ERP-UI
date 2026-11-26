@@ -17,13 +17,13 @@ const LAP_SALESMAN = [
   { kode:'S05', nama:'Yusuf Hakim',          jenis:'Salesman', aktif:true },
   { kode:'S06', nama:'Citra Ayu Lestari',    jenis:'Salesman', aktif:true },
   { kode:'S07', nama:'Bagas Prakoso',        jenis:'Salesman', aktif:false },
-  { kode:'M01', nama:'Halim Kusuma',         jenis:'SPV/Mgr',  aktif:true },
+  { kode:'M01', nama:'Hadi Kusuma',         jenis:'SPV/Mgr',  aktif:true },
   { kode:'M02', nama:'Diah Puspitasari',     jenis:'SPV/Mgr',  aktif:true },
 ];
 
 const LAP_KOMISI_CUSTOMERS = [
-  'Toko Makmur Jaya', 'Sumber Rejeki', 'Cahaya Abadi', 'Berkah Sentosa',
-  'Mitra Utama', 'Sinar Harapan', 'Karya Mandiri', 'Anugerah Sejahtera',
+  'Pelanggan Contoh 33', 'Pelanggan Contoh 34', 'Pelanggan Contoh 35', 'Pelanggan Contoh 36',
+  'Pelanggan Contoh 37', 'Pelanggan Contoh 38', 'Pelanggan Contoh 39', 'Pelanggan Contoh 40',
 ];
 const LAP_REFERAL_LIST = ['-', 'Agen Timur', 'Agen Barat', 'Mitra Lepas 1'];
 
@@ -36,12 +36,12 @@ const LAP_PENERIMA_REFERAL = [
 function lapAddMonths(iso, n) {
   const d = new Date(iso + 'T00:00:00');
   d.setMonth(d.getMonth() + n);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; // lokal, bukan UTC (toISOString mundur 1 hari di WIB)
 }
 function lapAddDays(iso, n) {
   const d = new Date(iso + 'T00:00:00');
   d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; // lokal, bukan UTC (toISOString mundur 1 hari di WIB)
 }
 function lapNoDoc(prefix, iso, seq) {
   const [y, m] = iso.split('-');

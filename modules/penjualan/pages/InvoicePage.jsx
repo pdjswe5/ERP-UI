@@ -1,6 +1,9 @@
 // Penjualan — halaman Invoice / Nota Penjualan
 
 function InvoicePage({ rows, setRows, salesOrderList }) {
+  // Tabs (dan komponen picker di dalamnya) dibuat sekali per perubahan data sumber, bukan tiap render —
+  // kalau tidak, React me-remount picker/banner dan state-nya hilang setelah Simpan.
+  const tabs = React.useMemo(() => invoiceTabs(salesOrderList), [salesOrderList]);
   const columns = [
     { key:'No_Bukti', label:'No. Bukti', mono:true },
     { key:'Tgl_Bukti', label:'Tgl. Bukti' },
@@ -93,9 +96,10 @@ function InvoicePage({ rows, setRows, salesOrderList }) {
       )}
       {show && (
         <PjDocModal
+          rows={rows}
           title="Invoice"
           data={modal}
-          tabs={invoiceTabs(salesOrderList)}
+          tabs={tabs}
           prefix="JL"
           showTotals
           showRealisasi

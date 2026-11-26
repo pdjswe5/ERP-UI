@@ -196,11 +196,11 @@ function Dashboard({ onOpenList }) {
             </div>
             <div className="timeline-item done">
               <div className="ti-when">Hari ini · 13:08</div>
-              <div className="ti-what"><b className="ti-who">Sistem</b> menerima realisasi penuh untuk <a className="cell-link" onClick={onOpenList}>PO-2026-0625</a> dari PT Indo Ban Prima</div>
+              <div className="ti-what"><b className="ti-who">Sistem</b> menerima realisasi penuh untuk <a className="cell-link" onClick={onOpenList}>PO-2026-0625</a> dari PT. Pemasok Contoh G</div>
             </div>
             <div className="timeline-item">
               <div className="ti-when">Hari ini · 11:45</div>
-              <div className="ti-what"><b className="ti-who">Rini K.</b> membuat draft order untuk CV Bengkel Sentosa</div>
+              <div className="ti-what"><b className="ti-who">Rini K.</b> membuat draft order untuk PT. Pemasok Contoh F</div>
             </div>
             <div className="timeline-item">
               <div className="ti-when">Kemarin · 17:30</div>
@@ -217,11 +217,11 @@ function Dashboard({ onOpenList }) {
           <h3>Top Suppliers (30 Hari)</h3>
           <div style={{display:'flex', flexDirection:'column', gap:14}}>
             {[
-              ['PT Indo Ban Prima',       182400000, 92],
-              ['CV Sumber Mesin Jaya',    154200000, 78],
-              ['PT Auto Parts Nusantara', 128900000, 65],
-              ['PT Karya Otomotif',        91250000, 46],
-              ['PT Mandiri Lighting',      54100000, 27],
+              ['PT. Pemasok Contoh G',       182400000, 92],
+              ['CV. Pemasok Contoh B',    154200000, 78],
+              ['PT. Pemasok Contoh A', 128900000, 65],
+              ['PT. Pemasok Contoh C',        91250000, 46],
+              ['CV. Pemasok Contoh H',      54100000, 27],
             ].map(([name, val, pct]) => (
               <div key={name}>
                 <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, marginBottom:5}}>
@@ -274,7 +274,7 @@ function HomeDashboard({ onNavigate }) {
 
   const modules = [
     { id:'pembelian',   label:'Pembelian',    icon:I.truck(22),    color:'#0ea5e9', kpi:`${PB_PO.filter(p=>!p.Batal).length} PO aktif`, desc:'Purchase request, RFQ, PO, nota & retur beli' },
-    { id:'sales',       label:'Penjualan',    icon:I.users(22),    color:'#10b981', kpi:`${PJ_PELANGGAN.filter(p=>p.status!=='Non-aktif').length} pelanggan aktif`, desc:'Konfirmasi order, SO, DO, invoice & retur' },
+    { id:'sales',       label:'Penjualan',    icon:I.users(22),    color:'#10b981', kpi:`${pjPelanggan().filter(p=>p.status!=='Non-aktif').length} pelanggan aktif`, desc:'Konfirmasi order, SO, DO, invoice & retur' },
     { id:'barang',      label:'Barang',       icon:I.box(22),      color:'#f59e0b', kpi:`${BARANG_LAIN.filter(b=>b.aktif).length + BAHAN_BAKU.filter(b=>b.aktif).length + BARANG_JADI.filter(b=>b.aktif).length} item aktif`, desc:'Barang, bahan baku, mutasi & stock opname' },
     { id:'manufaktur',  label:'Manufaktur',   icon:I.list(22),     color:'#dc2626', kpi:`${MF_SPK_SEED.filter(s=>!['Batal','Cancelled','Selesai'].includes(s.status)).length} SPK aktif`, desc:'SPK, hasil produksi & planning schedule' },
     { id:'keuangan',    label:'Keuangan',     icon:I.bank(22),     color:'#8b5cf6', kpi:'Akuntansi & kas/bank', desc:'Akun, jurnal, laporan keuangan, kas, bank & giro' },

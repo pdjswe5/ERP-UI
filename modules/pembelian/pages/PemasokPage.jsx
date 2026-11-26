@@ -75,6 +75,7 @@ function PemasokPage({ rows, setRows }) {
 
   const save = (form) => {
     const normalized = { ...form, Aktif: form.Aktif === true || form.Aktif === 'true' };
+    if (!modal && rows.some(r => String(r.Kode_Supp).toUpperCase() === String(form.Kode_Supp).toUpperCase())) return `Kode Pemasok ${form.Kode_Supp} sudah dipakai.`;
     setRows(prev => modal ? prev.map(r => r.Kode_Supp===modal.Kode_Supp ? normalized : r) : [...prev, normalized]);
     window.__erpToast && window.__erpToast('Data pemasok berhasil disimpan.');
   };
@@ -101,6 +102,7 @@ function PemasokPage({ rows, setRows }) {
       <PemasokList rows={rows} onAdd={openAdd} onView={openView} onEdit={openEdit} onDeactivate={(r)=>setConfirmDeactivate(r)} onActivate={(r)=>setConfirmActivate(r)} />
       {show && (
         <PbModalShell
+          rows={rows}
           title="Pemasok"
           data={modal}
           tabs={pemasokModalTabs()}

@@ -90,11 +90,16 @@ function KatalogAktiva({ rows, onAdd, onEdit, onCetak, onCetakRow }) {
 function AktivaModal({ data, onClose, onSave }) {
   const isEdit = !!data;
   const [form, setForm] = React.useState(() => {
-    const base = data || { kode:'', nama:'', aktif:true, tglBeli:'', tglJual:'', noBukti:'', noKelompok:'', compro:'PT Pacific Data', kategori:'', harga:0, susut:0, nilai:0 };
+    const base = data || { kode:'', nama:'', aktif:true, tglBeli:'', tglJual:'', noBukti:'', noKelompok:'', compro:'PT. Pacific Data Jaya', kategori:'', harga:0, susut:0, nilai:0 };
     return { ...base, tglBeli: akToIso(base.tglBeli), tglJual: akToIso(base.tglJual) };
   });
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
-  const handleSave = () => onSave({ ...form, tglBeli: akFromIso(form.tglBeli), tglJual: akFromIso(form.tglJual) });
+  const handleSave = () => {
+    if (!String(form.kode || '').trim() || !String(form.nama || '').trim()) { window.__erpToast && window.__erpToast('Kode dan nama aktiva wajib diisi.'); return; }
+    if (+form.harga < 0 || +form.susut < 0 || +form.susut > +form.harga) { window.__erpToast && window.__erpToast('Akumulasi susut harus 0 s/d harga perolehan.'); return; }
+    // Nilai buku selalu dihitung: harga perolehan − akumulasi susut.
+    onSave({ ...form, nilai: (+form.harga || 0) - (+form.susut || 0), tglBeli: akFromIso(form.tglBeli), tglJual: akFromIso(form.tglJual) }, isEdit);
+  };
   return (
     <AkModalShell wide title={isEdit?`Edit Aktiva — ${data.kode}`:'Tambah Aktiva Tetap'}
       sub={isEdit?data.nama:'Daftarkan aktiva tetap baru beserta jadwal penyusutan'}
@@ -104,7 +109,7 @@ function AktivaModal({ data, onClose, onSave }) {
         <div className="form-section">
           <h4>Identitas Aktiva</h4>
           <div className="form-row">
-            <div className="field"><label>Kode Produk *</label><input className="input mono" value={form.kode} onChange={e=>set('kode',e.target.value)} placeholder="AT-XXX"/></div>
+            <div className="field"><label>Kode Produk *</label><input className="input mono" value={form.kode} disabled={isEdit} onChange={e=>set('kode',e.target.value)} placeholder="AT-XXX"/></div>
             <div className="field"><label>Kode Kategori</label>
               <select className="select" value={form.kategori} onChange={e=>set('kategori',e.target.value)}>
                 <option value="">— Pilih —</option>
@@ -133,7 +138,7 @@ function AktivaModal({ data, onClose, onSave }) {
           <div className="field"><label>Harga Perolehan (Rp) *</label><input className="input mono" type="number" value={form.harga} onChange={e=>set('harga',+e.target.value)}/></div>
           <div className="form-row">
             <div className="field"><label>Akm. Penyusutan (Rp)</label><input className="input mono" type="number" value={form.susut} onChange={e=>set('susut',+e.target.value)}/></div>
-            <div className="field"><label>Nilai Buku (Rp)</label><input className="input mono" type="number" value={form.nilai} onChange={e=>set('nilai',+e.target.value)}/></div>
+            <div className="field"><label>Nilai Buku (Rp)</label><input className="input mono" value={fmtRp((+form.harga || 0) - (+form.susut || 0))} readOnly title="Otomatis: harga perolehan − akumulasi susut"/></div>
           </div>
           <div className="field"><label>Tgl. Jual (jika dilepas)</label><input className="input" type="date" value={form.tglJual} onChange={e=>set('tglJual',e.target.value)}/></div>
         </div>
@@ -147,7 +152,8 @@ function AktivaPage({ rows, setRows }) {
   const [showCetak, setShowCetak] = React.useState(false);
   const [cetakRow, setCetakRow] = React.useState(null);
 
-  const save = (form) => {
+  const save = (form, isEdit) => {
+    if (!isEdit && rows.some(r => r.kode === form.kode)) { window.__erpToast && window.__erpToast(`Kode ${form.kode} sudah dipakai.`); return; }
     setRows(prev => prev.some(r => r.kode === form.kode) ? prev.map(r => r.kode === form.kode ? form : r) : [...prev, form]);
     setModal(null);
     window.__erpToast && window.__erpToast('Data berhasil disimpan.');

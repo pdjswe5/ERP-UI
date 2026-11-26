@@ -67,6 +67,8 @@ function MfSpkList({ rows, onAdd, onView, onEdit, onCancelDoc, onNavigate }) {
 
   const filtered = rows.filter((r) => {
     if (statusF && r.status !== statusF) return false;
+    if (tglDari && erpAnyToIso(r.tgl) < tglDari) return false;
+    if (tglSmp && erpAnyToIso(r.tgl) > tglSmp) return false;
     if (
       q &&
       !r.no.toLowerCase().includes(q.toLowerCase()) &&
@@ -337,10 +339,11 @@ function MfSpkList({ rows, onAdd, onView, onEdit, onCancelDoc, onNavigate }) {
 
 // ─── SPK Dialog ──────────────────────────────────────────────────────────────
 
-function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
+function MfSpkDialog({ rows, data, initialMode, onClose, onSave, onCancelDoc }) {
+  useEscape(onClose);
   // CREATE (data kosong) | VIEW (buka dari klik nama) | EDIT (buka dari ikon Edit)
   const [mode, setMode] = React.useState(
-    data ? (initialMode === "EDIT" ? "EDIT" : "VIEW") : "CREATE",
+    data ? (initialMode === "EDIT" && data.status !== "Batal" && !data.Batal ? "EDIT" : "VIEW") : "CREATE",
   );
   const isCreate = mode === "CREATE";
   const isView = mode === "VIEW";
@@ -518,6 +521,12 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
 
   const handleSave = () => {
     if (hasEmptyMesin) return; // jaga-jaga — tombol Simpan sudah disabled, ini cuma defensif
+    const liveBj = bjLines.filter((r) => !r._deleted);
+    if (isCreate && noBuktiLocked) { window.__erpToast && window.__erpToast("Pilih No. Bukti (ketik F atau K) terlebih dahulu."); return; }
+    if (liveBj.length === 0 || liveBj.some((r) => !r.kodeBarang || !(+r.qtySPK > 0))) {
+      window.__erpToast && window.__erpToast("SPK wajib berisi barang jadi dengan qty lebih dari 0.");
+      return;
+    }
     // Buang baris soft-delete + strip flag _deleted/_added sebelum disimpan (sama seperti
     // handleSave PjDocModal/PbModalShell di Penjualan/Pembelian).
     const cleanBj = bjLines
@@ -529,11 +538,7 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
     // No. SPK baru dibentuk dari huruf F/K yang diketik + "SPK" + YYMM + acak, sama pola
     // dengan No. Bukti KO/SO/DO (lihat handleSave di PjDocModal).
     const finalNo = isCreate
-      ? (noBuktiRaw[0] || "") +
-        "SPK" +
-        new Date().toISOString().slice(2, 4) +
-        new Date().toISOString().slice(5, 7) +
-        String(Math.floor(Math.random() * 9000) + 1000)
+      ? erpNextDocNo(noBuktiRaw[0], "SPK", tgl, rows, "no")
       : data.no;
     onSave({
       no: finalNo,
@@ -683,7 +688,7 @@ function MfSpkDialog({ data, initialMode, onClose, onSave, onCancelDoc }) {
                         disabled={isBatal || noBuktiLocked}
                         onChange={(e) => setStatus(e.target.value)}
                       >
-                        {MF_STATUS_SPK.filter((s) => s !== "Batal").map((s) => (
+                        {MF_STATUS_SPK.filter((s) => s !== "Batal" && (s === status || !["Approved", "Realisasi", "Selesai", "Cancelled"].includes(s))).map((s) => (
                           <option key={s}>{s}</option>
                         ))}
                         {isBatal && <option>Batal</option>}

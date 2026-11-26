@@ -47,7 +47,7 @@ function akBbRekapRows(akunRows, kbgRows, allEvents, kodeDari, kodeSampai, tglAw
     });
 }
 
-function LaporanBukuBesarRekapPage({ akunRows, kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows }) {
+function LaporanBukuBesarRekapPage({ akunRows, kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows, giroMasukRows, giroKeluarRows }) {
   const [tglAwal, setTglAwal] = React.useState('2026-04-01');
   const [tglAkhir, setTglAkhir] = React.useState('2026-07-31');
   const [kodeDari, setKodeDari] = React.useState('');
@@ -55,8 +55,8 @@ function LaporanBukuBesarRekapPage({ akunRows, kbgRows, kasMasukRows, kasKeluarR
 
   const allEvents = React.useMemo(() => akBbAllEvents({
     kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows,
-    transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows,
-  }), [kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows]);
+    transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows, giroMasukRows, giroKeluarRows,
+  }), [kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows, giroMasukRows, giroKeluarRows]);
 
   const rows = React.useMemo(() => akBbRekapRows(akunRows, kbgRows, allEvents, kodeDari, kodeSampai, tglAwal, tglAkhir),
     [akunRows, kbgRows, allEvents, kodeDari, kodeSampai, tglAwal, tglAkhir]);
@@ -71,7 +71,7 @@ function LaporanBukuBesarRekapPage({ akunRows, kbgRows, kasMasukRows, kasKeluarR
     saldoAkhirD: akBbFmtNum(sum('saldoAkhirD')), saldoAkhirK: akBbFmtNum(sum('saldoAkhirK')),
   };
 
-  const doCetak = () => { window.__erpToast && window.__erpToast('Cetak dikirim ke printer.'); };
+  const doCetak = () => { erpPrint(); };
 
   return (
     <>

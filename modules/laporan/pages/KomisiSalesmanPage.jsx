@@ -131,7 +131,7 @@ function LapKomisiPeriodeSection() {
     `Tanggal : ${lapFmtTgl(tglAwal)} sd ${lapFmtTgl(tglAkhir)}`,
   ];
 
-  const doCetak = () => { window.__erpToast && window.__erpToast('Cetak dikirim ke printer.'); };
+  const doCetak = () => { erpPrint(); };
 
   const radioRow = (label, value, opts, onChange) => (
     <div className="field">
@@ -152,7 +152,7 @@ function LapKomisiPeriodeSection() {
     const footerRow = { customer:'', tglNota:'', noNota:'', tglOrder:'', topKomisi:'', tglBayarAkhir:'', noBayarAkhir:'',
       dasarBruto:'', fee1:'', fee2:'', fee3:'', potBayar:'', dasarNetto:'TOTAL', komisiPct:'',
       komisiRp: lapFmtNum(filtered.reduce((a,r)=>a+r.komisiRp,0)) };
-    body = <LapCetakPage docTitle="Komisi Salesman" metaRight={lapFmtTglNow()} infoLines={infoLines}
+    body = <LapCetakPage roomy="sm" docTitle="Komisi Salesman" metaRight={lapFmtTglNow()} infoLines={infoLines}
       columns={LAP_KOMISI_COLS} rows={rows} footerRow={footerRow} emptyMsg="Tidak ada nota pada periode & filter ini." />;
   } else {
     const title = mode === 'REKAPFEE' ? `REKAP FEE KF${kfTier}` : `VOUCHER FEE KF${kfTier}`;
@@ -161,7 +161,7 @@ function LapKomisiPeriodeSection() {
     const footerRow = { noNota:'', tglOrder:'', customer:'', sales:'', tglBayarAkhir:'', noBayarAkhir:'',
       penerimaFee:'', alamat:'', noKtp:'', noHp:'', bank:'', rekening:'TOTAL',
       totalKf: lapFmtNum(filtered.reduce((a,r)=>a+(r['fee'+kfTier]||0),0)) };
-    body = <LapCetakPage docTitle={title} metaRight={lapFmtTglNow()} infoLines={infoLines}
+    body = <LapCetakPage roomy="sm" docTitle={title} metaRight={lapFmtTglNow()} infoLines={infoLines}
       columns={LAP_FEE_COLS} rows={rows} footerRow={footerRow} emptyMsg="Tidak ada data fee pada tier ini." />;
   }
 
@@ -221,7 +221,7 @@ function LapKomisiTahunanSection() {
   footerRow.total = lapFmtNum(pivot.grandTotal * 1000);
   footerRow.rataRata = lapFmtNum(pivot.grandRata * 1000);
 
-  const doCetak = () => { window.__erpToast && window.__erpToast('Cetak dikirim ke printer.'); };
+  const doCetak = () => { erpPrint(); };
 
   return (
     <LapReportShell
@@ -245,7 +245,7 @@ function LapKomisiTahunanSection() {
         </>
       }
       previewChildren={
-        <LapCetakPage docTitle={`KOMISI SALESMAN Tahun ${tahun}  (Dalam Ribuan Rupiah)`}
+        <LapCetakPage roomy="sm" docTitle={`KOMISI SALESMAN Tahun ${tahun}  (Dalam Ribuan Rupiah)`}
           metaRight={lapFmtTglNow()}
           columns={LAP_TAHUNAN_COLS} rows={rows} footerRow={footerRow}
           emptyMsg="Tidak ada salesman pada jenis ini." />

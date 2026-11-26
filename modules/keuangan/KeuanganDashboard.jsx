@@ -13,14 +13,10 @@ function KeuanganDashboard({ onOpenSub, onNavigate, akunRows, aktivaRows, jurnal
 
   const kasBankTiles = [
     { id:'kbg', icon:I.wallet ? I.wallet(20) : I.box(20), title:'Kas, Bank & Giro', desc:'Master akun kas, bank, dan giro beserta saldo realtime.', badge:`${kbgRows.length} akun`, accent:'#0369a1' },
-    { id:'km',  icon:I.arrowL(20), title:'Kas Masuk',     desc:'Pencatatan penerimaan kas dari pelanggan, tunai, atau lain-lain.',    badge:`${kasMasukRows.length} bulan ini`, accent:'#16a34a' },
-    { id:'kk',  icon:I.arrowR(20), title:'Kas Keluar',    desc:'Pengeluaran kas untuk supplier, beban operasional, dan reimburse.', badge:`${kasKeluarRows.length} bulan ini`, accent:'#dc2626' },
-    { id:'bm',  icon:I.arrowL(20), title:'Bank Masuk',    desc:'Penerimaan via transfer bank dari pelanggan dan lain-lain.',           badge:`${bankMasukRows.length} bulan ini`, accent:'#16a34a' },
-    { id:'bk',  icon:I.arrowR(20), title:'Bank Keluar',   desc:'Pembayaran ke supplier, payroll, pajak via transfer bank.',           badge:`${bankKeluarRows.length} bulan ini`, accent:'#dc2626' },
-    { id:'tm',  icon:I.arrowL(20), title:'Transfer Masuk antar Kas/Bank', desc:'Transfer masuk antar akun kas/bank internal.',          accent:'#0d9488' },
-    { id:'tk',  icon:I.arrowR(20), title:'Transfer Keluar antar Kas/Bank',desc:'Transfer keluar antar akun kas/bank internal.',         accent:'#0d9488' },
-    { id:'gm',  icon:I.invoice(20),title:'Giro Masuk',    desc:'Penerimaan giro dari pelanggan, monitoring jatuh tempo.',              badge: giroOutMasuk>0?`${giroOutMasuk} outstanding`:null, badgeKind:'pulse', accent:'#7c3aed' },
-    { id:'gk',  icon:I.invoice(20),title:'Giro Keluar',   desc:'Pengeluaran giro ke supplier dengan jadwal pencairan.',                badge: giroOutKeluar>0?`${giroOutKeluar} outstanding`:null, badgeKind:'pulse', accent:'#7c3aed' },
+    { id:'kas',      icon:I.arrowL(20), title:'Transaksi Kas',     desc:'Kas masuk (debet) dan kas keluar (kredit) dalam satu daftar.',       badge:`${kasMasukRows.length + kasKeluarRows.length} transaksi`, accent:'#16a34a' },
+    { id:'bank',     icon:I.arrowR(20), title:'Transaksi Bank',    desc:'Bank masuk (debet) dan bank keluar (kredit) dalam satu daftar.',     badge:`${bankMasukRows.length + bankKeluarRows.length} transaksi`, accent:'#2563eb' },
+    { id:'transfer', icon:I.arrowR(20), title:'Transfer Kas/Bank', desc:'Pemindahan saldo antar akun kas/bank internal.',                        accent:'#0d9488' },
+    { id:'giro',     icon:I.invoice(20),title:'Transaksi Giro',    desc:'Giro terima dari pelanggan & giro bayar ke supplier, pantau jatuh tempo.', badge: (giroOutMasuk+giroOutKeluar)>0?`${giroOutMasuk+giroOutKeluar} outstanding`:null, badgeKind:'pulse', accent:'#7c3aed' },
     { id:'pp',  icon:I.check(20),  title:'Pelunasan Piutang', desc:'Catat pelunasan invoice penjualan, full atau sebagian.',          badge:`${pelunasanPiutangRows.length} bulan ini`, accent:'#0d9488' },
     { id:'ph',  icon:I.check(20),  title:'Pelunasan Hutang',  desc:'Catat pelunasan bill supplier, full atau sebagian.',              badge:`${pelunasanHutangRows.length} bulan ini`, accent:'#0d9488' },
   ];

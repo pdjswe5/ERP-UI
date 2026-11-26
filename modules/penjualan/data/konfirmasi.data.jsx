@@ -4,7 +4,7 @@
 // atap/steel, bukan dari master BARANG generik). Tiap atribut punya pasangan kode+nama, sama pola
 // dengan PJ_SALES (dropdown pilih kode, field "Nama X" di sebelahnya otomatis terisi).
 const PJ_JENIS_BARANG = [
-  { kode:'ATS', nama:'Atap Spandek' },
+  { kode:'ATS', nama:'Atap Gelombang' },
   { kode:'ATG', nama:'Atap Genteng Metal' },
   { kode:'BRG', nama:'Bata Ringan' },
   { kode:'RNG', nama:'Reng Baja Ringan' },
@@ -22,14 +22,14 @@ const PJ_WARNA_BARANG = [
   { kode:'HTM', nama:'Hitam Doff' },
 ];
 const PJ_BRAND_BARANG = [
-  { kode:'AUS', nama:'Austeel' },
-  { kode:'BSC', nama:'BlueScope' },
-  { kode:'NSB', nama:'NS BlueScope' },
+  { kode:'AUS', nama:'Bahan Merek C' },
+  { kode:'BSC', nama:'Bahan Merek G' },
+  { kode:'NSB', nama:'Bahan Merek H' },
 ];
 const PJ_MERK_BARANG = [
-  { kode:'TRD', nama:'Trimdek' },
-  { kode:'SPD', nama:'Spandek' },
-  { kode:'MTL', nama:'Multiroof' },
+  { kode:'TRD', nama:'Profil Trapesium' },
+  { kode:'SPD', nama:'Profil Gelombang' },
+  { kode:'MTL', nama:'Merek Atap E' },
 ];
 const PJ_AZ_BARANG = [
   { kode:'AZ50', nama:'AZ 50' },
@@ -96,7 +96,7 @@ function koStatusPill(row) {
 const PJ_KONFIRMASI = [
   {
     noBukti: 'KKO20260001', tglDari: '08/07/2026', tglBukti: '2026-07-08', noReferensi: '',
-    customer: 'Pelanggan 1', kodeCustomer: 'H01', sales: 'Sales Baru 2',
+    customer: 'Pelanggan Contoh 05', kodeCustomer: 'H01', sales: 'Sales Baru 2',
     caraBayar: 'TUNAI', status: 'AKTIF', progressApproval: 'DISETUJUI', jmlItem: 1, totalNilai: 1332000,
     createdBy: 'PDJ Administrator', createdAt: '08/07/2026, 14:30', editedBy: 'PDJ Administrator', editedAt: '08/07/2026, 15:47',
     approval: { level: 'Level 1 - Supervisor', status: 'DISETUJUI', approvedBy: 'Admin', approvedAt: '08/07/2026, 15:00' },
@@ -108,7 +108,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'FKO20260002', tglDari: '07/07/2026', tglBukti: '2026-07-07', noReferensi: '',
-    customer: 'Brandon Fononta 3', kodeCustomer: 'C001', sales: 'Sales Senior',
+    customer: 'Pelanggan Contoh 02', kodeCustomer: 'C001', sales: 'Sales Senior',
     caraBayar: 'TUNAI', status: 'AKTIF', progressApproval: 'DISETUJUI', jmlItem: 2, totalNilai: 91575000,
     createdBy: 'PDJ Administrator', createdAt: '07/07/2026, 10:15', editedBy: 'PDJ Administrator', editedAt: '07/07/2026, 11:20',
     approval: { level: 'Level 1 - Supervisor', status: 'PENGAJUAN', approvedBy: '', approvedAt: '' },
@@ -123,7 +123,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'KKO20260003', tglDari: '04/07/2026', tglBukti: '2026-07-04', noReferensi: 'Ref-678678',
-    customer: 'KAVI', kodeCustomer: 'KV001', sales: 'Sales Junior 1',
+    customer: 'Pelanggan Contoh 06', kodeCustomer: 'KV001', sales: 'Sales Junior 1',
     caraBayar: 'KREDIT', status: 'AKTIF', progressApproval: 'DISETUJUI', jmlItem: 2, totalNilai: 66600000,
     createdBy: 'PDJ Administrator', createdAt: '04/07/2026, 09:00', editedBy: 'PDJ Administrator', editedAt: '04/07/2026, 09:30',
     approval: { level: 'Level 1 - Supervisor', status: 'DISETUJUI', approvedBy: 'Admin', approvedAt: '04/07/2026, 09:30' },
@@ -137,7 +137,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'KKO20260004', tglDari: '04/07/2026', tglBukti: '2026-07-04', noReferensi: 'Ref-765765',
-    customer: 'Lia Malik', kodeCustomer: 'L001', sales: 'Sales Junior 1',
+    customer: 'Pelanggan Contoh 07', kodeCustomer: 'L001', sales: 'Sales Junior 1',
     caraBayar: 'TUNAI', status: 'AKTIF', progressApproval: 'DISETUJUI', jmlItem: 2, totalNilai: 38850000,
     createdBy: 'PDJ Administrator', createdAt: '04/07/2026, 08:30', editedBy: 'PDJ Administrator', editedAt: '04/07/2026, 08:45',
     approval: { level: 'Level 1 - Supervisor', status: 'DISETUJUI', approvedBy: 'Admin', approvedAt: '04/07/2026, 08:45' },
@@ -145,11 +145,11 @@ const PJ_KONFIRMASI = [
     pembayaran: { tempo: 0, dp: 0, payment2: 0, payment3: 0, akun: 'BANK BCA', berlakuSampai: '2026-07-07' },
     discPct: 0, discRp: 0, ppn: 11, ppnMode: 'Exclude',
     biaya: [],
-    barang: [koBarangItem({ kode:'ITEM-004', nama:'Atap Spandek', jumlah:2, satuan:'LBR', hrgSat:19425000, realisasi:2, jenis:PJ_JENIS_BARANG[0], warna:PJ_WARNA_BARANG[0], brand:PJ_BRAND_BARANG[0], merk:PJ_MERK_BARANG[0], az:PJ_AZ_BARANG[2] })]
+    barang: [koBarangItem({ kode:'ITEM-004', nama:'Atap Gelombang', jumlah:2, satuan:'LBR', hrgSat:19425000, realisasi:2, jenis:PJ_JENIS_BARANG[0], warna:PJ_WARNA_BARANG[0], brand:PJ_BRAND_BARANG[0], merk:PJ_MERK_BARANG[0], az:PJ_AZ_BARANG[2] })]
   },
   {
     noBukti: 'KKO20260005', tglDari: '02/07/2026', tglBukti: '2026-07-02', noReferensi: 'REF-456456',
-    customer: 'Charlie Reynold 2', kodeCustomer: 'C012', sales: 'Sales Senior',
+    customer: 'Pelanggan Contoh 03', kodeCustomer: 'C012', sales: 'Sales Senior',
     caraBayar: 'TUNAI', status: 'AKTIF', progressApproval: 'DITOLAK SPV', jmlItem: 1, totalNilai: 5550000,
     createdBy: 'PDJ Administrator', createdAt: '02/07/2026, 13:00', editedBy: 'PDJ Administrator', editedAt: '02/07/2026, 13:15',
     approval: { level: 'Level 1 - Supervisor', status: 'DITOLAK', approvedBy: '', approvedAt: '' },
@@ -161,7 +161,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'KKO20260006', tglDari: '02/07/2026', tglBukti: '2026-07-02', noReferensi: 'REF-123123',
-    customer: 'Brandon Fononta 3', kodeCustomer: 'C001', sales: 'Sales Junior 2',
+    customer: 'Pelanggan Contoh 02', kodeCustomer: 'C001', sales: 'Sales Junior 2',
     caraBayar: 'TUNAI', status: 'AKTIF', progressApproval: 'PENGAJUAN MGR', jmlItem: 1, totalNilai: 1110000,
     createdBy: 'PDJ Administrator', createdAt: '02/07/2026, 11:00', editedBy: 'PDJ Administrator', editedAt: '02/07/2026, 11:30',
     approval: { level: 'Level 1 - Supervisor', status: 'PENGAJUAN', approvedBy: '', approvedAt: '' },
@@ -173,7 +173,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'KKO20260007', tglDari: '30/06/2026', tglBukti: '2026-06-30', noReferensi: '',
-    customer: 'Pelanggan 1', kodeCustomer: 'H01', sales: 'Sales Baru 2',
+    customer: 'Pelanggan Contoh 05', kodeCustomer: 'H01', sales: 'Sales Baru 2',
     caraBayar: 'TUNAI', status: 'BATAL', progressApproval: 'PENGAJUAN SPV', jmlItem: 1, totalNilai: 0,
     createdBy: 'PDJ Administrator', createdAt: '30/06/2026, 10:00', editedBy: 'PDJ Administrator', editedAt: '30/06/2026, 10:15',
     approval: { level: 'Level 1 - Supervisor', status: 'PENGAJUAN', approvedBy: '', approvedAt: '' },
@@ -185,7 +185,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'KKO20260008', tglDari: '18/06/2026', tglBukti: '2026-06-18', noReferensi: '',
-    customer: 'Pelanggan 1', kodeCustomer: 'H01', sales: 'Sales Junior 1',
+    customer: 'Pelanggan Contoh 05', kodeCustomer: 'H01', sales: 'Sales Junior 1',
     caraBayar: 'TUNAI', status: 'BATAL', progressApproval: 'PENGAJUAN SPV', jmlItem: 1, totalNilai: 5550000,
     createdBy: 'PDJ Administrator', createdAt: '18/06/2026, 09:00', editedBy: 'PDJ Administrator', editedAt: '18/06/2026, 09:10',
     approval: { level: 'Level 1 - Supervisor', status: 'PENGAJUAN', approvedBy: '', approvedAt: '' },
@@ -197,7 +197,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'KKO20260009', tglDari: '30/06/2026', tglBukti: '2026-06-30', noReferensi: '',
-    customer: 'Pelanggan 1', kodeCustomer: 'H01', sales: 'Sales Senior',
+    customer: 'Pelanggan Contoh 05', kodeCustomer: 'H01', sales: 'Sales Senior',
     caraBayar: 'TUNAI', status: 'BATAL', progressApproval: 'PENGAJUAN SPV', jmlItem: 1, totalNilai: 11100000,
     createdBy: 'PDJ Administrator', createdAt: '30/06/2026, 08:00', editedBy: 'PDJ Administrator', editedAt: '30/06/2026, 08:05',
     approval: { level: 'Level 1 - Supervisor', status: 'PENGAJUAN', approvedBy: '', approvedAt: '' },
@@ -209,7 +209,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'KKO20260010', tglDari: '30/06/2026', tglBukti: '2026-06-30', noReferensi: '',
-    customer: 'Budi Susanto Cahyono Siner', kodeCustomer: 'b7364', sales: 'Sales Junior 2',
+    customer: 'Pelanggan Contoh 01', kodeCustomer: 'b7364', sales: 'Sales Junior 2',
     caraBayar: 'TUNAI', status: 'BATAL', progressApproval: 'PENGAJUAN SPV', jmlItem: 1, totalNilai: 444000,
     createdBy: 'PDJ Administrator', createdAt: '30/06/2026, 07:30', editedBy: 'PDJ Administrator', editedAt: '30/06/2026, 07:40',
     approval: { level: 'Level 1 - Supervisor', status: 'PENGAJUAN', approvedBy: '', approvedAt: '' },
@@ -221,7 +221,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'KKO20260011', tglDari: '30/06/2026', tglBukti: '2026-06-30', noReferensi: '',
-    customer: 'Toko Jaya Abadi', kodeCustomer: 'T201', sales: 'Sales Baru 2',
+    customer: 'Pelanggan Contoh 22', kodeCustomer: 'T201', sales: 'Sales Baru 2',
     caraBayar: 'TUNAI', status: 'BATAL', progressApproval: 'PENGAJUAN SPV', jmlItem: 1, totalNilai: 133200,
     createdBy: 'PDJ Administrator', createdAt: '30/06/2026, 07:00', editedBy: 'PDJ Administrator', editedAt: '30/06/2026, 07:10',
     approval: { level: 'Level 1 - Supervisor', status: 'PENGAJUAN', approvedBy: '', approvedAt: '' },
@@ -233,7 +233,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'KKO20260012', tglDari: '18/06/2026', tglBukti: '2026-06-18', noReferensi: 'Ref-321321321',
-    customer: 'Pelanggan 1', kodeCustomer: 'H01', sales: 'Sales Junior 1',
+    customer: 'Pelanggan Contoh 05', kodeCustomer: 'H01', sales: 'Sales Junior 1',
     caraBayar: 'KREDIT', status: 'AKTIF', progressApproval: 'DITOLAK MGR', jmlItem: 1, totalNilai: 44400,
     createdBy: 'PDJ Administrator', createdAt: '18/06/2026, 06:00', editedBy: 'PDJ Administrator', editedAt: '18/06/2026, 06:15',
     approval: { level: 'Level 1 - Supervisor', status: 'DITOLAK', approvedBy: '', approvedAt: '' },
@@ -245,7 +245,7 @@ const PJ_KONFIRMASI = [
   },
   {
     noBukti: 'FKO20260013', tglDari: '18/06/2026', tglBukti: '2026-06-18', noReferensi: '',
-    customer: 'Pelanggan 1', kodeCustomer: 'H01', sales: 'Sales Junior 2',
+    customer: 'Pelanggan Contoh 05', kodeCustomer: 'H01', sales: 'Sales Junior 2',
     caraBayar: 'TUNAI', status: 'SELESAI MANUAL', progressApproval: 'PENGAJUAN SPV', jmlItem: 4, totalNilai: 5661000,
     createdBy: 'PDJ Administrator', createdAt: '18/06/2026, 05:00', editedBy: 'PDJ Administrator', editedAt: '18/06/2026, 05:30',
     approval: { level: 'Level 1 - Supervisor', status: 'PENGAJUAN', approvedBy: '', approvedAt: '' },

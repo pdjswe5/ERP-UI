@@ -40,8 +40,8 @@ function LaporanKartuPiutangHutangPage() {
 
   const isPiutang = jenis === 'piutang';
   const partners = React.useMemo(() => isPiutang
-    ? PJ_PELANGGAN.map(p => ({ kode:p.code, nama:p.name }))
-    : PB_SUPPLIER.map(p => ({ kode:p.Kode_Supp, nama:p.Nama_Supp })),
+    ? pjPelanggan(true).map(p => ({ kode:p.code, nama:p.name }))
+    : pbSupplier(true).map(p => ({ kode:p.Kode_Supp, nama:p.Nama_Supp })),
   [isPiutang]);
 
   const groups = React.useMemo(() => lapKartuGroups(
@@ -52,7 +52,7 @@ function LaporanKartuPiutangHutangPage() {
     kodeDari, kodeSampai, tglAwal, tglAkhir,
   ), [partners, isPiutang, kodeDari, kodeSampai, tglAwal, tglAkhir]);
 
-  const doCetak = () => { window.__erpToast && window.__erpToast('Cetak dikirim ke printer.'); };
+  const doCetak = () => { erpPrint(); };
 
   return (
     <>

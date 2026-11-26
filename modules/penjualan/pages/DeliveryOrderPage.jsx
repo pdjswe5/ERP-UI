@@ -1,6 +1,9 @@
 // Penjualan — halaman Delivery Order
 
-function DeliveryOrderPage({ rows, setRows, salesOrderList }) {
+function DeliveryOrderPage({ rows, setRows, salesOrderList, onRealisasi }) {
+  // Tabs (dan komponen picker di dalamnya) dibuat sekali per perubahan data sumber, bukan tiap render —
+  // kalau tidak, React me-remount picker/banner dan state-nya hilang setelah Simpan.
+  const tabs = React.useMemo(() => deliveryOrderTabs(salesOrderList), [salesOrderList]);
   const columns = [
     { key:'No_Bukti', label:'No. Bukti', mono:true },
     { key:'Tgl_Bukti', label:'Tgl. Bukti' },
@@ -24,6 +27,9 @@ function DeliveryOrderPage({ rows, setRows, salesOrderList }) {
   const closeModal = () => { setShow(false); setModal(null); setModalMode(null); };
 
   const save = (form, mode) => {
+    // Realisasi SO = qty yang sudah dikirim lewat DO (edit: batalkan qty lama, pasang qty baru).
+    const old = rows.find(r => r.No_Bukti === form.No_Bukti);
+    if (onRealisasi) { if (mode !== 'CREATE' && old) onRealisasi(old.Details, -1); onRealisasi(form.Details, +1); }
     if (mode === 'CREATE') setRows(prev => [...prev, form]);
     else setRows(prev => prev.map(r => r.No_Bukti===form.No_Bukti ? form : r));
     window.__erpToast && window.__erpToast('Delivery Order berhasil disimpan.');
@@ -31,6 +37,7 @@ function DeliveryOrderPage({ rows, setRows, salesOrderList }) {
 
   const cancelDoc = (form) => {
     const updated = { ...form, Status:'BATAL', Batal:true, Alasan_Status: form.Alasan_Status || 'Dibatalkan oleh operator' };
+    onRealisasi && onRealisasi(form.Details, -1);
     setRows(prev => prev.map(r => r.No_Bukti===updated.No_Bukti ? updated : r));
     setModal(updated);
     window.__erpToast && window.__erpToast('Delivery Order dibatalkan.');
@@ -38,6 +45,7 @@ function DeliveryOrderPage({ rows, setRows, salesOrderList }) {
 
   const cancelFromList = (reason) => {
     const updated = { ...confirmCancel, Status:'BATAL', Batal:true, Alasan_Status: reason || 'Dibatalkan oleh operator' };
+    onRealisasi && onRealisasi(confirmCancel.Details, -1);
     setRows(prev => prev.map(r => r.No_Bukti===updated.No_Bukti ? updated : r));
     window.__erpToast && window.__erpToast('Delivery Order dibatalkan.');
     setConfirmCancel(null);
@@ -93,9 +101,10 @@ function DeliveryOrderPage({ rows, setRows, salesOrderList }) {
       )}
       {show && (
         <PjDocModal
+          rows={rows}
           title="Delivery Order"
           data={modal}
-          tabs={deliveryOrderTabs(salesOrderList)}
+          tabs={tabs}
           prefix="DO"
           showTotals
           xwide

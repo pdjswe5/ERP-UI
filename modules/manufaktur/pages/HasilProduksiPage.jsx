@@ -12,7 +12,8 @@
 
 // ─── Hasil Produksi Dialog ────────────────────────────────────────────────────
 
-function MfHasilProduksiDialog({ data, spkRows, onClose, onSave }) {
+function MfHasilProduksiDialog({ rows, data, spkRows, onClose, onSave }) {
+  useEscape(onClose);
   const isCreate = !data;
 
   // No. Bukti: gerbang F/K sama pola dengan KO/SO/DO/SPK — user ketik F atau K, field lain
@@ -30,8 +31,9 @@ function MfHasilProduksiDialog({ data, spkRows, onClose, onSave }) {
   const noBuktiLocked = isCreate && (!noBuktiRaw || !['F','K'].includes(noBuktiRaw[0]));
   React.useEffect(() => { if (isCreate && noBuktiRef.current) noBuktiRef.current.focus(); }, [isCreate]);
 
-  const [tgl,    setTgl]    = React.useState(data?.tgl    || '2026-06-24');
+  const [tgl,    setTgl]    = React.useState(erpAnyToIso(data?.tgl) || todayLocal());
   const [gudang, setGudang] = React.useState(data?.gudang || '');
+  const [qtyAktual, setQtyAktual] = React.useState(data?.qtyAktual ?? data?.qtySPK ?? '');
 
   // SPK + Barang Jadi — hanya bisa dipilih sekali saat CREATE (mengunci konsisten dgn pola gerbang
   // No. Bukti); di EDIT, field ini murni tampilan dari data yang sudah tersimpan.
@@ -107,15 +109,19 @@ function MfHasilProduksiDialog({ data, spkRows, onClose, onSave }) {
   };
 
   const handleSave = () => {
+    if (noBuktiLocked) { window.__erpToast && window.__erpToast('Pilih No. Bukti (ketik F atau K) terlebih dahulu.'); return; }
+    if (!noSpk) { window.__erpToast && window.__erpToast('No. SPK wajib dipilih.'); return; }
+    if (qtyAktual !== '' && !(+qtyAktual > 0)) { window.__erpToast && window.__erpToast('Qty aktual harus lebih dari 0.'); return; }
+    if (isCreate && (rows || []).some(r => !r.Batal && r.noSpk === noSpk && bj && r.bjLineId === bj.bjLineId)) { window.__erpToast && window.__erpToast('Barang jadi SPK ini sudah dibuatkan Hasil Produksi.'); return; }
     const finalNo = isCreate
-      ? (noBuktiRaw[0] || '') + 'HP' + new Date().toISOString().slice(2,4) + new Date().toISOString().slice(5,7) + String(Math.floor(Math.random()*9000)+1000)
+      ? erpNextDocNo(noBuktiRaw[0], 'HP', tgl, rows, 'no')
       : data.no;
     onSave({
       no: finalNo, tgl, gudang,
       dibuatOleh: data?.dibuatOleh || 'Admin', dibuatTgl: data?.dibuatTgl || `${tgl} 09:00`,
       noSpk, bjLineId: bj?.bjLineId ?? null,
       kodeBarang: bj?.kodeBarang || '', namaBarang: bj?.namaBarang || '',
-      qtySPK: bj?.qtySPK ?? '', satuan: bj?.satuan || '',
+      qtySPK: bj?.qtySPK ?? '', qtyAktual: qtyAktual === '' ? (bj?.qtySPK ?? 0) : +qtyAktual, satuan: bj?.satuan || '',
       namaKelompokWarna: bj?.namaKelompokWarna || '', namaAz: bj?.namaAz || '',
       namaBrand: bj?.namaBrand || '', namaMerkBarang: bj?.namaMerkBarang || '',
       stempel: bj?.stempel || '', mesinDipilih: bj?.mesinDipilih || [],
@@ -201,6 +207,10 @@ function MfHasilProduksiDialog({ data, spkRows, onClose, onSave }) {
                   <div className="field" style={{gridColumn:'span 2', marginBottom:0}}>
                     <label>Qty SPK</label>
                     <input className="input mono" value={bj ? `${bj.qtySPK} ${bj.satuan}` : ''} readOnly placeholder="Otomatis" />
+                  </div>
+                  <div className="field" style={{gridColumn:'span 2', marginBottom:0}}>
+                    <label>Qty Aktual *</label>
+                    <input className="input mono" type="number" min="0" value={qtyAktual} onChange={e => setQtyAktual(e.target.value)} placeholder={bj ? String(bj.qtySPK) : ''} />
                   </div>
                   <div className="field" style={{gridColumn:'span 2', marginBottom:0}}>
                     <label>Kode Barang</label>
@@ -299,7 +309,7 @@ function MfHasilProduksiDialog({ data, spkRows, onClose, onSave }) {
                           <td style={tdS}>
                             <select className="select" style={{width:'100%', fontSize:12, padding:'3px 6px'}}
                               value={row.satuan} onChange={e => updateBahan(row.id, 'satuan', e.target.value)}>
-                              {MF_SATUAN_SPK.map(s => <option key={s}>{s}</option>)}
+                              {MF_SATUAN_OPTS.map(s => <option key={s}>{s}</option>)}
                             </select>
                           </td>
                           <td style={tdS}>
@@ -385,6 +395,8 @@ function MfHasilProduksiList({ rows, onAdd, onEdit }) {
 
   const filtered = rows.filter(r => {
     if (spkF && !r.noSpk.toLowerCase().includes(spkF.toLowerCase())) return false;
+    if (tglDari && erpAnyToIso(r.tgl) < tglDari) return false;
+    if (tglSmp && erpAnyToIso(r.tgl) > tglSmp) return false;
     return true;
   });
 
@@ -460,7 +472,7 @@ function MfHasilProduksiList({ rows, onAdd, onEdit }) {
                   <td><span className="cell-link" style={{cursor:'pointer'}} onClick={() => onEdit(r)}>{r.no}</span></td>
                   <td className="muted">{r.noSpk}</td>
                   <td>{r.namaBarang}</td>
-                  <td className="num mono">{r.qtySPK} {r.satuan}</td>
+                  <td className="num mono">{r.qtyAktual ?? r.qtySPK} {r.satuan}</td>
                   <td>{r.tgl}</td>
                   <td>{r.gudang}</td>
                   <td>

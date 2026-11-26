@@ -232,9 +232,9 @@ function MutasiBarangTable({ rows, setRows, onAddClick, viewMode, addLocked, add
 // dari PbModalShell: "Batalkan Perubahan" di sini eksplisit menampilkan ConfirmationModal HANYA
 // kalau form benar-benar berubah dari snapshot saat masuk mode edit (dibandingkan lewat
 // JSON.stringify) — PbModalShell aslinya langsung revert tanpa konfirmasi sama sekali.
-function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestCancel }) {
+function MutasiBuatModal({ rows, jenis, data, initialMode, onClose, onSave, onRequestCancel }) {
   const isEdit0 = !!data;
-  const [mode, setMode] = React.useState(isEdit0 ? (initialMode === 'EDIT' ? 'EDIT' : 'VIEW') : 'CREATE');
+  const [mode, setMode] = React.useState(isEdit0 ? (initialMode === 'EDIT' && !data.batal ? 'EDIT' : 'VIEW') : 'CREATE');
   const isCreate = mode === 'CREATE';
   const isView = mode === 'VIEW';
   const isEdit = mode === 'EDIT';
@@ -251,11 +251,13 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
   const noBuktiLocked = isCreate && (!noBuktiRaw || !['F','K'].includes(noBuktiRaw[0]));
   React.useEffect(() => { if (isCreate && noBuktiRef.current) noBuktiRef.current.focus(); }, [isCreate]);
 
-  const empty = { tglBukti:new Date().toISOString().slice(0,10), kodeKategori:'LAIN', kodeCustomer:'', kodeGudangDari:'', kodeGudangKe:'', keterangan:'', jenis, batal:false, alasanBatal:'', details:[] };
+  const empty = { tglBukti:todayLocal(), kodeKategori:'LAIN', kodeCustomer:'', kodeGudangDari:'', kodeGudangKe:'', keterangan:'', jenis, batal:false, alasanBatal:'', details:[] };
   const [form, setForm] = React.useState(() => { const base = data ? {...empty, ...data} : {...empty}; if (!Array.isArray(base.details)) base.details = []; return base; });
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
   const [picker, setPicker] = React.useState(false);
-  const [snapshotForm, setSnapshotForm] = React.useState(null);
+  const [snapshotForm, setSnapshotForm] = React.useState(() => (data && initialMode === 'EDIT') ? { ...data } : null);
+  const [saveError, setSaveError] = React.useState('');
+  useEscape(onClose);
   const [confirmDiscard, setConfirmDiscard] = React.useState(false);
 
   const enterEditMode = () => { setSnapshotForm({...form}); setMode('EDIT'); };
@@ -268,11 +270,18 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
   const handlePickerConfirm = (picked) => { setForm(f => ({...f, details:[...f.details, ...picked]})); setPicker(false); };
 
   const handleSave = () => {
-    const cleanDetails = form.details.filter(r => !r._deleted).map(({_deleted, _added, units, ...r}) => ({ ...r, satuanTerkecil:(r.konversi||1)*(r.jumlah||0) }));
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(2);
-    const mm = String(now.getMonth()+1).padStart(2,'0');
-    const finalNo = isCreate ? `${noBuktiRaw[0]}MB${yy}${mm}${String(Math.floor(Math.random()*9000)+1000)}` : data.noBukti;
+    const cleanDetails = form.details.filter(r => !r._deleted).map(({_deleted, _added, ...r}) => ({ ...r, satuanTerkecil:(r.konversi||1)*(r.jumlah||0) }));
+    const live = form.details.filter(r => !r._deleted);
+    let err = '';
+    if (noBuktiLocked) err = 'Pilih No. Bukti (ketik F atau K) terlebih dahulu.';
+    else if (!form.tglBukti) err = 'Tanggal wajib diisi.';
+    else if (jenis === 'KONSINYASI' && !form.kodeCustomer) err = 'Customer wajib dipilih.';
+    else if (!form.kodeGudangDari || (jenis !== 'KONSINYASI' && !form.kodeGudangKe)) err = 'Gudang asal dan tujuan wajib dipilih.';
+    else if (form.kodeGudangKe && form.kodeGudangDari === form.kodeGudangKe) err = 'Gudang asal tidak boleh sama dengan gudang tujuan.';
+    else if (live.length === 0) err = 'Minimal 1 barang.';
+    else if (live.some(r => !(+r.jumlah > 0))) err = 'Jumlah setiap barang harus lebih dari 0.';
+    setSaveError(err); if (err) return;
+    const finalNo = isCreate ? erpNextDocNo(noBuktiRaw[0], 'MB', form.tglBukti, rows, 'noBukti') : data.noBukti;
     onSave({ ...form, noBukti:finalNo, details:cleanDetails });
   };
 
@@ -283,7 +292,7 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
   // PJ_PELANGGAN (modules/penjualan/data/pelanggan.data.jsx) dimuat setelah script modul Barang,
   // tapi ini cuma dipakai di dalam body komponen (dievaluasi saat render di browser, jauh setelah
   // semua <script> selesai dimuat), jadi urutan <script> di index.html tidak masalah di sini.
-  const customerNama = (kode) => PJ_PELANGGAN.find(c => c.code === kode)?.name || '';
+  const customerNama = (kode) => pjPelanggan().find(c => c.code === kode)?.name || '';
   const modalTitle = isCreate ? `Buat ${title}` : isEdit ? `Edit ${title} — ${form.noBukti}` : `${title} — ${form.noBukti}`;
 
   return (
@@ -294,6 +303,7 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
           <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
         </div>
         <div className="modal-body" style={{overflowY:'auto', maxHeight:'calc(92vh - 180px)', padding:'16px 24px'}}>
+          {saveError && <div className="danger-form" style={{marginBottom:12}}>{saveError}</div>}
           {form.batal && <BrgAlasanBatal alasan={form.alasanBatal} />}
           <div className="panel">
             <h3>Informasi {title}</h3>
@@ -321,7 +331,7 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
               {isKonsinyasi && (
                 isView ? <BrgViewField label="Customer" value={customerNama(form.kodeCustomer) ? `${customerNama(form.kodeCustomer)} (${form.kodeCustomer})` : form.kodeCustomer} /> : (
                   <div className="form-grid-2" style={{gap:8}}>
-                    <div className="field"><label>Customer {req}</label><select className="select" disabled={noBuktiLocked} value={form.kodeCustomer} onChange={e=>set('kodeCustomer',e.target.value)}><option value="">Pilih Customer</option>{PJ_PELANGGAN.map(c=><option key={c.code} value={c.code}>{c.code}</option>)}</select></div>
+                    <div className="field"><label>Customer {req}</label><select className="select" disabled={noBuktiLocked} value={form.kodeCustomer} onChange={e=>set('kodeCustomer',e.target.value)}><option value="">Pilih Customer</option>{pjPelanggan(true).map(c=><option key={c.code} value={c.code}>{c.code}</option>)}</select></div>
                     <div className="field"><label>&nbsp;</label><input className="input" value={customerNama(form.kodeCustomer)} readOnly placeholder="Customer" /></div>
                   </div>
                 )
@@ -356,7 +366,7 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
             {isView && !form.batal && <button className="btn btn-primary" onClick={enterEditMode}>{I.edit()} Edit</button>}
             {isEdit && <button className="btn" onClick={handleCancelEditClick}>Batalkan Perubahan</button>}
             <button className="btn" onClick={onClose}>Tutup</button>
-            {!isView && <button className="btn btn-primary" onClick={handleSave}>{I.check()} Simpan</button>}
+            {!isView && <button className="btn btn-primary" onClick={handleSave} disabled={noBuktiLocked}>{I.check()} Simpan</button>}
           </div>
         </div>
       </div>
@@ -376,8 +386,11 @@ function MutasiBuatModal({ jenis, data, initialMode, onClose, onSave, onRequestC
   );
 }
 
-function MutasiBarangPage() {
-  const [rows, setRows] = React.useState(MUTASI_BARANG);
+function MutasiBarangPage(props) {
+  // State dipegang BarangPage (tidak hilang saat pindah sub-tab); fallback lokal bila dipakai mandiri.
+  const [rowsLocal, setRowsLocal] = React.useState(MUTASI_BARANG);
+  const rows = (props && props.rows) || rowsLocal;
+  const setRows = (props && props.setRows) || setRowsLocal;
   const [modal, setModal] = React.useState(null);
   const [modalJenis, setModalJenis] = React.useState(null); // null | 'MUTASI' | 'KONSINYASI'
   const [modalMode, setModalMode] = React.useState(null); // null | 'VIEW' | 'EDIT'
@@ -409,7 +422,7 @@ function MutasiBarangPage() {
         onCancel={(r)=>setConfirmCancel(r)}
         onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
         onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}} />
-      {modalJenis && <MutasiBuatModal jenis={modalJenis} data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} onRequestCancel={(r)=>setConfirmCancel(r)} />}
+      {modalJenis && <MutasiBuatModal rows={rows} jenis={modalJenis} data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} onRequestCancel={(r)=>setConfirmCancel(r)} />}
       {showCetak && (
         <BrgCetakModal docLabel="Mutasi Barang & Konsinyasi" rows={rows}
           columns={[{label:'Satuan'},{label:'Konversi', numeric:true},{label:'Jumlah', numeric:true},{label:'Satuan Terkecil', numeric:true}]}
@@ -587,9 +600,9 @@ function KoreksiBarangTable({ rows, setRows, onAddClick, viewMode, addLocked, ad
 // Asal/Tujuan), dan Keterangan wajib (bukan opsional seperti di Mutasi).
 //
 // Mode VIEW/EDIT — sama pola dengan MutasiBuatModal di atas (lihat komentarnya untuk detail).
-function PenyesuaianKoreksiModal({ data, initialMode, onClose, onSave, onRequestCancel }) {
+function PenyesuaianKoreksiModal({ rows, data, initialMode, onClose, onSave, onRequestCancel }) {
   const isEdit0 = !!data;
-  const [mode, setMode] = React.useState(isEdit0 ? (initialMode === 'EDIT' ? 'EDIT' : 'VIEW') : 'CREATE');
+  const [mode, setMode] = React.useState(isEdit0 ? (initialMode === 'EDIT' && !data.batal ? 'EDIT' : 'VIEW') : 'CREATE');
   const isCreate = mode === 'CREATE';
   const isView = mode === 'VIEW';
   const isEdit = mode === 'EDIT';
@@ -606,11 +619,13 @@ function PenyesuaianKoreksiModal({ data, initialMode, onClose, onSave, onRequest
   const noBuktiLocked = isCreate && (!noBuktiRaw || !['F','K'].includes(noBuktiRaw[0]));
   React.useEffect(() => { if (isCreate && noBuktiRef.current) noBuktiRef.current.focus(); }, [isCreate]);
 
-  const empty = { tglBukti:new Date().toISOString().slice(0,10), kodeKategori:'LAIN', kodeGudang:'', keterangan:'', batal:false, alasanBatal:'', details:[] };
+  const empty = { tglBukti:todayLocal(), kodeKategori:'LAIN', kodeGudang:'', keterangan:'', batal:false, alasanBatal:'', details:[] };
   const [form, setForm] = React.useState(() => { const base = data ? {...empty, ...data} : {...empty}; if (!Array.isArray(base.details)) base.details = []; return base; });
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
   const [picker, setPicker] = React.useState(false);
-  const [snapshotForm, setSnapshotForm] = React.useState(null);
+  const [snapshotForm, setSnapshotForm] = React.useState(() => (data && initialMode === 'EDIT') ? { ...data } : null);
+  const [saveError, setSaveError] = React.useState('');
+  useEscape(onClose);
   const [confirmDiscard, setConfirmDiscard] = React.useState(false);
 
   const enterEditMode = () => { setSnapshotForm({...form}); setMode('EDIT'); };
@@ -623,11 +638,15 @@ function PenyesuaianKoreksiModal({ data, initialMode, onClose, onSave, onRequest
   const handlePickerConfirm = (picked) => { setForm(f => ({...f, details:[...f.details, ...picked]})); setPicker(false); };
 
   const handleSave = () => {
-    const cleanDetails = form.details.filter(r => !r._deleted).map(({_deleted, _added, units, ...r}) => r);
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(2);
-    const mm = String(now.getMonth()+1).padStart(2,'0');
-    const finalNo = isCreate ? `${noBuktiRaw[0]}PB${yy}${mm}${String(Math.floor(Math.random()*9000)+1000)}` : data.noBukti;
+    const cleanDetails = form.details.filter(r => !r._deleted).map(({_deleted, _added, ...r}) => r);
+    const live = form.details.filter(r => !r._deleted);
+    let err = '';
+    if (noBuktiLocked) err = 'Pilih No. Bukti (ketik F atau K) terlebih dahulu.';
+    else if (!form.tglBukti) err = 'Tanggal wajib diisi.';
+    else if (!form.kodeGudang) err = 'Gudang wajib dipilih.';
+    else if (live.length === 0) err = 'Minimal 1 barang.';
+    setSaveError(err); if (err) return;
+    const finalNo = isCreate ? erpNextDocNo(noBuktiRaw[0], 'PB', form.tglBukti, rows, 'noBukti') : data.noBukti;
     onSave({ ...form, noBukti:finalNo, details:cleanDetails });
   };
 
@@ -643,6 +662,7 @@ function PenyesuaianKoreksiModal({ data, initialMode, onClose, onSave, onRequest
           <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
         </div>
         <div className="modal-body" style={{overflowY:'auto', maxHeight:'calc(92vh - 180px)', padding:'16px 24px'}}>
+          {saveError && <div className="danger-form" style={{marginBottom:12}}>{saveError}</div>}
           {form.batal && <BrgAlasanBatal alasan={form.alasanBatal} />}
           <div className="panel">
             <h3>Informasi Koreksi</h3>
@@ -689,7 +709,7 @@ function PenyesuaianKoreksiModal({ data, initialMode, onClose, onSave, onRequest
             {isView && !form.batal && <button className="btn btn-primary" onClick={enterEditMode}>{I.edit()} Edit</button>}
             {isEdit && <button className="btn" onClick={handleCancelEditClick}>Batalkan Perubahan</button>}
             <button className="btn" onClick={onClose}>Tutup</button>
-            {!isView && <button className="btn btn-primary" onClick={handleSave}>{I.check()} Simpan</button>}
+            {!isView && <button className="btn btn-primary" onClick={handleSave} disabled={noBuktiLocked}>{I.check()} Simpan</button>}
           </div>
         </div>
       </div>
@@ -709,8 +729,11 @@ function PenyesuaianKoreksiModal({ data, initialMode, onClose, onSave, onRequest
   );
 }
 
-function PenyesuaianBarangPage() {
-  const [rows, setRows] = React.useState(PENYESUAIAN_BARANG);
+function PenyesuaianBarangPage(props) {
+  // State dipegang BarangPage (tidak hilang saat pindah sub-tab); fallback lokal bila dipakai mandiri.
+  const [rowsLocal, setRowsLocal] = React.useState(PENYESUAIAN_BARANG);
+  const rows = (props && props.rows) || rowsLocal;
+  const setRows = (props && props.setRows) || setRowsLocal;
   const [modal, setModal] = React.useState(null);
   const [showModal, setShowModal] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null); // null | 'VIEW' | 'EDIT'
@@ -741,7 +764,7 @@ function PenyesuaianBarangPage() {
         onCancel={(r)=>setConfirmCancel(r)}
         onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
         onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}} />
-      {showModal && <PenyesuaianKoreksiModal data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} onRequestCancel={(r)=>setConfirmCancel(r)} />}
+      {showModal && <PenyesuaianKoreksiModal rows={rows} data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} onRequestCancel={(r)=>setConfirmCancel(r)} />}
       {showCetak && (
         <BrgCetakModal docLabel="Penyesuaian Barang (Koreksi)" rows={rows}
           columns={[{label:'Satuan'},{label:'Konversi', numeric:true},{label:'Jumlah', numeric:true},{label:'Harga Total', numeric:true}]}
@@ -900,9 +923,9 @@ function OpnameBarangTable({ rows, setRows, onAddClick, viewMode, addLocked, add
 // Kategori, Gudang dd+nama, Keterangan).
 //
 // Mode VIEW/EDIT — sama pola dengan MutasiBuatModal/PenyesuaianKoreksiModal di atas.
-function StockOpnameModal({ data, initialMode, onClose, onSave, onRequestCancel }) {
+function StockOpnameModal({ rows, data, initialMode, onClose, onSave, onRequestCancel }) {
   const isEdit0 = !!data;
-  const [mode, setMode] = React.useState(isEdit0 ? (initialMode === 'EDIT' ? 'EDIT' : 'VIEW') : 'CREATE');
+  const [mode, setMode] = React.useState(isEdit0 ? (initialMode === 'EDIT' && !data.batal ? 'EDIT' : 'VIEW') : 'CREATE');
   const isCreate = mode === 'CREATE';
   const isView = mode === 'VIEW';
   const isEdit = mode === 'EDIT';
@@ -919,11 +942,13 @@ function StockOpnameModal({ data, initialMode, onClose, onSave, onRequestCancel 
   const noBuktiLocked = isCreate && (!noBuktiRaw || !['F','K'].includes(noBuktiRaw[0]));
   React.useEffect(() => { if (isCreate && noBuktiRef.current) noBuktiRef.current.focus(); }, [isCreate]);
 
-  const empty = { tglBukti:new Date().toISOString().slice(0,10), kodeKategori:'LAIN', kodeGudang:'', keterangan:'', batal:false, alasanBatal:'', details:[] };
+  const empty = { tglBukti:todayLocal(), kodeKategori:'LAIN', kodeGudang:'', keterangan:'', batal:false, alasanBatal:'', details:[] };
   const [form, setForm] = React.useState(() => { const base = data ? {...empty, ...data} : {...empty}; if (!Array.isArray(base.details)) base.details = []; return base; });
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
   const [picker, setPicker] = React.useState(false);
-  const [snapshotForm, setSnapshotForm] = React.useState(null);
+  const [snapshotForm, setSnapshotForm] = React.useState(() => (data && initialMode === 'EDIT') ? { ...data } : null);
+  const [saveError, setSaveError] = React.useState('');
+  useEscape(onClose);
   const [confirmDiscard, setConfirmDiscard] = React.useState(false);
 
   const enterEditMode = () => { setSnapshotForm({...form}); setMode('EDIT'); };
@@ -937,10 +962,14 @@ function StockOpnameModal({ data, initialMode, onClose, onSave, onRequestCancel 
 
   const handleSave = () => {
     const cleanDetails = form.details.filter(r => !r._deleted).map(({_deleted, _added, ...r}) => r);
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(2);
-    const mm = String(now.getMonth()+1).padStart(2,'0');
-    const finalNo = isCreate ? `${noBuktiRaw[0]}SO${yy}${mm}${String(Math.floor(Math.random()*9000)+1000)}` : data.noBukti;
+    const live = form.details.filter(r => !r._deleted);
+    let err = '';
+    if (noBuktiLocked) err = 'Pilih No. Bukti (ketik F atau K) terlebih dahulu.';
+    else if (!form.tglBukti) err = 'Tanggal wajib diisi.';
+    else if (!form.kodeGudang) err = 'Gudang wajib dipilih.';
+    else if (live.length === 0) err = 'Minimal 1 barang.';
+    setSaveError(err); if (err) return;
+    const finalNo = isCreate ? erpNextDocNo(noBuktiRaw[0], 'SO', form.tglBukti, rows, 'noBukti') : data.noBukti;
     onSave({ ...form, noBukti:finalNo, details:cleanDetails });
   };
 
@@ -956,6 +985,7 @@ function StockOpnameModal({ data, initialMode, onClose, onSave, onRequestCancel 
           <button className="btn btn-icon" onClick={onClose}>{I.x(16)}</button>
         </div>
         <div className="modal-body" style={{overflowY:'auto', maxHeight:'calc(92vh - 180px)', padding:'16px 24px'}}>
+          {saveError && <div className="danger-form" style={{marginBottom:12}}>{saveError}</div>}
           {form.batal && <BrgAlasanBatal alasan={form.alasanBatal} />}
           <div className="panel">
             <h3>Informasi Opname</h3>
@@ -1002,7 +1032,7 @@ function StockOpnameModal({ data, initialMode, onClose, onSave, onRequestCancel 
             {isView && !form.batal && <button className="btn btn-primary" onClick={enterEditMode}>{I.edit()} Edit</button>}
             {isEdit && <button className="btn" onClick={handleCancelEditClick}>Batalkan Perubahan</button>}
             <button className="btn" onClick={onClose}>Tutup</button>
-            {!isView && <button className="btn btn-primary" onClick={handleSave}>{I.check()} Simpan</button>}
+            {!isView && <button className="btn btn-primary" onClick={handleSave} disabled={noBuktiLocked}>{I.check()} Simpan</button>}
           </div>
         </div>
       </div>
@@ -1022,8 +1052,11 @@ function StockOpnameModal({ data, initialMode, onClose, onSave, onRequestCancel 
   );
 }
 
-function StockOpnamePage() {
-  const [rows, setRows] = React.useState(STOCK_OPNAME);
+function StockOpnamePage(props) {
+  // State dipegang BarangPage (tidak hilang saat pindah sub-tab); fallback lokal bila dipakai mandiri.
+  const [rowsLocal, setRowsLocal] = React.useState(STOCK_OPNAME);
+  const rows = (props && props.rows) || rowsLocal;
+  const setRows = (props && props.setRows) || setRowsLocal;
   const [modal, setModal] = React.useState(null);
   const [showModal, setShowModal] = React.useState(false);
   const [modalMode, setModalMode] = React.useState(null); // null | 'VIEW' | 'EDIT'
@@ -1053,7 +1086,7 @@ function StockOpnamePage() {
         onCancel={(r)=>setConfirmCancel(r)}
         onCetak={()=>{setCetakRow(null); setShowCetak(true);}}
         onCetakRow={(r)=>{setCetakRow(r); setShowCetak(true);}} />
-      {showModal && <StockOpnameModal data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} onRequestCancel={(r)=>setConfirmCancel(r)} />}
+      {showModal && <StockOpnameModal rows={rows} data={modal} initialMode={modalMode} onClose={closeModal} onSave={save} onRequestCancel={(r)=>setConfirmCancel(r)} />}
       {showCetak && (
         <BrgCetakModal docLabel="Stock Opname" rows={rows}
           columns={[{label:'Satuan'},{label:'Konversi', numeric:true},{label:'Saldo', numeric:true},{label:'Fisik', numeric:true}]}

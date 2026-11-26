@@ -2,7 +2,7 @@
 // Kerja/Golongan/Jenis Pekerjaan Borongan), semua dipakai sebagai dropdown FK di Mutasi Karyawan
 // (modules/payroll/components/MutasiKaryawanModal.jsx) dan (khusus Jenis Pekerjaan Borongan) di
 // Transaksi Produksi Harian. Kode/nama Divisi persis contoh screenshot "Master Divisi"; kode² lain
-// (Unit 01=CDG, Status P01=Produksi, Departemen T002, Bagian B022/B023, Jabatan J015, Kelompok
+// (Unit 01, Status P01=Produksi, Departemen T002, Bagian B022/B023, Jabatan J015, Kelompok
 // K026, Waktu Kerja W02, Golongan IA) persis nilai yang muncul di screenshot "Mutasi Karyawan"
 // supaya data seed & referensi UI konsisten. Jenis Pekerjaan Borongan (kode kerja+harga/satuan)
 // diambil dari sheet "Sheet1"/"Data Produksi" file Excel referensi user (kode kerja 27/46/47/48/50,
@@ -10,8 +10,8 @@
 // Excel-nya (dikonfirmasi user), cuma diambil struktur rate-master intinya.
 
 const PR_UNIT = [
-  { kode:'01', nama:'CDG', aktif:true },
-  { kode:'02', nama:'Sabe', aktif:true },
+  { kode:'01', nama:'Unit Produksi A', aktif:true },
+  { kode:'02', nama:'Unit Produksi B', aktif:true },
   { kode:'03', nama:'Bus', aktif:true },
   { kode:'04', nama:'Kantor Pusat', aktif:true },
   { kode:'05', nama:'Gudang Cabang', aktif:false },

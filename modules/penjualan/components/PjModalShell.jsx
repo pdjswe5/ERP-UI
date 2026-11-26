@@ -30,9 +30,9 @@ function PjModalShell({ title, sub, onClose, onSave, children, saveLabel = 'Simp
 }
 
 // Modal tab generik refactored to ScrollNavModal + 3-mode
-function PjDocModal({ title, data, tabs, showTotals, showRealisasi, prefix, xwide, initialMode, onClose, onSave, onCancelDoc, onCompleteDoc }) {
+function PjDocModal({ rows, title, data, tabs, showTotals, showRealisasi, prefix, xwide, initialMode, onClose, onSave, onCancelDoc, onCompleteDoc }) {
   // initialMode="EDIT" membuka langsung dalam mode edit (dipakai tombol Edit di list), tanpa itu default VIEW.
-  const [mode, setMode] = React.useState(data ? (initialMode === 'EDIT' ? 'EDIT' : 'VIEW') : 'CREATE');
+  const [mode, setMode] = React.useState(data ? (initialMode === 'EDIT' && !erpIsLocked(data) ? 'EDIT' : 'VIEW') : 'CREATE');
   const isCreate = mode === 'CREATE';
   const isView = mode === 'VIEW';
   const isEdit = mode === 'EDIT';
@@ -40,7 +40,7 @@ function PjDocModal({ title, data, tabs, showTotals, showRealisasi, prefix, xwid
   const emptyShape = () => {
     const base = {};
     tabs.forEach(t => {
-      if (t.type === 'fields') t.fields.forEach(f => { base[f.key] = f.default ?? (f.type === 'number' ? 0 : ''); });
+      if (t.type === 'fields') t.fields.forEach(f => { base[f.key] = f.default ?? (f.type === 'number' ? 0 : f.key === 'Tgl_Bukti' ? todayLocal() : ''); });
       if (t.type === 'items') base[t.itemsKey] = [];
     });
     if (showTotals) { base.discPct = 0; base.discRp = 0; base.ppnMode = 'Exclude'; }
@@ -54,7 +54,7 @@ function PjDocModal({ title, data, tabs, showTotals, showRealisasi, prefix, xwid
   };
 
   const [form, setForm] = React.useState(() => {
-    const base = data ? {...buildEmpty(), ...data} : buildEmpty();
+    const base = data ? {...buildEmpty(), ...erpMapSeedTotals(data), ...data} : buildEmpty();
     tabs.forEach(t => { if (t.type === 'items' && !Array.isArray(base[t.itemsKey])) base[t.itemsKey] = []; });
     return base;
   });
@@ -63,7 +63,7 @@ function PjDocModal({ title, data, tabs, showTotals, showRealisasi, prefix, xwid
   // data awal itu sendiri, supaya "Batalkan Perubahan" tetap bisa mengembalikan.
   const [snapshotForm, setSnapshotForm] = React.useState(() => {
     if (data && initialMode === 'EDIT') {
-      const base = {...buildEmpty(), ...data};
+      const base = {...buildEmpty(), ...erpMapSeedTotals(data), ...data};
       tabs.forEach(t => { if (t.type === 'items' && !Array.isArray(base[t.itemsKey])) base[t.itemsKey] = []; });
       return base;
     }
@@ -82,7 +82,7 @@ function PjDocModal({ title, data, tabs, showTotals, showRealisasi, prefix, xwid
   }, [isCreate]);
 
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
-  const isBatal = form.Status === 'BATAL';
+  const isBatal = !!(form.Batal || form.Status === 'BATAL');
   const isSelesai = form.Status === 'SELESAI';
   const isLocked = isBatal || isSelesai;
   const itemTabs = tabs.filter(t => t.type === 'items');
@@ -110,11 +110,19 @@ function PjDocModal({ title, data, tabs, showTotals, showRealisasi, prefix, xwid
     setMode('CREATE');
   };
 
+  const [saveError, setSaveError] = React.useState('');
   const handleSave = (andClose=false) => {
+    if (isCreate && prefix && noBuktiLocked) { setSaveError('Pilih No. Bukti (ketik F atau K) terlebih dahulu.'); return; }
+    const err = erpValidateDoc(form, tabs, { discPct: form.discPct });
+    if (err) { setSaveError(err); return; }
+    setSaveError('');
     let withNo = form;
     if (isCreate && prefix) {
-      const fullNo = (noBuktiRaw[0] || '') + prefix + new Date().toISOString().slice(2,4) + new Date().toISOString().slice(5,7) + String(Math.floor(Math.random()*9000)+1000);
-      withNo = { ...form, No_Bukti: fullNo };
+      withNo = { ...form, No_Bukti: erpNextDocNo(noBuktiRaw[0], prefix, form.Tgl_Bukti, rows) };
+    }
+    if (showTotals) {
+      const t = erpCalcTotals(subtotal, form.discPct, form.discRp, form.PPN ?? form.Ppn ?? 11, form.ppnMode);
+      withNo = { ...withNo, Sub_Total: subtotal, Total_Disc: t.discAmt, Total_DPP: t.dpp, Total_PPN: t.ppnAmt, Total: t.total };
     }
     // Filter out soft-deleted items from all item arrays
     tabs.filter(t => t.type === 'items').forEach(t => {
@@ -123,7 +131,8 @@ function PjDocModal({ title, data, tabs, showTotals, showRealisasi, prefix, xwid
         withNo = { ...withNo, [t.itemsKey]: arr.filter(r => !r._deleted).map(r => { const { _deleted, _added, ...rest } = r; return rest; }) };
       }
     });
-    onSave(withNo, mode);
+    const saveResult = onSave(withNo, mode);
+    if (typeof saveResult === 'string') { setSaveError(saveResult); return; }
     if (andClose) onClose();
     else if (isEdit) setMode('VIEW');
     else { resetToCreate(); }
@@ -281,7 +290,7 @@ function PjDocModal({ title, data, tabs, showTotals, showRealisasi, prefix, xwid
         mode={mode}
         sections={sections}
         summaryPanel={summaryPanel}
-        preContent={alasanPreContent}
+        preContent={<>{saveError && <div className="danger-form" style={{marginBottom:12}}>{saveError}</div>}{alasanPreContent}</>}
         statusBadge={isLocked ? <span className={`status-badge ${isBatal ? 'batal' : 'selesai'}`}>{isBatal ? 'BATAL' : 'SELESAI'}</span> : null}
         locked={isLocked}
         onClose={onClose}

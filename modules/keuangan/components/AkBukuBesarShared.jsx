@@ -36,23 +36,34 @@ function akBbSaldoAwalBase(kodeAkun, kbgRows) {
 }
 
 // Ratakan SEMUA sumber transaksi jadi 1 daftar event { kodeAkun, tglIso, tgl, noBukti, uraian,
-// transaksi:'KasBank'|'Jurnal', debet, kredit }. Kas/Bank Masuk-Keluar & Pelunasan CUMA posting ke
-// SATU sisi (akun kas/bank-nya saja) — kontra-akunnya (Piutang/Hutang/Biaya) tidak tersedia di
-// bentuk data yg ada sekarang, beda dari Jurnal Memorial yg SUDAH py 2 baris debet/kredit lewat
-// `lines`. Konsekuensinya: ledger PER-AKUN tetap benar & konsisten, tapi Grand Total Debet tidak
-// selalu = Grand Total Kredit lintas semua akun (wajar utk prototipe, sama semangatnya dgn
-// penyederhanaan OPNAME/PRODUK/JUAL di Laporan > Kartu Stok).
-function akBbAllEvents({ kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows }) {
+// transaksi, debet, kredit }. Setiap transaksi diposting DUA SISI (double entry) supaya Grand Total
+// Debet = Kredit di Buku Besar Rekap: Kas/Bank Masuk ↔ Piutang Usaha, Kas/Bank Keluar ↔ Hutang Usaha
+// (pembayaran pemasok) atau Biaya Operasional, Pelunasan ↔ Piutang/Hutang Usaha, Giro Masuk (Piutang
+// Giro ↔ Piutang Usaha) dan Giro Keluar (Hutang Usaha ↔ Hutang Giro). Transfer & Jurnal sudah dua sisi.
+const AK_BB_KONTRA = { piutang:'1015.000', hutang:'2000.000', biaya:'6000.000', piutangGiro:'1020.000', hutangGiro:'2010.000' };
+function akBbAllEvents({ kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows, transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows, giroMasukRows, giroKeluarRows }) {
   const kode = (nama) => akBbKodeByNama(nama, kbgRows);
+  // Hanya transaksi yang sudah Posted (atau giro Cair) yang masuk buku besar — Draft/Pending/Batal diabaikan.
+  const ok = (r) => !r.Batal && !r.batal && (!r.status || ['Posted', 'Cair', 'Final'].includes(r.status));
+  const only = (rows) => (rows || []).filter(ok);
+  kasMasukRows = only(kasMasukRows); kasKeluarRows = only(kasKeluarRows); bankMasukRows = only(bankMasukRows); bankKeluarRows = only(bankKeluarRows);
+  transferMasukRows = only(transferMasukRows); transferKeluarRows = only(transferKeluarRows);
+  pelunasanPiutangRows = only(pelunasanPiutangRows); pelunasanHutangRows = only(pelunasanHutangRows); jurnalRows = only(jurnalRows);
   const ev = [];
   const push = (kodeAkun, tgl, noBukti, uraian, transaksi, debet, kredit) => {
     if (!kodeAkun) return;
     ev.push({ kodeAkun, tgl, tglIso: akToIso(tgl), noBukti, uraian, transaksi, debet: debet||0, kredit: kredit||0 });
   };
-  (kasMasukRows||[]).forEach(r => push(kode(r.akun), r.tgl, r.no, `${r.deskripsi} (${r.dari})`, 'KasBank', r.nominal, 0));
-  (kasKeluarRows||[]).forEach(r => push(kode(r.akun), r.tgl, r.no, `${r.deskripsi} (${r.untuk})`, 'KasBank', 0, r.nominal));
-  (bankMasukRows||[]).forEach(r => push(kode(r.akun), r.tgl, r.no, `${r.deskripsi} (${r.dari})`, 'KasBank', r.nominal, 0));
-  (bankKeluarRows||[]).forEach(r => push(kode(r.akun), r.tgl, r.no, `${r.deskripsi} (${r.untuk})`, 'KasBank', 0, r.nominal));
+  const K = AK_BB_KONTRA;
+  const kontraKeluar = (untuk) => /pemasok/i.test(untuk || '') ? K.hutang : K.biaya;
+  [...(kasMasukRows||[]), ...(bankMasukRows||[])].forEach(r => {
+    push(kode(r.akun), r.tgl, r.no, `${r.deskripsi} (${r.dari})`, 'KasBank', r.nominal, 0);
+    push(K.piutang, r.tgl, r.no, `${r.deskripsi} (${r.dari})`, 'KasBank', 0, r.nominal);
+  });
+  [...(kasKeluarRows||[]), ...(bankKeluarRows||[])].forEach(r => {
+    push(kode(r.akun), r.tgl, r.no, `${r.deskripsi} (${r.untuk})`, 'KasBank', 0, r.nominal);
+    push(kontraKeluar(r.untuk), r.tgl, r.no, `${r.deskripsi} (${r.untuk})`, 'KasBank', r.nominal, 0);
+  });
   (transferMasukRows||[]).forEach(r => {
     push(kode(r.ke), r.tgl, r.no, `${r.deskripsi} (dari ${r.dari})`, 'KasBank', r.nominal, 0);
     push(kode(r.dari), r.tgl, r.no, `${r.deskripsi} (ke ${r.ke})`, 'KasBank', 0, r.nominal);
@@ -61,10 +72,24 @@ function akBbAllEvents({ kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, ba
     push(kode(r.ke), r.tgl, r.no, `${r.deskripsi} (dari ${r.dari})`, 'KasBank', r.nominal, 0);
     push(kode(r.dari), r.tgl, r.no, `${r.deskripsi} (ke ${r.ke})`, 'KasBank', 0, r.nominal);
   });
-  (pelunasanPiutangRows||[]).forEach(r => (r.penerimaan||[]).forEach(p =>
-    push(p.kodeAkun, r.tgl, r.no, `Pelunasan Piutang ${r.namaCust}`, 'KasBank', p.masuk, p.keluar)));
-  (pelunasanHutangRows||[]).forEach(r => (r.penerimaan||[]).forEach(p =>
-    push(p.kodeAkun, r.tgl, r.no, `Pelunasan Hutang ${r.namaSupp}`, 'KasBank', p.keluar, p.masuk)));
+  (pelunasanPiutangRows||[]).forEach(r => (r.penerimaan||[]).forEach(p => {
+    push(p.kodeAkun, r.tgl, r.no, `Pelunasan Piutang ${r.namaCust}`, 'KasBank', p.masuk, p.keluar);
+    push(K.piutang, r.tgl, r.no, `Pelunasan Piutang ${r.namaCust}`, 'KasBank', p.keluar, p.masuk);
+  }));
+  (pelunasanHutangRows||[]).forEach(r => (r.penerimaan||[]).forEach(p => {
+    push(p.kodeAkun, r.tgl, r.no, `Pelunasan Hutang ${r.namaSupp}`, 'KasBank', p.keluar, p.masuk);
+    push(K.hutang, r.tgl, r.no, `Pelunasan Hutang ${r.namaSupp}`, 'KasBank', p.masuk, p.keluar);
+  }));
+  // Giro: Outstanding/Cair diposting, Tolak/Batal diabaikan.
+  const giroOk = (r) => !r.Batal && !r.batal && !['Tolak', 'Batal'].includes(r.status);
+  (giroMasukRows||[]).filter(giroOk).forEach(r => {
+    push(K.piutangGiro, r.tgl, r.no, `Giro ${r.noGiro} (${r.dari})`, 'Giro', r.nominal, 0);
+    push(K.piutang, r.tgl, r.no, `Giro ${r.noGiro} (${r.dari})`, 'Giro', 0, r.nominal);
+  });
+  (giroKeluarRows||[]).filter(giroOk).forEach(r => {
+    push(K.hutang, r.tgl, r.no, `Giro ${r.noGiro} (${r.untuk})`, 'Giro', r.nominal, 0);
+    push(K.hutangGiro, r.tgl, r.no, `Giro ${r.noGiro} (${r.untuk})`, 'Giro', 0, r.nominal);
+  });
   (jurnalRows||[]).forEach(r => (r.lines||[]).forEach(l =>
     push(l.akun, r.tgl, r.no, l.desc, 'Jurnal', l.d, l.k)));
   return ev.sort((a,b) => a.tglIso.localeCompare(b.tglIso));
@@ -220,13 +245,15 @@ function AkBbCetakPage({ docTitle, metaRight, infoLines, columns, rows, footerRo
 // var generik dipakai bareng modul Laporan, bukan API privat modul itu (CSS custom property, bukan
 // komponen JS), jadi aman dipakai ulang persis drpd duplikasi rule CSS yang identik.
 function AkBbReportShell({ filterPanel, previewChildren, onCetak, disabled, footNote }) {
+  const [fillRef, fillH] = useFillHeight();
   const [zoom, setZoom] = React.useState(100);
   return (
-    <div className="table-card" style={{display:'flex', height:'calc(100vh - 220px)', minHeight:520, overflow:'hidden'}}>
+    <div ref={fillRef} className="table-card" style={{display:'flex', height: fillH ? fillH : 'calc(100vh - 220px)', overflow:'hidden'}}>
       <div className="cetak-filter panel" style={{borderRight:'1px solid var(--border)', padding:16, borderRadius:0}}>{filterPanel}</div>
       <div className="cetak-preview-pane" style={{borderRadius:0}}>
         <div className="cetak-toolbar">
           <span className="cetak-pageof">{footNote || 'Pratinjau'}</span>
+          <ErpPaperSelect />
           <div style={{display:'flex', gap:8, alignItems:'center'}}>
             <div style={{display:'flex', gap:4, alignItems:'center'}}>
               <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.max(40,z-10))}>−</button>

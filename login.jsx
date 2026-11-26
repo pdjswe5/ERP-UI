@@ -30,7 +30,7 @@ function LoginPage({ onLogin }) {
         <div className="login-card-accent" />
         <div className="login-card-body">
           <div className="login-logo"><img src="assets/login-logo.png" alt="PDJ ERP" /></div>
-          <h1 className="login-title">Pacific Data Jaya</h1>
+          <h1 className="login-title">PT. Pacific Data Jaya</h1>
           <div className="login-subtitle">Portal ERP</div>
 
           <form onSubmit={submit}>

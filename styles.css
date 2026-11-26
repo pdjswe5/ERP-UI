@@ -1376,7 +1376,9 @@ kbd {
    sel yg teksnya kepanjangan boleh wrap ke baris ke-2 drpd tabel meluber keluar kertas. Tinggi konten
    yg melebihi 1 halaman A4 dipaginasi jadi beberapa .cetak-page berurutan (lihat LAP_ROWS_PER_PAGE &
    lapChunkCetakLines, components/LapShared.jsx) drpd 1 halaman yg terus memanjang ke bawah. */
-.cetak-page-landscape { width: 1123px; height: 794px; padding: 16px 22px; overflow: hidden; }
+/* min-height 794 (bukan height tetap + overflow:hidden) supaya baris yang wrap tidak terpotong; saat
+   dicetak, erpPrint menskalakan halaman yang lebih tinggi agar tetap muat 1 lembar. */
+.cetak-page-landscape { width: 1123px; height: auto; min-height: 794px; padding: 16px 22px; overflow: visible; }
 .cetak-page-landscape .cetak-table { table-layout: fixed; }
 .cetak-page-landscape .cetak-table th,
 .cetak-page-landscape .cetak-table td {
@@ -1402,6 +1404,16 @@ kbd {
 .cetak-page-landscape.cetak-lap-roomy .cetak-table td {
   font-size: 13px; padding: 5px 7px; line-height: 1.35;
 }
+/* Laporan berkolom banyak (15-16 kolom: Rekap Piutang-Hutang, Komisi Salesman): roomy="sm". */
+.cetak-page-landscape.cetak-lap-sm .cetak-table th,
+.cetak-page-landscape.cetak-lap-sm .cetak-table td {
+  font-size: 10.5px; padding: 3px 4px; line-height: 1.3;
+}
+/* Laporan berkolom sedang (11-13 kolom, mis. Rekap Stok): LapCetakPage roomy="md". */
+.cetak-page-landscape.cetak-lap-mid .cetak-table th,
+.cetak-page-landscape.cetak-lap-mid .cetak-table td {
+  font-size: 12px; padding: 4px 6px; line-height: 1.35;
+}
 /* Zoom preview (tombol +/− di toolbar Laporan/Keuangan) diterapkan lewat CSS var drpd inline
    transform per halaman, krn 1 laporan sekarang bisa render beberapa .cetak-page sekaligus
    (LapReportShell di modules/laporan, AkBbReportShell di modules/keuangan) — 1 var di kontainer
@@ -1409,7 +1421,7 @@ kbd {
    -landscape) supaya laporan potrait (mis. Laporan Bank di Keuangan) ikut ke-zoom juga — aman utk
    modul lain yg masih pakai inline transform per-halaman (PbCetakModal dkk.), krn inline style
    SELALU menang atas rule stylesheet manapun. */
-.cetak-canvas-scroll .cetak-page { transform: scale(var(--lap-zoom, 1)); }
+.cetak-canvas-scroll .cetak-page { zoom: var(--lap-zoom, 1); } /* zoom (bukan transform) supaya zoom >100% tidak membuat halaman saling menumpuk */
 
 .cetak-doc { font-size: 12.5px; color: #111; position: relative; }
 .cetak-watermark {
@@ -1462,3 +1474,33 @@ kbd {
   .scroll-modal-layout { grid-template-columns: 1fr; }
   .scroll-modal-side { position: static; }
 }
+
+/* ── Cetak sungguhan (erpPrint, components.jsx) ─────────────────────────────────────────────
+   Saat print, hanya #print-root (salinan .cetak-page dari pratinjau) yang tampil. Tiap .cetak-page
+   = 1 lembar kertas; halaman landscape memakai named page "land" supaya kertasnya ikut diputar. */
+#print-root { display: none; }
+@page { size: A4 portrait; margin: 0; }
+@page land { size: A4 landscape; margin: 0; }
+@media print {
+  body > *:not(#print-root) { display: none !important; }
+  html, body { background: #fff !important; margin: 0; padding: 0; }
+  #print-root { display: block; }
+  #print-root .cetak-page {
+    transform: none !important; box-shadow: none !important; margin: 0 auto !important;
+    break-after: page; page-break-after: always; break-inside: avoid;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  #print-root .cetak-page:last-child { break-after: auto; page-break-after: auto; }
+  #print-root .cetak-page-landscape { page: land; }
+}
+
+/* Pesan validasi form (danger) / peringatan — dipakai semua modal saat Simpan ditolak. */
+.danger-form, .warning-form { padding: 8px 12px; border-radius: 6px; font-size: 12.5px; border: 1px solid; }
+.danger-form { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+.warning-form { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+
+/* Buku Kas / Buku Bank / Register Transfer & Giro (A4 tegak): 7 kolom tetap, font 11px, sel boleh
+   wrap — angka tanpa "Rp" supaya kolom nominal sempit. */
+.cetak-bukukas { table-layout: fixed; }
+.cetak-bukukas th, .cetak-bukukas td { font-size: 11px; padding: 3px 5px; line-height: 1.3; overflow-wrap: break-word; }
+.cetak-bukukas th { font-size: 10.5px; }

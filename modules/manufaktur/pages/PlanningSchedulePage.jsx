@@ -40,12 +40,10 @@ function mfRechainMesinRows(allRows, mesin, fallbackAnchor, resetFirst) {
 // Toleran kalau noSpk/bjLineId tidak match apa pun (seed MF_PLANNING_SEED pakai format No. SPK yang
 // nggak match MF_SPK_SEED sama sekali, dan baris 'Tambah Proses' literal noSpk:'Proses') — fallback
 // men-sintesis 1 baris bahan dari field milik baris planning itu sendiri.
-function mfPlanningRowToHpRecord(row, spkRows) {
+function mfPlanningRowToHpRecord(row, spkRows, no) {
   const spk = (spkRows || []).find(s => s.no === row.noSpk);
   const bjLines = (spk?.bjLines || []).filter(b => !b._deleted);
   const bjLine = bjLines.find(b => b.id === row.bjLineId) || bjLines[0];
-  const now = new Date();
-  const no = 'KHP' + now.toISOString().slice(2,4) + now.toISOString().slice(5,7) + String(Math.floor(Math.random()*9000)+1000);
 
   if (bjLine) {
     const bahanForBj = (spk.bahanLines || []).filter(b => b.bjLineId === bjLine.id);
@@ -59,34 +57,42 @@ function mfPlanningRowToHpRecord(row, spkRows) {
       bahanLines: bahanForBj.map(b => ({
         id: Date.now() + Math.random(), gudang: b.gudang, kodeBahan: b.kodeBahan, merkBahan: b.merkBahan,
         jumlah: b.jumlah, satuan: b.satuan,
-        noCoil:'', kondisi:'Normal', lapisanPu:'Atas', pembelian:'', sisaStok: String(row.jumlah ?? '0'),
+        noCoil:'', kondisi:'Normal', lapisanPu:'Atas', pembelian:'', sisaStok:'',
       })),
     };
   }
+  // Fallback (planning tanpa SPK yang cocok): kode barang dicari dari master Barang Jadi menurut nama.
+  const bjMaster = (typeof BARANG_JADI !== 'undefined' ? BARANG_JADI : []).find(b => b.namaProduk === row.namaBarang);
 
   return {
     no, tgl: row.tgl, gudang: '',
     dibuatOleh: 'Admin', dibuatTgl: `${row.tgl} 09:00`,
     noSpk: row.noSpk, bjLineId: null,
-    kodeBarang: '', namaBarang: row.namaBarang, qtySPK: row.jumlah, satuan: row.satuan,
+    kodeBarang: bjMaster ? bjMaster.kodeProduk : '', namaBarang: row.namaBarang, qtySPK: row.jumlah, satuan: row.satuan,
     namaKelompokWarna: '', namaAz: '', namaBrand: '', namaMerkBarang: row.merk || '', stempel: '', mesinDipilih: [],
     bahanLines: [{
       id: Date.now() + Math.random(), gudang: '', kodeBahan: '', merkBahan: row.merk || '',
       jumlah: row.jumlah, satuan: row.satuan,
-      noCoil:'', kondisi:'Normal', lapisanPu:'Atas', pembelian:'', sisaStok: String(row.jumlah ?? '0'),
+      noCoil:'', kondisi:'Normal', lapisanPu:'Atas', pembelian:'', sisaStok:'',
     }],
   };
 }
 
-function mfBuildHpRecordsFromPlanning(rowsCompleted, spkRows) {
-  return rowsCompleted.map(row => mfPlanningRowToHpRecord(row, spkRows));
+// Nomor HP berurutan (bukan acak), lanjut dari Hasil Produksi yang sudah ada.
+function mfBuildHpRecordsFromPlanning(rowsCompleted, spkRows, hpRows) {
+  const acc = [...(hpRows || [])];
+  return rowsCompleted.map(row => {
+    const rec = mfPlanningRowToHpRecord(row, spkRows, erpNextDocNo('K', 'HP', row.tgl, acc, 'no'));
+    acc.push(rec);
+    return rec;
+  });
 }
 
 function MfPlanningScheduleList({ rows, setRows, spkRows, onSelesai }) {
   const showToast = (msg) => { window.__erpToast && window.__erpToast(msg); };
 
   const [selectedMesin,  setSelectedMesin]  = React.useState(null);
-  const [tgl,            setTgl]            = React.useState('2026-06-24');
+  const [tgl,            setTgl]            = React.useState('2026-06-24'); // tanggal data contoh planning
   const [jamMulai,       setJamMulai]       = React.useState('08:30');
   const [selPlanning,    setSelPlanning]    = React.useState(new Set());
   const [showSpkPicker,  setShowSpkPicker]  = React.useState(false);

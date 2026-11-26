@@ -19,6 +19,8 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
 
   // Kas/Bank/Giro/Transfer/Pelunasan (asli Keuangan)
   const [kbgRows, setKbgRows] = React.useState(KAS_BANK_GIRO);
+  window.KAS_BANK_GIRO_LIVE = kbgRows;
+  React.useEffect(() => () => { window.KAS_BANK_GIRO_LIVE = null; }, []);
   const [kasMasukRows, setKasMasukRows] = React.useState(KAS_MASUK);
   const [kasKeluarRows, setKasKeluarRows] = React.useState(KAS_KELUAR);
   const [bankMasukRows, setBankMasukRows] = React.useState(BANK_MASUK);
@@ -45,7 +47,19 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
   // cuma bisa dipicu dari baris TxPage, yang hanya ter-render saat activeSub adalah salah satu kind
   // transaksi ini.
   const cancelFromList = (reason) => {
-    txMap[activeSub].setRows(prev => prev.map(r => r.no === confirmCancel.no
+    // Batal pelunasan: kembalikan sisa nota yang tadinya dipakai & hapus Uang Muka yang dibuatnya.
+    if ((activeSub === 'pp' || activeSub === 'ph') && !confirmCancel.Batal && confirmCancel.status !== 'Batal') {
+      const setSaldo = activeSub === 'pp' ? setSaldoPiutangItems : setSaldoHutangItems;
+      const items = confirmCancel.items || [];
+      const umBaru = items.filter(it => it.isNewUangMuka).map(it => it.noBukti);
+      setSaldo(prev => prev.filter(it => !umBaru.includes(it.noBukti)).map(it => {
+        const used = items.find(f => f.noBukti === it.noBukti && !f.isNewUangMuka);
+        if (!used) return it;
+        const back = (+used.debet || 0) + (+used.kredit || 0);
+        return { ...it, sisa: Math.min(+it.nilai || Infinity, (+it.sisa || 0) + back) };
+      }));
+    }
+    txMap[confirmCancel._kind || activeSub].setRows(prev => prev.map(r => r.no === confirmCancel.no
       ? { ...r, status:'Batal', Batal:true, Alasan_Status: reason || 'Dibatalkan oleh operator' }
       : r));
     window.__erpToast && window.__erpToast('Transaksi dibatalkan.');
@@ -137,6 +151,28 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
     ph: { rows: pelunasanHutangRows,  setRows: setPelunasanHutangRows,  cols: pelunasanCols('hutang'),  title:'Pelunasan Hutang',  sub:`${pelunasanHutangRows.length} pelunasan`,  modalKind:'ph' },
   };
 
+  // Menu gabungan: Kas (Masuk+Keluar), Bank (Masuk+Keluar), Transfer, Giro (Terima+Bayar). Data tetap
+  // disimpan di array per jenis (dipakai buku besar/laporan/dashboard); daftar menampilkan gabungannya
+  // dengan kolom Debet (masuk) / Kredit (keluar). Tiap baris membawa _kind supaya Edit/Batal/Cetak
+  // diteruskan ke array asalnya.
+  const GROUPS = {
+    kas:      { kinds:['km','kk'], title:'Transaksi Kas',     add:'Transaksi Kas Baru',      cols: kasBankCols,   jenis:{ km:'Masuk', kk:'Keluar' } },
+    bank:     { kinds:['bm','bk'], title:'Transaksi Bank',    add:'Transaksi Bank Baru',     cols: kasBankCols,   jenis:{ bm:'Masuk', bk:'Keluar' } },
+    transfer: { kinds:['tm','tk'], title:'Transfer Kas/Bank', add:'Transfer Baru',           cols: transferCols,  jenis:null, newKind:'tk' },
+    giro:     { kinds:['gm','gk'], title:'Transaksi Giro',    add:'Transaksi Giro Baru',     cols: giroGabungCols, jenis:{ gm:'Terima', gk:'Bayar' } },
+  };
+  const grp = GROUPS[activeSub];
+  const grpRows = grp ? grp.kinds.flatMap(k => txMap[k].rows.map(r => ({
+    ...r, _kind:k, _jenis: grp.jenis ? grp.jenis[k] : undefined, _dk: k.endsWith('m') ? 'D' : 'K',
+    _debet: k.endsWith('m') ? (+r.nominal || 0) : 0, _kredit: k.endsWith('m') ? 0 : (+r.nominal || 0),
+  }))).sort((a,b) => (akToIso(b.tgl) || '').localeCompare(akToIso(a.tgl) || '') || String(b.no).localeCompare(String(a.no))) : [];
+  const rowsByKind = Object.fromEntries(Object.entries(txMap).map(([k,v]) => [k, v.rows]));
+  // Simpan ke array jenis yang dipilih di form; buang field bantu tampilan.
+  const saveTx = (form, k) => {
+    const { _kind, _jenis, _dk, _debet, _kredit, ...clean } = form;
+    saveToRows(txMap[k].setRows)(clean);
+  };
+
   return (
     <div className="page" data-screen-label={`06 Keuangan — ${subLabel}`}>
       <div className="crumbs">
@@ -157,12 +193,30 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
         const bbProps = {
           akunRows, kbgRows, kasMasukRows, kasKeluarRows, bankMasukRows, bankKeluarRows,
           transferMasukRows, transferKeluarRows, pelunasanPiutangRows, pelunasanHutangRows, jurnalRows,
+          giroMasukRows, giroKeluarRows,
         };
         if (activeSub === 'lapbank') return <LaporanBankPage {...bbProps} />;
         if (activeSub === 'bbdetil') return <LaporanBukuBesarDetailPage {...bbProps} />;
         return <LaporanBukuBesarRekapPage {...bbProps} />;
       })()}
-      {txMap[activeSub] && (
+      {grp && (
+        <TxPage
+          title={grp.title}
+          sub={`${grpRows.length} transaksi`}
+          rows={grpRows}
+          columns={grp.cols}
+          totalKey="nominal"
+          sumKeys={grp.jenis ? [{ key:'_debet', label: grp.kinds[0]==='gm' ? 'Terima' : 'Debet' }, { key:'_kredit', label: grp.kinds[0]==='gm' ? 'Bayar' : 'Kredit' }] : null}
+          jenisOpts={grp.jenis ? Object.values(grp.jenis) : null}
+          addLabel={grp.add}
+          onAdd={()=>setModal({kind: grp.newKind || grp.kinds[0], kinds: grp.kinds})}
+          onEdit={(d)=>setModal({kind: d._kind, kinds: grp.kinds, data:d})}
+          onCancelDoc={(r)=>setConfirmCancel(r)}
+          onCetak={()=>setCetakDoc({kind:activeSub, row:null})}
+          onCetakRow={(r)=>setCetakDoc({kind:activeSub, row:r})}
+        />
+      )}
+      {['pp','ph'].includes(activeSub) && (
         <TxPage
           title={txMap[activeSub].title}
           sub={txMap[activeSub].sub}
@@ -172,20 +226,20 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
           onAdd={()=>setModal({kind: txMap[activeSub].modalKind})}
           onEdit={(d)=>setModal({kind: txMap[activeSub].modalKind, data:d})}
           onCancelDoc={(r)=>setConfirmCancel(r)}
-          onCetak={['pp','ph'].includes(activeSub) ? ()=>setCetakDoc({kind:activeSub, row:null}) : undefined}
-          onCetakRow={['pp','ph'].includes(activeSub) ? (r)=>setCetakDoc({kind:activeSub, row:r}) : undefined}
+          onCetak={()=>setCetakDoc({kind:activeSub, row:null})}
+          onCetakRow={(r)=>setCetakDoc({kind:activeSub, row:r})}
         />
       )}
 
       {modal?.kind==='kbg' && <KbgModal data={modal.data} onClose={close} onSave={saveToRows(setKbgRows, 'kode')}/>}
       {['km','kk','bm','bk'].includes(modal?.kind) && (
-        <CashModal kind={modal.kind} data={modal.data} rows={txMap[modal.kind].rows} onClose={close} onSave={saveToRows(txMap[modal.kind].setRows)}/>
+        <CashModal kind={modal.kind} kinds={modal.kinds} data={modal.data} rowsByKind={rowsByKind} onClose={close} onSave={saveTx}/>
       )}
       {['tm','tk'].includes(modal?.kind) && (
-        <TransferModal kind={modal.kind} data={modal.data} rows={txMap[modal.kind].rows} onClose={close} onSave={saveToRows(txMap[modal.kind].setRows)}/>
+        <TransferModal kind={modal.kind} data={modal.data} rows={[...transferMasukRows, ...transferKeluarRows]} onClose={close} onSave={saveTx}/>
       )}
       {['gm','gk'].includes(modal?.kind) && (
-        <GiroModal kind={modal.kind} data={modal.data} rows={txMap[modal.kind].rows} onClose={close} onSave={saveToRows(txMap[modal.kind].setRows)}/>
+        <GiroModal kind={modal.kind} kinds={modal.kinds} data={modal.data} rowsByKind={rowsByKind} onClose={close} onSave={saveTx}/>
       )}
       {['pp','ph'].includes(modal?.kind) && (
         <PelunasanModal kind={modal.kind} data={modal.data} rows={txMap[modal.kind].rows}
@@ -204,7 +258,28 @@ function KeuanganPage({ activeSub, onSubChange, onNavigate }) {
         />
       )}
 
-      {cetakDoc && (
+      {cetakDoc && GROUPS[cetakDoc.kind] && (
+        <AkCetakModal variant="kasbank" kbKind={GROUPS[cetakDoc.kind].kinds[0]}
+          docLabel={GROUPS[cetakDoc.kind].title}
+          rows={grpRows}
+          extraRows={['kas','bank'].includes(cetakDoc.kind) ? [...transferMasukRows.map(r => ({...r, _kind:'tm'})), ...transferKeluarRows.map(r => ({...r, _kind:'tk'}))] : null}
+          noKey="no" tglKey="tgl"
+          statusFilter={{ options: Array.from(new Set(grpRows.map(r => r.status).filter(Boolean))).map(v => ({ value:v, label:v })), match:(r,v) => r.status === v }}
+          initialSelected={cetakDoc.row ? [cetakDoc.row.no] : null}
+          onClose={()=>setCetakDoc(null)}
+        />
+      )}
+      {cetakDoc && !['pp','ph'].includes(cetakDoc.kind) && txMap[cetakDoc.kind] && (
+        <AkCetakModal variant="kasbank" kbKind={cetakDoc.kind}
+          docLabel={txMap[cetakDoc.kind].title}
+          rows={txMap[cetakDoc.kind].rows}
+          noKey="no" tglKey="tgl"
+          statusFilter={{ options: Array.from(new Set(txMap[cetakDoc.kind].rows.map(r => r.status).filter(Boolean))).map(v => ({ value:v, label:v })), match:(r,v) => r.status === v }}
+          initialSelected={cetakDoc.row ? [cetakDoc.row.no] : null}
+          onClose={()=>setCetakDoc(null)}
+        />
+      )}
+      {cetakDoc && ['pp','ph'].includes(cetakDoc.kind) && (
         <AkCetakModal variant="pelunasan"
           docLabel={cetakDoc.kind==='pp' ? 'Pelunasan Piutang' : 'Pelunasan Hutang'}
           rows={cetakDoc.kind==='pp' ? pelunasanPiutangRows : pelunasanHutangRows}

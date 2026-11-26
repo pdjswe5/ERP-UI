@@ -52,7 +52,7 @@ const PG_PENJUALAN = { ppn:11, ppnMasukan:'PPN 11%', ppnKeluaran:'PPN 11%', temp
 
 const ACTIVITY_LOG_PENGATURAN = [
   { user:'pdjsw', action:'Melakukan Login:', detail:'Sistem Utama', time:'4 menit yang lalu', color:'var(--realisasi)' },
-  { user:'admin', action:'Mengubah Data Pemasok:', detail:'PT. Sinar Jaya', time:'17 menit yang lalu', color:'#f59e0b' },
+  { user:'admin', action:'Mengubah Data Pemasok:', detail:'PT. Pemasok Contoh E', time:'17 menit yang lalu', color:'#f59e0b' },
   { user:'operator_1', action:'Membuat Nota Penjualan:', detail:'INV-2026-9682', time:'1 jam yang lalu', color:'var(--realisasi)' },
   { user:'system', action:'Sinkronisasi Database:', detail:'Server Cloud Utama', time:'3 jam yang lalu', color:'var(--accent)' },
   { user:'admin', action:'Menghapus Batch Produksi:', detail:'PRD-2026-B2', time:'7 jam yang lalu', color:'var(--danger)' },
@@ -72,6 +72,7 @@ function PgHeader({ title, sub, onAdd, addLabel='Tambah' }) {
 }
 
 function PgModalShell({ title, sub, onClose, onSave, children, saveLabel='Simpan', wide=false }) {
+  useEscape(onClose);
   return (
     <div className="modal-backdrop">
       <div className="modal" onClick={e=>e.stopPropagation()} style={wide ? {maxWidth:1000, maxHeight:'92vh'} : {maxWidth:700}}>
@@ -395,7 +396,7 @@ function KonfigurasiSistem() {
 }
 
 function KonfigurasiOrganisasi() {
-  const [d, setD] = React.useState(PG_ORGANISASI);
+  const [d, setD] = React.useState(() => ({...PG_ORGANISASI}));
   return (
     <>
       <PgHeader title="Konfigurasi Organisasi" sub="Pengaturan data perusahaan & cabang." />
@@ -411,8 +412,8 @@ function KonfigurasiOrganisasi() {
           <div className="field"><label>Rekening Bank</label><input className="input" value={d.akunBank} onChange={e=>setD({...d, akunBank:e.target.value})}/></div>
         </div>
         <div style={{marginTop:20, display:'flex', gap:8, justifyContent:'flex-end'}}>
-          <button className="btn" onClick={()=>setD(PG_ORGANISASI)}>Reset</button>
-          <button className="btn btn-primary" onClick={()=>window.__erpToast && window.__erpToast('Konfigurasi organisasi berhasil disimpan.')}>{I.check()} Simpan Perubahan</button>
+          <button className="btn" onClick={()=>setD({...PG_ORGANISASI})}>Reset</button>
+          <button className="btn btn-primary" onClick={()=>{ Object.assign(PG_ORGANISASI, d); window.__erpToast && window.__erpToast('Konfigurasi organisasi berhasil disimpan (berlaku sampai halaman di-refresh).'); }}>{I.check()} Simpan Perubahan</button>
         </div>
       </div>
     </>
@@ -446,6 +447,135 @@ function KonfigurasiPenjualan() {
 }
 
 // ─── Dashboard & Router (unchanged) ────────────────────────────────────────
+
+
+// ─── 7-12. Menu Admin (dulu kosong) — form satu-record sederhana. Simpan menulis ke objek PG_* di
+// memori (berlaku sampai halaman di-refresh, sesuai sifat demo). ─────────────────────────────────
+const PG_DEFAULT = { tempoPiutang:30, tempoHutang:30, kodeGudang:'GDG001', kodeSatuan:'PCS', ppn:11, ppnMode:'Exclude', caraBayar:'KREDIT', mataUang:'IDR' };
+const PG_CETAKAN = { judulKop:'PT. Pacific Data Jaya', catatanPO:'Mohon cantumkan No. PO pada surat jalan.', catatanInvoice:'Pembayaran ditransfer ke rekening perusahaan.', catatanSJ:'Barang diterima dalam keadaan baik dan lengkap.', ttdKiri:'Dibuat oleh', ttdTengah:'Diperiksa oleh', ttdKanan:'Disetujui oleh', tampilLogo:true };
+const PG_FITUR = { approvalPO:true, approvalSO:true, batasPlafon:true, stokMinus:false, multiGudang:true, hargaPerPelanggan:false, auditLog:true };
+const PG_SESI = [
+  { user:'admin',      perangkat:'Chrome · Windows 11', ip:'192.168.1.10', mulai:'25-11-2026 08:02', status:'Aktif' },
+  { user:'operator_1', perangkat:'Edge · Windows 10',   ip:'192.168.1.24', mulai:'25-11-2026 08:15', status:'Aktif' },
+  { user:'gudang_01',  perangkat:'Chrome · Android',    ip:'192.168.1.41', mulai:'25-11-2026 07:48', status:'Aktif' },
+  { user:'sales_a',    perangkat:'Safari · iOS',        ip:'10.10.0.7',    mulai:'24-11-2026 16:30', status:'Aktif' },
+];
+const PG_TAMPILAN = { ukuranHuruf:'100', kepadatan:'Normal', barisPerHalaman:10, formatTanggal:'DD-MM-YYYY' };
+
+// fields: [{ key, label, type:'text'|'number'|'select'|'bool'|'textarea', options, span }]
+function PgSettingsForm({ title, sub, store, fields, onSaved }) {
+  const [d, setD] = React.useState(() => ({ ...store }));
+  const [err, setErr] = React.useState('');
+  const save = () => {
+    const bad = fields.find(f => f.type === 'number' && (d[f.key] === '' || +d[f.key] < 0));
+    if (bad) { setErr(`${bad.label} harus berupa angka ≥ 0.`); return; }
+    setErr('');
+    Object.assign(store, d);
+    onSaved && onSaved(d);
+    window.__erpToast && window.__erpToast(`${title} berhasil disimpan (berlaku sampai halaman di-refresh).`);
+  };
+  return (
+    <>
+      <PgHeader title={title} sub={sub} />
+      <div className="panel" style={{marginTop:0}}>
+        {err && <div className="danger-form" style={{marginBottom:12}}>{err}</div>}
+        <div className="form-grid-2" style={{gap:16}}>
+          {fields.map(f => (
+            <div className="field" key={f.key} style={f.span ? {gridColumn:`span ${f.span}`} : null}>
+              <label>{f.label}</label>
+              {f.type === 'bool' ? (
+                <select className="select" value={d[f.key] ? '1' : '0'} onChange={e=>setD({...d, [f.key]: e.target.value === '1'})}><option value="1">Ya / Aktif</option><option value="0">Tidak</option></select>
+              ) : f.type === 'select' ? (
+                <select className="select" value={d[f.key]} onChange={e=>setD({...d, [f.key]: e.target.value})}>{f.options.map(o => <option key={o}>{o}</option>)}</select>
+              ) : f.type === 'textarea' ? (
+                <textarea className="textarea" value={d[f.key]} onChange={e=>setD({...d, [f.key]: e.target.value})} />
+              ) : (
+                <input className={`input ${f.type === 'number' ? 'mono' : ''}`} type={f.type === 'number' ? 'number' : 'text'} value={d[f.key]}
+                  onChange={e=>setD({...d, [f.key]: f.type === 'number' ? (e.target.value === '' ? '' : +e.target.value) : e.target.value})} />
+              )}
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:20, display:'flex', gap:8, justifyContent:'flex-end'}}>
+          <button className="btn" onClick={()=>setD({ ...store })}>Reset</button>
+          <button className="btn btn-primary" onClick={save}>{I.check()} Simpan Perubahan</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function AdminProfil() {
+  return <PgSettingsForm title="Profil Perusahaan" sub="Identitas perusahaan yang tampil di kop semua cetakan." store={PG_ORGANISASI} fields={[
+    { key:'nama', label:'Nama Perusahaan', span:2 }, { key:'alamat', label:'Alamat', type:'textarea', span:2 },
+    { key:'kota', label:'Kota' }, { key:'kodePos', label:'Kode Pos' }, { key:'telpon', label:'Telepon' }, { key:'email', label:'Email' },
+    { key:'noNpwp', label:'No. NPWP' }, { key:'akunBank', label:'Rekening Bank' },
+  ]} />;
+}
+function AdminDefault() {
+  return <PgSettingsForm title="Nilai Default" sub="Nilai awal yang otomatis terisi saat membuat dokumen baru." store={PG_DEFAULT} fields={[
+    { key:'tempoPiutang', label:'Tempo Piutang (hari)', type:'number' }, { key:'tempoHutang', label:'Tempo Hutang (hari)', type:'number' },
+    { key:'kodeGudang', label:'Gudang Default', type:'select', options:['GDG001','GDG002','GDG003','GDG004'] },
+    { key:'kodeSatuan', label:'Satuan Default', type:'select', options:['PCS','KG','LBR','MTR','ROLL'] },
+    { key:'ppn', label:'PPN (%)', type:'number' }, { key:'ppnMode', label:'Mode PPN', type:'select', options:['Exclude','Include'] },
+    { key:'caraBayar', label:'Cara Bayar Default', type:'select', options:['KREDIT','TUNAI'] }, { key:'mataUang', label:'Mata Uang', type:'select', options:['IDR','USD'] },
+  ]} />;
+}
+function AdminCetakan() {
+  return <PgSettingsForm title="Keterangan Cetakan" sub="Catatan kaki & label tanda tangan pada dokumen cetak." store={PG_CETAKAN} fields={[
+    { key:'judulKop', label:'Judul Kop', span:2 }, { key:'catatanPO', label:'Catatan Purchase Order', type:'textarea', span:2 },
+    { key:'catatanInvoice', label:'Catatan Faktur Penjualan', type:'textarea', span:2 }, { key:'catatanSJ', label:'Catatan Surat Jalan', type:'textarea', span:2 },
+    { key:'ttdKiri', label:'Label TTD Kiri' }, { key:'ttdTengah', label:'Label TTD Tengah' }, { key:'ttdKanan', label:'Label TTD Kanan' },
+    { key:'tampilLogo', label:'Tampilkan Logo', type:'bool' },
+  ]} />;
+}
+function AdminFitur() {
+  return <PgSettingsForm title="Fitur Administrator" sub="Aktif/nonaktifkan fitur kontrol per perusahaan." store={PG_FITUR} fields={[
+    { key:'approvalPO', label:'Wajib Approval Purchase Order', type:'bool' }, { key:'approvalSO', label:'Wajib Approval Sales Order', type:'bool' },
+    { key:'batasPlafon', label:'Blokir Order Melebihi Plafon', type:'bool' }, { key:'stokMinus', label:'Izinkan Stok Minus', type:'bool' },
+    { key:'multiGudang', label:'Multi Gudang', type:'bool' }, { key:'hargaPerPelanggan', label:'Harga Khusus per Pelanggan', type:'bool' },
+    { key:'auditLog', label:'Catat Log Aktivitas', type:'bool' },
+  ]} />;
+}
+function AdminSesi() {
+  const [rows, setRows] = React.useState(PG_SESI);
+  const [target, setTarget] = React.useState(null);
+  return (
+    <>
+      <PgHeader title="Login Pengguna" sub={`${rows.filter(r=>r.status==='Aktif').length} sesi aktif`} />
+      <div className="table-card">
+        <div className="table-scroll">
+          <table className="data">
+            <thead><tr><th>User</th><th>Perangkat</th><th>IP</th><th>Mulai</th><th>Status</th><th style={{width:120}}>Aksi</th></tr></thead>
+            <tbody>
+              {rows.map(r => (
+                <tr key={r.user + r.mulai}>
+                  <td className="mono">{r.user}</td><td>{r.perangkat}</td><td className="mono">{r.ip}</td><td className="mono">{r.mulai}</td>
+                  <td>{pgAktifPill(r.status === 'Aktif')}</td>
+                  <td><button className="btn btn-sm" disabled={r.status !== 'Aktif'} onClick={()=>setTarget(r)}>Akhiri Sesi</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {target && (
+        <ConfirmationModal title="Akhiri Sesi" message={`Sesi ${target.user} (${target.perangkat}) akan diakhiri.`} confirmLabel="Akhiri" requireReason={false}
+          onCancel={()=>setTarget(null)}
+          onConfirm={()=>{ setRows(prev => prev.map(x => x === target ? { ...x, status:'Berakhir' } : x)); setTarget(null); window.__erpToast && window.__erpToast('Sesi diakhiri.'); }} />
+      )}
+    </>
+  );
+}
+function AdminTampilan() {
+  const apply = (d) => { document.documentElement.style.zoom = (+d.ukuranHuruf || 100) / 100; };
+  return <PgSettingsForm title="Tampilan & Tema" sub="Preferensi tampilan aplikasi." store={PG_TAMPILAN} onSaved={apply} fields={[
+    { key:'ukuranHuruf', label:'Skala Tampilan (%)', type:'select', options:['90','100','110','125'] },
+    { key:'kepadatan', label:'Kepadatan Tabel', type:'select', options:['Rapat','Normal','Lega'] },
+    { key:'barisPerHalaman', label:'Baris per Halaman', type:'number' },
+    { key:'formatTanggal', label:'Format Tanggal', type:'select', options:['DD-MM-YYYY','YYYY-MM-DD'] },
+  ]} />;
+}
 
 function PengaturanDashboard({ onOpenSub }) {
   const sections = [
@@ -509,12 +639,12 @@ function PengaturanPage({ activeSub, onSubChange, onNavigate, theme, setTheme })
       {activeSub === 'organisasi'  && <KonfigurasiOrganisasi />}
       {activeSub === 'penjualan'   && <KonfigurasiPenjualan />}
       {/* Admin subs (digabung ke Pengaturan) */}
-      {activeSub === 'profil'      && typeof AdminProfil !== 'undefined' && <AdminProfil />}
-      {activeSub === 'default'     && typeof AdminDefault !== 'undefined' && <AdminDefault />}
-      {activeSub === 'cetakan'     && typeof AdminCetakan !== 'undefined' && <AdminCetakan />}
-      {activeSub === 'fitur'       && typeof AdminFitur !== 'undefined' && <AdminFitur />}
-      {activeSub === 'sesi'        && typeof AdminSesi !== 'undefined' && <AdminSesi />}
-      {activeSub === 'tampilan'    && typeof AdminTampilan !== 'undefined' && <AdminTampilan theme={theme} setTheme={setTheme} />}
+      {activeSub === 'profil'      && <AdminProfil />}
+      {activeSub === 'default'     && <AdminDefault />}
+      {activeSub === 'cetakan'     && <AdminCetakan />}
+      {activeSub === 'fitur'       && <AdminFitur />}
+      {activeSub === 'sesi'        && <AdminSesi />}
+      {activeSub === 'tampilan'    && <AdminTampilan />}
     </div>
   );
 }

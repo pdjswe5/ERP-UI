@@ -5,14 +5,10 @@
 // mereferensikan balik. Pola sama seperti PJ_SUBS di modules/penjualan/data/master.data.jsx.
 const KU_SUBS = [
   { id:'kbg',   label:'Kas, Bank & Giro',         icon:'wallet' },
-  { id:'km',    label:'Kas Masuk',                 icon:'in' },
-  { id:'kk',    label:'Kas Keluar',                icon:'out' },
-  { id:'bm',    label:'Bank Masuk',                icon:'in' },
-  { id:'bk',    label:'Bank Keluar',               icon:'out' },
-  { id:'tm',    label:'Transfer Masuk',            icon:'in' },
-  { id:'tk',    label:'Transfer Keluar',           icon:'out' },
-  { id:'gm',    label:'Giro Masuk',                icon:'doc' },
-  { id:'gk',    label:'Giro Keluar',               icon:'doc' },
+  { id:'kas',      label:'Transaksi Kas',     icon:'in' },
+  { id:'bank',     label:'Transaksi Bank',    icon:'in' },
+  { id:'transfer', label:'Transfer Kas/Bank', icon:'in' },
+  { id:'giro',     label:'Transaksi Giro',    icon:'doc' },
   { id:'pp',    label:'Pelunasan Piutang',         icon:'check' },
   { id:'ph',    label:'Pelunasan Hutang',          icon:'check' },
 ];

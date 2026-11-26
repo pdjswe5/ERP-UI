@@ -8,11 +8,11 @@
 // Dipanggil dari MfHasilProduksiList:
 //   <MfCetakModal rows={rows} initialSelected={cetakRow ? [cetakRow.no] : null} onClose={...} />
 
-function mfHpFmtTgl(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+function mfHpFmtTgl(v) {
+  if (!v) return '—';
+  const iso = erpAnyToIso(v); // seed DD-MM-YYYY tidak boleh di-parse new Date() (tertukar hari/bulan)
+  const [y, m, d] = iso.split('-');
+  return d && m && y ? `${d}-${m}-${y}` : String(v);
 }
 
 function MfHpCetakBuktiBody({ row, orgInfo }) {
@@ -77,7 +77,7 @@ function MfHpCetakBuktiBody({ row, orgInfo }) {
           <div className="grand">Qty Produksi<span>{row.qtySPK} {row.satuan}</span></div>
         </div>
       </div>
-      <div className="cetak-timestamp">Dicetak pada {mfHpFmtTgl(new Date().toISOString())} {new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator</div>
+      <div className="cetak-timestamp">Dicetak pada {mfHpFmtTgl(todayLocal())} {new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator</div>
     </div>
   );
 }
@@ -139,7 +139,7 @@ function MfHpCetakRegisterBody({ lines, docLabel, orgInfo, tglRangeLabel, pageIn
       )}
       <div className="cetak-timestamp">
         Halaman {pageInfo.current} dari {pageInfo.total}
-        {isLastPage && ` — Dicetak pada ${mfHpFmtTgl(new Date().toISOString())} ${new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator`}
+        {isLastPage && ` — Dicetak pada ${mfHpFmtTgl(todayLocal())} ${new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator`}
       </div>
     </div>
   );
@@ -171,6 +171,7 @@ function mfHpChunk(lines, size) {
 }
 
 function MfCetakModal({ docLabel='Hasil Produksi', rows, getGroupLabel, initialSelected, onClose }) {
+  useEscape(onClose);
   const orgInfo = (typeof PG_ORGANISASI !== 'undefined' && PG_ORGANISASI) || { nama:'PT. Pacific Data Jaya', alamat:'', kota:'', telpon:'', email:'' };
   const labelOf = (r) => (getGroupLabel ? getGroupLabel(r) : r.namaBarang || '');
 
@@ -184,8 +185,8 @@ function MfCetakModal({ docLabel='Hasil Produksi', rows, getGroupLabel, initialS
   const [zoom, setZoom] = React.useState(100);
 
   const filtered = rows.filter(r => {
-    if (tglAwal && r.tgl < tglAwal) return false;
-    if (tglAkhir && r.tgl > tglAkhir) return false;
+    if (tglAwal && erpAnyToIso(r.tgl) < tglAwal) return false;
+    if (tglAkhir && erpAnyToIso(r.tgl) > tglAkhir) return false;
     if (noAwal && r.no < noAwal) return false;
     if (noAkhir && r.no > noAkhir) return false;
     if (search && !r.no.toLowerCase().includes(search.toLowerCase())) return false;
@@ -198,7 +199,7 @@ function MfCetakModal({ docLabel='Hasil Produksi', rows, getGroupLabel, initialS
   });
   const toggleOne = (no) => setSelected(prev => { const next = new Set(prev); next.has(no) ? next.delete(no) : next.add(no); return next; });
 
-  const selectedRows = rows.filter(r => selected.has(r.no));
+  const selectedRows = filtered.filter(r => selected.has(r.no));
   const registerLines = previewMode === 'register' ? mfHpBuildRegisterLines(selectedRows, labelOf) : [];
   const registerPages = previewMode === 'register' ? mfHpChunk(registerLines, MF_HP_REGISTER_ROWS_PER_PAGE) : [[]];
   const registerSummary = React.useMemo(() => {
@@ -212,12 +213,12 @@ function MfCetakModal({ docLabel='Hasil Produksi', rows, getGroupLabel, initialS
     ? `${mfHpFmtTgl(tglAwal) || '—'} s/d ${mfHpFmtTgl(tglAkhir) || '—'}`
     : (() => {
         if (selectedRows.length === 0) return '—';
-        const sorted = [...selectedRows].map(r => r.tgl).sort();
+        const sorted = [...selectedRows].map(r => erpAnyToIso(r.tgl)).sort();
         return sorted[0] === sorted[sorted.length-1] ? mfHpFmtTgl(sorted[0]) : `${mfHpFmtTgl(sorted[0])} s/d ${mfHpFmtTgl(sorted[sorted.length-1])}`;
       })();
 
   const doCetak = () => {
-    window.__erpToast && window.__erpToast(`Cetak dikirim ke printer (${selectedRows.length} dokumen).`);
+    erpPrint();
     onClose();
   };
 
@@ -265,6 +266,7 @@ function MfCetakModal({ docLabel='Hasil Produksi', rows, getGroupLabel, initialS
           <div className="cetak-preview-pane">
             <div className="cetak-toolbar">
               <span className="cetak-pageof">{selectedRows.length===0 ? '0 halaman' : previewMode==='register' ? `${totalPages} halaman` : `${selectedRows.length} dokumen`}</span>
+              <ErpPaperSelect />
               <div style={{display:'flex', gap:4, alignItems:'center'}}>
                 <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.max(50,z-10))}>−</button>
                 <span className="cetak-pageof">{zoom}%</span>
@@ -396,7 +398,7 @@ function MfSpkCetakBuktiBody({ row, orgInfo }) {
           <div className="grand">Jumlah Bahan<span>{bahanCount}</span></div>
         </div>
       </div>
-      <div className="cetak-timestamp">Dicetak pada {mfHpFmtTgl(new Date().toISOString())} {new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator</div>
+      <div className="cetak-timestamp">Dicetak pada {mfHpFmtTgl(todayLocal())} {new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator</div>
     </div>
   );
 }
@@ -488,7 +490,7 @@ function MfSpkCetakRegisterBody({ lines, docLabel, orgInfo, tglRangeLabel, pageI
       )}
       <div className="cetak-timestamp">
         Halaman {pageInfo.current} dari {pageInfo.total}
-        {isLastPage && ` — Dicetak pada ${mfHpFmtTgl(new Date().toISOString())} ${new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator`}
+        {isLastPage && ` — Dicetak pada ${mfHpFmtTgl(todayLocal())} ${new Date().toLocaleTimeString('id-ID')} oleh PDJ Administrator`}
       </div>
     </div>
   );
@@ -497,6 +499,7 @@ function MfSpkCetakRegisterBody({ lines, docLabel, orgInfo, tglRangeLabel, pageI
 const MF_SPK_REGISTER_ROWS_PER_PAGE = 16;
 
 function MfSpkCetakModal({ docLabel='Surat Perintah Kerja', rows, statusFilter, initialSelected, onClose }) {
+  useEscape(onClose);
   const orgInfo = (typeof PG_ORGANISASI !== 'undefined' && PG_ORGANISASI) || { nama:'PT. Pacific Data Jaya', alamat:'', kota:'', telpon:'', email:'' };
 
   const [tglAwal, setTglAwal] = React.useState('');
@@ -510,7 +513,7 @@ function MfSpkCetakModal({ docLabel='Surat Perintah Kerja', rows, statusFilter, 
   const [zoom, setZoom] = React.useState(100);
 
   const filtered = rows.filter(r => {
-    const iso = mfToIso(r.tgl);
+    const iso = erpAnyToIso(r.tgl);
     if (tglAwal && iso && iso < tglAwal) return false;
     if (tglAkhir && iso && iso > tglAkhir) return false;
     if (noAwal && r.no < noAwal) return false;
@@ -526,7 +529,7 @@ function MfSpkCetakModal({ docLabel='Surat Perintah Kerja', rows, statusFilter, 
   });
   const toggleOne = (no) => setSelected(prev => { const next = new Set(prev); next.has(no) ? next.delete(no) : next.add(no); return next; });
 
-  const selectedRows = rows.filter(r => selected.has(r.no));
+  const selectedRows = filtered.filter(r => selected.has(r.no));
   const registerLines = previewMode === 'register' ? mfSpkBuildRegisterLines(selectedRows) : [];
   const registerPages = previewMode === 'register' ? mfSpkChunk(registerLines, MF_SPK_REGISTER_ROWS_PER_PAGE) : [[]];
   const registerSummary = React.useMemo(() => {
@@ -540,12 +543,12 @@ function MfSpkCetakModal({ docLabel='Surat Perintah Kerja', rows, statusFilter, 
     ? `${tglAwal ? mfFromIso(tglAwal) : '—'} s/d ${tglAkhir ? mfFromIso(tglAkhir) : '—'}`
     : (() => {
         if (selectedRows.length === 0) return '—';
-        const sorted = [...selectedRows].map(r => mfToIso(r.tgl)).sort();
+        const sorted = [...selectedRows].map(r => erpAnyToIso(r.tgl)).sort();
         return sorted[0] === sorted[sorted.length-1] ? mfFromIso(sorted[0]) : `${mfFromIso(sorted[0])} s/d ${mfFromIso(sorted[sorted.length-1])}`;
       })();
 
   const doCetak = () => {
-    window.__erpToast && window.__erpToast(`Cetak dikirim ke printer (${selectedRows.length} dokumen).`);
+    erpPrint();
     onClose();
   };
 
@@ -599,6 +602,7 @@ function MfSpkCetakModal({ docLabel='Surat Perintah Kerja', rows, statusFilter, 
           <div className="cetak-preview-pane">
             <div className="cetak-toolbar">
               <span className="cetak-pageof">{selectedRows.length===0 ? '0 halaman' : previewMode==='register' ? `${totalPages} halaman` : `${selectedRows.length} dokumen`}</span>
+              <ErpPaperSelect />
               <div style={{display:'flex', gap:4, alignItems:'center'}}>
                 <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.max(50,z-10))}>−</button>
                 <span className="cetak-pageof">{zoom}%</span>

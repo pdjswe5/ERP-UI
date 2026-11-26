@@ -37,7 +37,7 @@ function PbInlineItemTable({ title, columns, rows, setRows, addLabel='Tambah Bar
     if (c.compute) {
       return <span className="cell num mono" style={{display:'block',padding:'4px 0',borderBottom:'1px solid transparent'}}>{c.compute(r)}</span>;
     }
-    const lockedByFill = c.lockIfFilled && r[c.key];
+    const lockedByFill = c.lockIfFilled && r[c.key] && !r._added; // kunci hanya nilai bawaan dokumen sumber, bukan baris yang sedang diketik
     if (disabled || isLockedItemCol(c) || c.readOnly || lockedByFill || r._deleted) {
       let display = r[c.key];
       if (c.type === 'select') {

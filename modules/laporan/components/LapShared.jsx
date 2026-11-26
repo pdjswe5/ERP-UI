@@ -132,13 +132,25 @@ function lapBuildArApLedger(items, pelunasanList, kodeKey, kodePartner, tglAwalI
   const lines = dalamPeriode.map(e => { running += e.debet - e.kredit; return { ...e, saldo: running }; });
 
   const penjualan = dalamPeriode.filter(e => e.tipe === '1.JUAL').reduce((s, e) => s + e.debet, 0);
-  const pelunasan = dalamPeriode.filter(e => e.tipe === '3.PELUNASAN' || e.tipe === '4.UANG MUKA').reduce((s, e) => s + e.kredit, 0);
+  // Pelunasan dilaporkan NETO (kredit − debet baris pelunasan, mis. retur/uang muka yang dipakai) supaya
+  // Saldo Akhir Rekap = saldo berjalan terakhir di Kartu.
+  const pelunasan = dalamPeriode.filter(e => e.tipe === '3.PELUNASAN' || e.tipe === '4.UANG MUKA').reduce((s, e) => s + e.kredit - e.debet, 0);
   const retur = dalamPeriode.filter(e => e.tipe === '2.RETUR').reduce((s, e) => s + e.kredit, 0);
   const saldoAkhir = saldoAwal + penjualan - pelunasan - retur;
   const totalDebet = dalamPeriode.reduce((s, e) => s + e.debet, 0);
   const totalKredit = dalamPeriode.reduce((s, e) => s + e.kredit, 0);
 
   return { saldoAwal, lines, penjualan, pelunasan, retur, saldoAkhir, totalDebet, totalKredit };
+}
+
+// Sisa 1 nota PER tanggal tertentu (bukan sisa hari ini): sisa sekarang + pelunasan atas nota itu
+// yang terjadi SETELAH tanggal tsb. Dipakai aging Rekap & kolom Pembayaran Rincian Nota supaya ikut
+// Tgl Akhir laporan.
+function lapSisaNotaPer(it, pelunasanList, tglAkhirIso) {
+  if (lapDmyToIso(it.tgl) > tglAkhirIso) return 0;
+  const bayarSetelah = (pelunasanList || []).filter(p => lapDmyToIso(p.tgl) > tglAkhirIso)
+    .reduce((s, p) => s + (p.items || []).filter(x => x.noBukti === it.noBukti).reduce((t, x) => t + (x.kredit || 0) - (x.debet || 0), 0), 0);
+  return Math.min(it.nilai || 0, Math.max(0, (it.sisa || 0) + bayarSetelah));
 }
 
 // Rentang kode partner (mis. filter "Kode Customer: dari-sd" Kartu/Rincian Piutang-Hutang) —
@@ -322,7 +334,7 @@ function LapCetakPage({ docTitle, plainTitle, metaRight, infoLines, columns, row
   return (
     <>
       {pages.map((pageLines, pi) => (
-        <div className={`cetak-page cetak-page-landscape${roomy ? ' cetak-lap-roomy' : ''}`} key={pi}>
+        <div className={`cetak-page cetak-page-landscape${roomy === 'md' ? ' cetak-lap-mid' : roomy === 'sm' ? ' cetak-lap-sm' : roomy ? ' cetak-lap-roomy' : ''}`} key={pi}>
           <div className="cetak-doc">
             <div className="cetak-kop">
               {plainTitle ? (
@@ -380,12 +392,14 @@ function LapCetakPage({ docTitle, plainTitle, metaRight, infoLines, columns, row
 // SEMUA halaman sekaligus tanpa shell ini perlu tahu ada berapa halaman.
 function LapReportShell({ filterPanel, previewChildren, onCetak, disabled, footNote }) {
   const [zoom, setZoom] = React.useState(100);
+  const [fillRef, fillH] = useFillHeight();
   return (
-    <div className="table-card lap-report-shell" style={{display:'flex', height:'calc(100vh - 220px)', minHeight:520, overflow:'hidden'}}>
+    <div ref={fillRef} className="table-card lap-report-shell" style={{display:'flex', height: fillH ? fillH : 'calc(100vh - 220px)', overflow:'hidden'}}>
       <div className="cetak-filter panel" style={{borderRight:'1px solid var(--border)', padding:16, borderRadius:0}}>{filterPanel}</div>
       <div className="cetak-preview-pane" style={{borderRadius:0}}>
         <div className="cetak-toolbar">
           <span className="cetak-pageof">{footNote || 'Pratinjau'}</span>
+          <ErpPaperSelect />
           <div style={{display:'flex', gap:8, alignItems:'center'}}>
             <div style={{display:'flex', gap:4, alignItems:'center'}}>
               <button className="btn btn-icon btn-sm" onClick={()=>setZoom(z=>Math.max(40,z-10))}>−</button>

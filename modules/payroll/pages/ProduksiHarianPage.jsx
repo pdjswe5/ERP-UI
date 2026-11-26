@@ -30,7 +30,7 @@ function ProduksiHarianModal({ data, onClose, onSave }) {
               <label>Karyawan <span style={{color:'var(--danger)'}}>*</span></label>
               <select className="select" value={form.noInduk} onChange={e=>set('noInduk', e.target.value)}>
                 <option value="">— Pilih —</option>
-                {PR_KARYAWAN.map(k => <option key={k.noInduk} value={k.noInduk}>{k.noInduk} - {k.nama}</option>)}
+                {prKaryawan(true).map(k => <option key={k.noInduk} value={k.noInduk}>{k.noInduk} - {k.nama}</option>)}
               </select>
             </div>
             <div className="field">

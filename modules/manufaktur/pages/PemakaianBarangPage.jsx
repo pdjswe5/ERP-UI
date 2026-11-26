@@ -7,7 +7,8 @@
 
 // ─── Pemakaian / Retur Barang Dialog ─────────────────────────────────────────
 
-function MfPemakaianBarangDialog({ type, data, spkRows, onClose, onSave }) {
+function MfPemakaianBarangDialog({ rows, type, data, spkRows, onClose, onSave }) {
+  useEscape(onClose);
   const prefix = type === 'bpbl' ? 'BPBL' : 'RPBL';
   const title  = type === 'bpbl' ? 'Bukti Pemakaian Barang Lain' : 'Retur Pakai Barang Lain';
   const isCreate = !data;
@@ -27,7 +28,7 @@ function MfPemakaianBarangDialog({ type, data, spkRows, onClose, onSave }) {
   const noBuktiLocked = isCreate && (!noBuktiRaw || !['F','K'].includes(noBuktiRaw[0]));
   React.useEffect(() => { if (isCreate && noBuktiRef.current) noBuktiRef.current.focus(); }, [isCreate]);
 
-  const [tgl,         setTgl]         = React.useState(data?.tgl         || '2026-06-24');
+  const [tgl,         setTgl]         = React.useState(erpAnyToIso(data?.tgl) || todayLocal());
   const [gudang,      setGudang]      = React.useState(data?.gudang      || '');
   const [bagian,      setBagian]      = React.useState(data?.bagian      || '');
   const [noOpb,       setNoOpb]       = React.useState(data?.noOpb       || '');
@@ -49,8 +50,10 @@ function MfPemakaianBarangDialog({ type, data, spkRows, onClose, onSave }) {
   const handleSave = () => {
     const namaGudang = (GUDANG_DATA.find(g => g.kode === gudang) || {}).nama || '';
     const cleanBarang = barangLines.filter(r => !r._deleted).map(({_deleted, _added, ...r}) => r);
+    if (noBuktiLocked) { window.__erpToast && window.__erpToast('Pilih No. Bukti (ketik F atau K) terlebih dahulu.'); return; }
+    if (!gudang || cleanBarang.length === 0) { window.__erpToast && window.__erpToast('Gudang dan minimal 1 barang wajib diisi.'); return; }
     const finalNo = isCreate
-      ? (noBuktiRaw[0] || '') + prefix + new Date().toISOString().slice(2,4) + new Date().toISOString().slice(5,7) + String(Math.floor(Math.random()*9000)+1000)
+      ? erpNextDocNo(noBuktiRaw[0], prefix, tgl, rows, 'no')
       : data.no;
     onSave({
       no: finalNo,
@@ -225,6 +228,7 @@ function MfPemakaianBarangList({ type, rows, onAdd, onEdit }) {
 
   const [tglDari,  setTglDari]  = React.useState('');
   const [tglSmpai, setTglSmpai] = React.useState('');
+  const [showCetak, setShowCetak] = React.useState(false);
   const [qBagian,  setQBagian]  = React.useState('');
   const [page,     setPage]     = React.useState(1);
   const perPage = 10;
@@ -234,7 +238,7 @@ function MfPemakaianBarangList({ type, rows, onAdd, onEdit }) {
   // sebelumnya tidak pernah dipakai di sini) salah bandingnya kalau langsung string-compare.
   const filtered = rows.filter(r => {
     if (qBagian && !(r.bagian || '').toLowerCase().includes(qBagian.toLowerCase())) return false;
-    const iso = mfToIso(r.tgl);
+    const iso = erpAnyToIso(r.tgl);
     if (tglDari && iso && iso < tglDari) return false;
     if (tglSmpai && iso && iso > tglSmpai) return false;
     return true;
@@ -283,7 +287,7 @@ function MfPemakaianBarangList({ type, rows, onAdd, onEdit }) {
           <div className="table-toolbar-right">
             <button className="btn btn-primary btn-sm" onClick={onAdd}>{I.plus()} Tambah Data</button>
             <button className="btn btn-sm btn-icon" title="Refresh">{I.refresh()}</button>
-            <button className="btn btn-sm btn-icon" title="Print">{I.print()}</button>
+            <button className="btn btn-sm btn-icon" title="Cetak" onClick={() => setShowCetak(true)}>{I.print()}</button>
             <button className="btn btn-sm btn-icon btn-danger" title="Hapus">{I.trash()}</button>
           </div>
         </div>
@@ -315,7 +319,7 @@ function MfPemakaianBarangList({ type, rows, onAdd, onEdit }) {
                   <td>{r.namaGudang}</td>
                   <td>{r.bagian}</td>
                   {type === 'bpbl' && <td className="muted">{r.noOpb || '—'}</td>}
-                  <td className="num mono">{r.totalBarang}</td>
+                  <td className="num mono">{r.totalBarang ?? (r.barangLines || []).length}</td>
                   <td className="center">
                     <div className="row-actions">
                       <button className="btn btn-icon btn-sm" title="Edit" onClick={() => onEdit(r)}>{I.edit()}</button>
@@ -337,6 +341,15 @@ function MfPemakaianBarangList({ type, rows, onAdd, onEdit }) {
           </div>
         </div>
       </div>
+      {showCetak && (
+        <BrgCetakModal docLabel={title}
+          rows={rows.map(r => ({ ...r, noBukti: r.no, tglBukti: erpAnyToIso(r.tgl), batal: !!r.Batal }))}
+          columns={[{label:'Satuan'},{label:'Jumlah', numeric:true},{label:'No. SPK'}]}
+          getItems={r => (r.barangLines || []).map(d => ({ kode:d.kodeBarang, nama:d.namaBarang, values:[d.satuan, d.jumlah, d.noSpk || '—'] }))}
+          getGroupLabel={r => `${r.namaGudang || r.gudang} · ${r.bagian || ''}`}
+          groupLabelText="Gudang · Bagian"
+          onClose={() => setShowCetak(false)} />
+      )}
     </>
   );
 }

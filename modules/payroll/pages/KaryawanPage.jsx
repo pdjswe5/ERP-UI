@@ -6,7 +6,7 @@
 // soft-delete/restore, konsisten dgn keputusan "tidak cross-import lintas modul").
 
 function PrKeluargaTable({ rows, setRows, disabled }) {
-  const add = () => setRows([...rows, { hubungan:'Keluarga 1', nama:'', tglLahir:'' }]);
+  const add = () => setRows([...rows, { _key: Date.now(), hubungan:'Keluarga 1', nama:'', tglLahir:'' }]);
   const update = (idx, key, val) => { const next=[...rows]; next[idx]={...next[idx],[key]:val}; setRows(next); };
   const remove = (idx) => setRows(rows.filter((_,i)=>i!==idx));
   return (
@@ -21,7 +21,7 @@ function PrKeluargaTable({ rows, setRows, disabled }) {
           <tbody>
             {rows.length === 0 && <tr><td colSpan={disabled?3:4} className="empty">Belum ada data keluarga.</td></tr>}
             {rows.map((r,idx) => (
-              <tr key={idx}>
+              <tr key={r._key || `${r.hubungan}-${r.nama}-${idx}`}>
                 <td>{disabled ? r.hubungan : (
                   <select className="cell" value={r.hubungan} onChange={e=>update(idx,'hubungan',e.target.value)}>
                     {['Suami/Istri','Keluarga 1','Keluarga 2','Keluarga 3','Keluarga 4','Keluarga 5'].map(h => <option key={h}>{h}</option>)}
@@ -43,6 +43,7 @@ function KaryawanModal({ data, initialMode, onClose, onSave }) {
   const isEdit = !!data;
   const [mode, setMode] = React.useState(data ? (initialMode === 'EDIT' ? 'EDIT' : 'VIEW') : 'CREATE');
   const isView = mode === 'VIEW';
+  useEscape(onClose);
   const empty = {
     noInduk:'', noIndukLama:'', noFinger:'', statusKyw:'00', tglMasuk:'', nama:'', noNpwp:'', noKtp:'',
     alamat:'', kota:'', kodePos:'', telpon:'', tempatLahir:'', tglLahir:'', alamatKtp:'', noJkn:'',
@@ -97,7 +98,7 @@ function KaryawanModal({ data, initialMode, onClose, onSave }) {
       ) : opts.type === 'textarea' ? (
         <textarea className="textarea" disabled={fieldsDisabled} value={form[key]} onChange={e=>set(key,e.target.value)}/>
       ) : (
-        <input className={`input ${opts.mono ? 'mono' : ''}`} type={opts.type||'text'} disabled={fieldsDisabled || opts.disabled}
+        <input className={`input ${opts.mono ? 'mono' : ''}`} type={opts.type||'text'} disabled={(key === 'noInduk' || key === 'nama') ? (isView || opts.disabled) : (fieldsDisabled || opts.disabled)}
           value={form[key]} onChange={e=>set(key,e.target.value)} />
       )}
     </div>
@@ -225,6 +226,10 @@ function PayrollKaryawanPage({ rows, setRows, mutasiRows, onMutasi }) {
   };
 
   const save = (form) => {
+    if (!modal && rows.some(r => String(r.noInduk).toUpperCase() === String(form.noInduk).trim().toUpperCase())) {
+      window.__erpToast && window.__erpToast(`No. Induk ${form.noInduk} sudah dipakai.`);
+      return;
+    }
     setRows(prev => prev.some(r=>r.noInduk===form.noInduk) ? prev.map(r=>r.noInduk===form.noInduk?form:r) : [...prev, form]);
     window.__erpToast && window.__erpToast('Karyawan berhasil disimpan.');
     setModal(null); setShowCreate(false);
@@ -281,7 +286,10 @@ function PayrollKaryawanPage({ rows, setRows, mutasiRows, onMutasi }) {
           confirmLabel="Hapus" confirmKind="danger" requireReason={false}
           onCancel={()=>setPendingDelete(null)}
           onConfirm={()=>{
-            setRows(prev => prev.filter(x=>x.noInduk!==pendingDelete.noInduk));
+            const no = pendingDelete.noInduk;
+            const punyaTrx = PR_ABSENSI.some(a => a.noInduk === no) || PR_PRODUKSI_HARIAN.some(p => p.noInduk === no) || (mutasiRows || []).some(m => m.noInduk === no);
+            if (punyaTrx) { window.__erpToast && window.__erpToast('Karyawan punya data absensi/produksi/mutasi — nonaktifkan saja, jangan dihapus.'); setPendingDelete(null); return; }
+            setRows(prev => prev.filter(x=>x.noInduk!==no));
             window.__erpToast && window.__erpToast('Karyawan berhasil dihapus.');
             setPendingDelete(null);
           }} />

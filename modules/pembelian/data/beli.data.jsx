@@ -20,7 +20,7 @@ function beliBiayaItem(kodeAkun, jumlah, satuan, harga, disc1, discRp, realisasi
 }
 
 function beliHead(no, tgl, kodeSupp, kodeGudang, noBuktiFrom, kreditTunai, akunTunai, tempo, ket, details, details2, opts={}) {
-  const supp = PB_SUPPLIER.find(s => s.Kode_Supp === kodeSupp);
+  const supp = pbSupplier().find(s => s.Kode_Supp === kodeSupp);
   const akun = PB_AKUN.find(a => a.kode === akunTunai);
   return {
     No_Bukti:no, Tgl_Bukti:tgl, No_Bukti_From:noBuktiFrom, Kode_Supp:kodeSupp, Nama_Supp: supp ? supp.Nama_Supp : kodeSupp,
@@ -166,8 +166,8 @@ function beliModalTabs() {
       { key:'Tgl_Bukti', label:'Tgl. Bukti', type:'date', required:true },
       { key:'No_Bukti_From', label:'Ref. GR', mono:true, lockOnEdit:true },
       { key:'Nama_Supp', label:'Nama Supplier', type:'select', required:true, span:2,
-        options: () => PB_SUPPLIER.map(s => ({ value:s.Nama_Supp, label:s.Nama_Supp })),
-        onChange: (val, set) => { const s = PB_SUPPLIER.find(x => x.Nama_Supp === val); set('Kode_Supp', s ? s.Kode_Supp : ''); } },
+        options: () => pbSupplier(true).map(s => ({ value:s.Nama_Supp, label:s.Nama_Supp })),
+        onChange: (val, set) => { const s = pbSupplier().find(x => x.Nama_Supp === val); set('Kode_Supp', s ? s.Kode_Supp : ''); } },
       { key:'Kode_Supp', label:'Kode Supplier', mono:true, readOnly:true, span:1 },
       { key:'Kode_Gudang', label:'Gudang', type:'select', options:PB_GUDANG_OPTS },
       { key:'No_Sj_Inv', label:'No. SJ/Invoice', mono:true },

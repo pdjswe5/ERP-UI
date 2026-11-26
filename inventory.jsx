@@ -12,16 +12,16 @@ const KATEGORI = [
 
 const BARANG = [
   { name: 'Engine Oil Filter — 5.0L',         code: 'P-EF1001', kategori:'Sparepart Mesin',     active:true,  minQty: 50,  hargaBeli: 142000, hpp: 142000, stock: 124, gudang:'Gudang Utama',  note:'Reorder bulanan' },
-  { name: 'Brake Pad Set Front — Ranger',     code: 'P-BK2104', kategori:'Sparepart Kaki-Kaki', active:true,  minQty: 20,  hargaBeli: 720000, hpp: 725000, stock:  46, gudang:'Gudang Utama',  note:'' },
-  { name: 'Brake Disc Rear — Everest',        code: 'P-BK2105', kategori:'Sparepart Kaki-Kaki', active:true,  minQty: 12,  hargaBeli:1180000, hpp:1180000, stock:  18, gudang:'Gudang Utama',  note:'' },
+  { name: 'Brake Pad Set Front — Pickup',     code: 'P-BK2104', kategori:'Sparepart Kaki-Kaki', active:true,  minQty: 20,  hargaBeli: 720000, hpp: 725000, stock:  46, gudang:'Gudang Utama',  note:'' },
+  { name: 'Brake Disc Rear — SUV',        code: 'P-BK2105', kategori:'Sparepart Kaki-Kaki', active:true,  minQty: 12,  hargaBeli:1180000, hpp:1180000, stock:  18, gudang:'Gudang Utama',  note:'' },
   { name: 'Spark Plug Iridium (4-pack)',      code: 'P-SP3201', kategori:'Sparepart Mesin',     active:true,  minQty: 30,  hargaBeli: 480000, hpp: 485000, stock:   8, gudang:'Gudang Pusat',  note:'Stok kritis' },
-  { name: 'Air Filter — Ranger 2.2L',         code: 'P-AF4022', kategori:'Sparepart Mesin',     active:true,  minQty: 40,  hargaBeli: 175000, hpp: 178000, stock:  92, gudang:'Gudang Utama',  note:'' },
+  { name: 'Air Filter — Pickup 2.2L',         code: 'P-AF4022', kategori:'Sparepart Mesin',     active:true,  minQty: 40,  hargaBeli: 175000, hpp: 178000, stock:  92, gudang:'Gudang Utama',  note:'' },
   { name: 'Clutch Disc — Manual 6-spd',       code: 'P-CL5500', kategori:'Sparepart Mesin',     active:true,  minQty:  8,  hargaBeli:2480000, hpp:2480000, stock:  14, gudang:'Gudang Pusat',  note:'' },
-  { name: 'Timing Belt Kit — EcoBoost',       code: 'P-TR6611', kategori:'Sparepart Mesin',     active:true,  minQty:  6,  hargaBeli:3220000, hpp:3220000, stock:   9, gudang:'Gudang Pusat',  note:'' },
+  { name: 'Timing Belt Kit — Turbo',       code: 'P-TR6611', kategori:'Sparepart Mesin',     active:true,  minQty:  6,  hargaBeli:3220000, hpp:3220000, stock:   9, gudang:'Gudang Pusat',  note:'' },
   { name: 'Engine Oil 5W-30 (4L)',            code: 'P-OL7022', kategori:'Oli & Cairan',        active:true,  minQty:100,  hargaBeli: 458000, hpp: 462000, stock: 215, gudang:'Gudang Utama',  note:'Promo Mei' },
   { name: 'Tire 265/65R17 All-Terrain',       code: 'P-TY8801', kategori:'Sparepart Kaki-Kaki', active:true,  minQty: 16,  hargaBeli:1620000, hpp:1635000, stock:  32, gudang:'Gudang Utama',  note:'' },
-  { name: 'Headlamp LED Assy — Ranger',       code: 'P-LT9210', kategori:'Sparepart Body',      active:true,  minQty:  6,  hargaBeli:4200000, hpp:4200000, stock:   4, gudang:'Gudang Pusat',  note:'Order ke supplier' },
-  { name: 'Shock Absorber Rear — Everest',    code: 'P-SH1140', kategori:'Sparepart Kaki-Kaki', active:true,  minQty: 10,  hargaBeli:1450000, hpp:1450000, stock:  22, gudang:'Gudang Utama',  note:'' },
+  { name: 'Headlamp LED Assy — Pickup',       code: 'P-LT9210', kategori:'Sparepart Body',      active:true,  minQty:  6,  hargaBeli:4200000, hpp:4200000, stock:   4, gudang:'Gudang Pusat',  note:'Order ke supplier' },
+  { name: 'Shock Absorber Rear — SUV',    code: 'P-SH1140', kategori:'Sparepart Kaki-Kaki', active:true,  minQty: 10,  hargaBeli:1450000, hpp:1450000, stock:  22, gudang:'Gudang Utama',  note:'' },
   { name: 'Battery 70Ah MF',                  code: 'P-BT3300', kategori:'Aksesoris',           active:true,  minQty: 12,  hargaBeli:1020000, hpp:1025000, stock:  28, gudang:'Gudang Utama',  note:'' },
   { name: 'Coolant Premium 1L',               code: 'P-CO4411', kategori:'Oli & Cairan',        active:true,  minQty: 60,  hargaBeli:  72000, hpp:  74000, stock: 150, gudang:'Gudang Utama',  note:'' },
   { name: 'Karpet Premium 5pcs Set',          code: 'P-AK5520', kategori:'Aksesoris',           active:true,  minQty: 20,  hargaBeli: 380000, hpp: 385000, stock:  62, gudang:'Gudang Pusat',  note:'' },
@@ -33,7 +33,7 @@ const GUDANG = ['Gudang Utama', 'Gudang Pusat', 'Gudang Cabang Surabaya', 'Gudan
 const MUTASI = [
   { tgl:'30-04-2026', no:'MB26040007', asal:'Gudang Pusat',  tujuan:'Gudang Utama',           item:'Engine Oil 5W-30 (4L)',  qty: 50, status:'Approved' },
   { tgl:'30-04-2026', no:'MB26040006', asal:'Gudang Utama',  tujuan:'Gudang Cabang Surabaya', item:'Brake Pad Set Front',    qty: 12, status:'Pending'  },
-  { tgl:'29-04-2026', no:'MB26040005', asal:'Gudang Utama',  tujuan:'Gudang Service',         item:'Air Filter — Ranger',    qty:  8, status:'Approved' },
+  { tgl:'29-04-2026', no:'MB26040005', asal:'Gudang Utama',  tujuan:'Gudang Service',         item:'Air Filter — Pickup',    qty:  8, status:'Approved' },
   { tgl:'28-04-2026', no:'MB26040004', asal:'Gudang Pusat',  tujuan:'Gudang Cabang Bandung',  item:'Tire 265/65R17',         qty: 16, status:'Approved' },
   { tgl:'27-04-2026', no:'MB26040003', asal:'Gudang Utama',  tujuan:'Gudang Pusat',           item:'Headlamp LED Assy',      qty:  4, status:'Cancelled'},
   { tgl:'26-04-2026', no:'MB26040002', asal:'Gudang Service',tujuan:'Gudang Utama',           item:'Coolant Premium 1L',     qty: 24, status:'Approved' },
@@ -509,7 +509,7 @@ function BarangModal({ data, onClose, onSave }) {
       <div className="form-grid-2" style={{gap:24}}>
         <div className="form-section">
           <h4>Identitas</h4>
-          <div className="field"><label>Nama Barang *</label><input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Contoh: Brake Pad Set Front — Ranger"/></div>
+          <div className="field"><label>Nama Barang *</label><input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Contoh: Brake Pad Set Front — Pickup"/></div>
           <div className="form-row">
             <div className="field"><label>Kode *</label><input className="input mono" value={form.code} onChange={e=>set('code',e.target.value)} placeholder="P-XX0000"/></div>
             <div className="field"><label>Satuan</label><select className="select"><option>pcs</option><option>set</option><option>btl</option><option>liter</option><option>kg</option></select></div>

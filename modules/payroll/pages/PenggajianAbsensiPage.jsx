@@ -24,8 +24,8 @@ function prComputeSlipAbsensi(karyawan, mutasiRows, absensiRows, periode) {
   const total = gaji + tunjJbt + premiBln + premiHd + premiHarian + bonus + lemburLalu + lemburIni + cutiThn;
 
   const potUpah = alpha * (kb.upahPerhari || 0);
-  const potBpjsTk = gaji * ((mutasi?.potBpjsTkPct || 0) / 100);
-  const potBpjsKes = gaji * ((mutasi?.potBpjsKesPct || 0) / 100);
+  const potBpjsTk = Math.round(gaji * ((mutasi?.potBpjsTkPct || 0) / 100));
+  const potBpjsKes = Math.round(gaji * ((mutasi?.potBpjsKesPct || 0) / 100));
   const potSosial = mutasi?.potSpsi || 0;
   const koreksiUpah = 0;
   const totalPotongan = potUpah + potBpjsTk + potBpjsKes + potSosial + koreksiUpah;
@@ -55,6 +55,7 @@ function PayrollPenggajianAbsensiPage({ rows, setRows, karyawanRows, mutasiRows,
   const [kodeBagian, setKodeBagian] = React.useState('');
   const [preview, setPreview] = React.useState(null);
   const [cetakBatch, setCetakBatch] = React.useState(null);
+  const [registerBatch, setRegisterBatch] = React.useState(null);
 
   const proses = () => {
     const eligible = karyawanRows.filter(k => absensiRows.some(a => a.noInduk === k.noInduk && a.tanggal.startsWith(periode)));
@@ -66,7 +67,9 @@ function PayrollPenggajianAbsensiPage({ rows, setRows, karyawanRows, mutasiRows,
 
   const simpan = () => {
     if (!preview || preview.length === 0) { window.__erpToast && window.__erpToast('Belum ada slip untuk disimpan.'); return; }
-    const batch = { id: Date.now(), periode, kodeBagian, tglProses: new Date().toISOString().slice(0,10), slips: preview };
+    const bentrok = rows.find(b => b.periode === periode && (!b.kodeBagian || !kodeBagian || b.kodeBagian === kodeBagian));
+    if (bentrok) { window.__erpToast && window.__erpToast(`Periode ${periode}${bentrok.kodeBagian ? ' bagian ' + bentrok.kodeBagian : ''} sudah pernah diproses.`); return; }
+    const batch = { id: Date.now(), periode, kodeBagian, tglProses: todayLocal(), slips: preview };
     setRows(prev => [batch, ...prev]);
     window.__erpToast && window.__erpToast(`Penggajian Absensi periode ${periode} berhasil disimpan.`);
     setPreview(null);
@@ -136,7 +139,7 @@ function PayrollPenggajianAbsensiPage({ rows, setRows, karyawanRows, mutasiRows,
                   <td>{b.kodeBagian ? (PR_BAGIAN.find(x=>x.kode===b.kodeBagian)?.nama || b.kodeBagian) : 'Semua Bagian'}</td>
                   <td>{b.slips.length}</td>
                   <td className="num">{fmtRp(totalTerimaBatch(b))}</td>
-                  <td><button className="btn btn-icon btn-sm" title="Cetak" onClick={()=>setCetakBatch(b)}>{I.print()}</button></td>
+                  <td><div className="row-actions"><button className="btn btn-icon btn-sm" title="Cetak Slip" onClick={()=>setCetakBatch(b)}>{I.print()}</button><button className="btn btn-icon btn-sm" title="Cetak Register Gaji" onClick={()=>setRegisterBatch(b)}>{I.list ? I.list(14) : I.print()}</button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -145,6 +148,7 @@ function PayrollPenggajianAbsensiPage({ rows, setRows, karyawanRows, mutasiRows,
       </div>
 
       {cetakBatch && <PrCetakSlipGaji batch={cetakBatch} onClose={()=>setCetakBatch(null)} />}
+      {registerBatch && <PrCetakRegisterGaji batch={registerBatch} judul="Gaji Absensi" onClose={()=>setRegisterBatch(null)} />}
     </>
   );
 }

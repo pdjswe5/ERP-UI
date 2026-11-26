@@ -50,8 +50,8 @@ const PJ_GUDANG_OPTS = PJ_GUDANG.map(g => ({ value:g, label:g }));
 const PJ_AKUN_OPTS = PJ_AKUN_TUNAI.map(a => ({ value:a, label:a }));
 const PJ_ALASAN_RETUR_OPTS = ['Cacat produksi', 'Salah kirim varian', 'Kemasan rusak', 'Tidak sesuai pesanan', 'Expired', 'Lain-lain'].map(a => ({ value:a, label:a }));
 
-function pjCustOpts() { return PJ_PELANGGAN.map(p => ({ value:p.code, label:p.name })); }
-function pjCustOnChange(val, set) { const p = PJ_PELANGGAN.find(x=>x.code===val); if (p) set('Nama_Cust', p.name); }
+function pjCustOpts() { return pjPelanggan(true).map(p => ({ value:p.code, label:p.name })); }
+function pjCustOnChange(val, set) { const p = pjPelanggan().find(x=>x.code===val); if (p) set('Nama_Cust', p.name); }
 
 const PJ_SUBS = [
   { id:'katalog',    label:'Katalog Pelanggan' },
@@ -61,3 +61,12 @@ const PJ_SUBS = [
   { id:'invoice',    label:'Invoice' },
   { id:'retur',      label:'Sales Return' },
 ];
+
+// Harga jual default = harga jual master bila ada, selain itu HPP + margin 25% (dibulatkan ke 500),
+// supaya baris penjualan tidak terisi harga pokok.
+function pjHargaJual(b) {
+  if (!b) return 0;
+  const jual = +(b.price ?? b.hargaJual ?? 0);
+  return jual > 0 ? jual : Math.round(((+b.hpp || 0) * 1.25) / 500) * 500;
+}
+window.pjHargaJual = pjHargaJual;

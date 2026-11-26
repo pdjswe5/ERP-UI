@@ -50,7 +50,7 @@ function PbDocList({ title, sub, rows, columns, onAdd, onView, onEdit, onCancelD
                   ))}
                   <td onClick={e=>e.stopPropagation()}>
                     <div className="row-actions">
-                      <button className="btn btn-icon btn-sm" title="Edit" onClick={()=>onEdit(r)}>{I.edit()}</button>
+                      <button className="btn btn-icon btn-sm" title={erpIsLocked(r) ? 'Dokumen batal/selesai tidak bisa diedit' : 'Edit'} disabled={erpIsLocked(r)} onClick={()=>onEdit(r)}>{I.edit()}</button>
                       {onCancelDoc && (
                         <button className="btn btn-icon btn-sm del" title={isCancelled(r) ? 'Sudah dibatalkan' : 'Batalkan Transaksi'} disabled={isCancelled(r)} onClick={()=>onCancelDoc(r)}>{I.fileX(14)}</button>
                       )}

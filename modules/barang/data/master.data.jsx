@@ -39,7 +39,7 @@ const BRG_TIPE_OPTS = [
   { kode:'STD', nama:'Standard' }, { kode:'CST', nama:'Custom' }, { kode:'PRM', nama:'Premium' },
 ];
 const BRG_MERK_OPTS = [
-  { kode:'MK01', nama:'Solite' }, { kode:'MK02', nama:'Alderon' }, { kode:'MK03', nama:'Superroof' }, { kode:'MK04', nama:'Onduline' },
+  { kode:'MK01', nama:'Merek Atap A' }, { kode:'MK02', nama:'Merek Atap B' }, { kode:'MK03', nama:'Merek Atap C' }, { kode:'MK04', nama:'Merek Atap D' },
 ];
 
 // Master Jenis/Tipe khusus form Barang PU (proses/jasa produksi, beda konteks dari Jenis/Tipe
@@ -58,7 +58,7 @@ const BRG_GUDANG_OPTS = [
 
 const ACTIVITY_LOG_BARANG = [
   { user:'pdjsw', action:'Melakukan Login:', detail:'Sistem Utama', time:'1 menit yang lalu', color:'var(--realisasi)' },
-  { user:'admin', action:'Mengubah Data Pemasok:', detail:'PT. Sinar Jaya', time:'12 menit yang lalu', color:'#f59e0b' },
+  { user:'admin', action:'Mengubah Data Pemasok:', detail:'PT. Pemasok Contoh E', time:'12 menit yang lalu', color:'#f59e0b' },
   { user:'operator_1', action:'Membuat Nota Penjualan:', detail:'INV-2026-9526', time:'1 jam yang lalu', color:'var(--realisasi)' },
   { user:'system', action:'Sinkronisasi Database:', detail:'Server Cloud Utama', time:'3 jam yang lalu', color:'var(--accent)' },
   { user:'admin', action:'Menghapus Batch Produksi:', detail:'PRD-2026-B1', time:'7 jam yang lalu', color:'var(--danger)' },

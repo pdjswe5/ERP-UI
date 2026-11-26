@@ -7,12 +7,11 @@
 // `periodMode`: 'range' (Laba Rugi/Arus Kas — field tglAwal & tglAkhir keduanya diisi user) atau
 // 'point' (Neraca — snapshot per 1 tanggal; tglAwal & tglAkhir disamakan otomatis ke tanggal itu
 // supaya row shape tetap seragam untuk AkCetakModal/list/filter).
-// `file` masih dipertahankan (dipakai popup Cetak: preview iframe dari PDF referensi yang sama).
 const AK_STATUS_LAPORAN_OPTS = ['Draft', 'Final'];
 
 const AK_LAPORAN_LIST = [
   {
-    id:'labarugi', label:'Laba Rugi', file:'Laba Rugi (Regular).pdf',
+    id:'labarugi', label:'Laba Rugi',
     desc:'Ringkasan pendapatan, beban pokok, dan beban operasional untuk mengukur laba/rugi periode berjalan.',
     noPrefix:'LR', periodMode:'range',
     fields:[
@@ -24,7 +23,7 @@ const AK_LAPORAN_LIST = [
     compute: f => (+f.totalPendapatan||0) - (+f.totalBebanPokok||0) - (+f.totalBebanOperasional||0),
   },
   {
-    id:'aruskas', label:'Laporan Arus Kas', file:'Laporan Arus Kas.pdf',
+    id:'aruskas', label:'Laporan Arus Kas',
     desc:'Arus kas masuk dan keluar dari aktivitas operasi, investasi, dan pendanaan.',
     noPrefix:'AK', periodMode:'range',
     fields:[
@@ -36,7 +35,7 @@ const AK_LAPORAN_LIST = [
     compute: f => (+f.arusOperasi||0) + (+f.arusInvestasi||0) + (+f.arusPendanaan||0),
   },
   {
-    id:'neraca', label:'Neraca', file:'Neraca.pdf',
+    id:'neraca', label:'Neraca',
     desc:'Posisi aktiva, kewajiban, dan ekuitas perusahaan pada tanggal tertentu.',
     noPrefix:'NR', periodMode:'point',
     fields:[

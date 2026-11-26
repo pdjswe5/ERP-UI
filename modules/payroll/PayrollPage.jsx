@@ -60,6 +60,8 @@ function PayrollDashboard({ onOpenSub, karyawanRows, absensiRows, produksiHarian
 
 function PayrollPage({ activeSub, onSubChange, onNavigate }) {
   const [karyawanRows, setKaryawanRows] = React.useState(PR_KARYAWAN);
+  window.PR_KARYAWAN_LIVE = karyawanRows;
+  React.useEffect(() => () => { window.PR_KARYAWAN_LIVE = null; }, []);
   const [mutasiRows, setMutasiRows] = React.useState(PR_MUTASI);
   const [absensiRows, setAbsensiRows] = React.useState(PR_ABSENSI);
   const [produksiHarianRows, setProduksiHarianRows] = React.useState(PR_PRODUKSI_HARIAN);

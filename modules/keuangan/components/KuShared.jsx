@@ -9,12 +9,36 @@
 // jadi controlled (value+onChange lewat React.useState) dan tiap modal membangun objek `form` asli
 // lalu memanggil onSave(form) — sama pola dengan modal2 lain di seluruh app ini.
 
+// Daftar akun Kas/Bank/Giro yang sedang dipakai modul Keuangan (window.KAS_BANK_GIRO_LIVE, diisi
+// KeuanganPage) — akun baru di menu Kas, Bank & Giro langsung muncul di dropdown transaksi.
+function kuKbg() { return window.KAS_BANK_GIRO_LIVE || KAS_BANK_GIRO; }
+
 // ─── Generic Transaction Page Builder ───────────────────────────────────────
 
-function TxPage({ title, sub, rows, columns, onAdd, onEdit, onCancelDoc, onCetak, onCetakRow, totalKey, totalLabel='Total', extraTotals=[] }) {
+// sumKeys (opsional): [{key,label}] → toolbar menampilkan beberapa total (mis. Debet & Kredit) dari
+// baris hasil filter tanpa Batal. jenisOpts (opsional): filter Jenis berdasarkan field _jenis.
+function TxPage({ title, sub, rows, columns, onAdd, onEdit, onCancelDoc, onCetak, onCetakRow, totalKey, totalLabel='Total', extraTotals=[], sumKeys, jenisOpts, addLabel }) {
   const [q, setQ] = React.useState('');
-  const filtered = rows.filter(r => !q || JSON.stringify(r).toLowerCase().includes(q.toLowerCase()));
-  const totalAmt = filtered.reduce((s,r)=>s+(+r[totalKey]||0),0);
+  const [periode, setPeriode] = React.useState('');
+  const [statusF, setStatusF] = React.useState('');
+  const [jenisF, setJenisF] = React.useState('');
+  const [page, setPage] = React.useState(1);
+  const perPage = 10;
+  const statusOpts = Array.from(new Set(rows.map(r => r.status).filter(Boolean)));
+  const filtered = rows.filter(r => {
+    if (q && !JSON.stringify(r).toLowerCase().includes(q.toLowerCase())) return false;
+    if (periode && !(akToIso(r.tgl) || '').startsWith(periode)) return false;
+    if (statusF && r.status !== statusF) return false;
+    if (jenisF && r._jenis !== jenisF) return false;
+    return true;
+  });
+  const isBatalRow = (r) => !!(r.Batal || r.status === 'Batal');
+  const totalAmt = filtered.filter(r => !isBatalRow(r)).reduce((s,r)=>s+(+r[totalKey]||0),0);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const curPage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((curPage - 1) * perPage, curPage * perPage);
+  const reset = () => { setQ(''); setPeriode(''); setStatusF(''); setJenisF(''); setPage(1); };
+  const sumOf = (key) => filtered.filter(r => !isBatalRow(r)).reduce((s,r)=>s+(+r[key]||0),0);
   // Root-cause fix: sebelumnya row-action cuma Edit+Print, tidak ada delete/cancel sama sekali di
   // 9 halaman transaksi Keuangan — beda dari modul transaksi lain (Pembelian/Penjualan/Manufaktur)
   // yang semua sudah punya "Batalkan Transaksi" soft-cancel. Pola ditiru persis dari
@@ -28,23 +52,26 @@ function TxPage({ title, sub, rows, columns, onAdd, onEdit, onCancelDoc, onCetak
           <button className="btn btn-sm">{I.refresh()} Refresh</button>
           <button className="btn btn-sm">{I.download()} Export</button>
           {onCetak && <button className="btn btn-sm" onClick={onCetak}>{I.print()} Cetak</button>}
-          {onAdd && <button className="btn btn-primary" onClick={onAdd}>{I.plus()} {title} Baru</button>}
+          {onAdd && <button className="btn btn-primary" onClick={onAdd}>{I.plus()} {addLabel || `${title} Baru`}</button>}
         </div>
       </div>
 
       <div className="filter-bar">
         <div className="filter-grid">
-          <div className="field"><label>Periode</label><input className="input" type="month" defaultValue="2026-04"/></div>
-          <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="No., nama, atau deskripsi…" value={q} onChange={e=>setQ(e.target.value)}/></div></div>
-          <div className="field"><label>Status</label><select className="select"><option>Semua</option><option>Posted</option><option>Pending</option><option>Draft</option></select></div>
-          <div className="filter-actions"><button className="btn">Reset</button><button className="btn">{I.filter()} Cari</button></div>
+          <div className="field"><label>Periode</label><input className="input" type="month" value={periode} onChange={e=>{setPeriode(e.target.value); setPage(1);}}/></div>
+          <div className="field"><label>Pencarian</label><div className="input-w-icon">{I.search(14)}<input className="input" placeholder="No., nama, atau deskripsi…" value={q} onChange={e=>{setQ(e.target.value); setPage(1);}}/></div></div>
+          {jenisOpts && <div className="field"><label>Jenis</label><select className="select" value={jenisF} onChange={e=>{setJenisF(e.target.value); setPage(1);}}><option value="">Semua</option>{jenisOpts.map(j => <option key={j} value={j}>{j}</option>)}</select></div>}
+          <div className="field"><label>Status</label><select className="select" value={statusF} onChange={e=>{setStatusF(e.target.value); setPage(1);}}><option value="">Semua</option>{statusOpts.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+          <div className="filter-actions"><button className="btn" onClick={reset}>Reset</button></div>
         </div>
       </div>
 
       <div className="table-card">
         <div className="table-toolbar">
           <div className="table-toolbar-left">
-            <b>{filtered.length}</b> transaksi · {totalLabel} <span className="mono" style={{fontWeight:600, color:'var(--text)'}}>{fmtRp(totalAmt)}</span>
+            <b>{filtered.length}</b> transaksi · {sumKeys
+              ? sumKeys.map(k => <span key={k.key} style={{marginRight:14}}>{k.label} <span className="mono" style={{fontWeight:600, color:'var(--text)'}}>{fmtRp(sumOf(k.key))}</span></span>)
+              : <>{totalLabel} (tanpa Batal) <span className="mono" style={{fontWeight:600, color:'var(--text)'}}>{fmtRp(totalAmt)}</span></>}
             {extraTotals.map(t => <span key={t.label} style={{marginLeft:14, color:'var(--text-3)'}}>{t.label} <span className="mono" style={{color:'var(--text)', fontWeight:500}}>{t.value}</span></span>)}
           </div>
         </div>
@@ -53,8 +80,8 @@ function TxPage({ title, sub, rows, columns, onAdd, onEdit, onCancelDoc, onCetak
             <thead><tr>{columns.map(c => <th key={c.key} className={c.cls||''} style={c.style}>{c.label}</th>)}<th style={{width:80}}>Aksi</th></tr></thead>
             <tbody>
               {filtered.length === 0 && <tr><td colSpan={columns.length + 1} className="empty">Tidak ada data.</td></tr>}
-              {filtered.map((r,i) => (
-                <tr key={i} onClick={()=>onEdit && onEdit(r)}>
+              {pageRows.map((r,i) => (
+                <tr key={r.no || i} onClick={()=>onEdit && onEdit(r)}>
                   {columns.map(c => (
                     <td key={c.key} className={c.cls||''}>{c.render ? c.render(r) : r[c.key]}</td>
                   ))}
@@ -71,6 +98,14 @@ function TxPage({ title, sub, rows, columns, onAdd, onEdit, onCancelDoc, onCetak
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="pager">
+          <div>Menampilkan <b>{filtered.length ? (curPage - 1) * perPage + 1 : 0}</b>–<b>{Math.min(curPage * perPage, filtered.length)}</b> dari <b>{filtered.length}</b></div>
+          <div style={{display:'flex', gap:6, alignItems:'center'}}>
+            <button className="btn btn-sm" disabled={curPage <= 1} onClick={()=>setPage(curPage - 1)}>‹ Sebelumnya</button>
+            <span className="muted" style={{fontSize:12.5}}>{curPage} / {totalPages}</span>
+            <button className="btn btn-sm" disabled={curPage >= totalPages} onClick={()=>setPage(curPage + 1)}>Berikutnya ›</button>
+          </div>
         </div>
       </div>
     </>
@@ -150,6 +185,21 @@ const giroCols = [
   { key:'status', label:'Status', render: r => stPill(r.status) },
 ];
 
+// Kolom menu gabungan Kas / Bank (Masuk + Keluar dalam satu daftar): Debet = masuk, Kredit = keluar.
+const jenisPill = (r) => <span className={`pill ${r._dk === 'D' ? 'realisasi' : 'pending'}`}>{r._jenis}</span>;
+const kasBankCols = [
+  { key:'tgl', label:'Tanggal', cls:'mono' },
+  { key:'no',  label:'No. Bukti', render: r => <span className="cell-link mono">{r.no}</span> },
+  { key:'_jenis', label:'Jenis', render: jenisPill },
+  { key:'partner', label:'Dari / Untuk', render: r => r.dari || r.untuk },
+  { key:'desc', label:'Deskripsi', render: r => r.deskripsi },
+  { key:'akun', label:'Akun' },
+  { key:'_debet', label:'Debet', cls:'num mono', render: r => r._debet ? fmtRp(r._debet) : <span className="muted">—</span> },
+  { key:'_kredit', label:'Kredit', cls:'num mono', render: r => r._kredit ? fmtRp(r._kredit) : <span className="muted">—</span> },
+  { key:'status', label:'Status', render: r => stPill(r.status) },
+];
+const giroGabungCols = [giroCols[0], giroCols[1], { key:'_jenis', label:'Jenis', render: jenisPill }, ...giroCols.slice(2)];
+
 const pelunasanCols = (kind) => [
   { key:'tgl', label:'Tanggal', cls:'mono' },
   { key:'no', label:'No. Pelunasan', render: r => <span className="cell-link mono">{r.no}</span> },
@@ -162,7 +212,11 @@ const pelunasanCols = (kind) => [
 
 // ─── Modal: Cash/Bank Transaction ───────────────────────────────────────────
 
-function CashModal({ data, onClose, onSave, kind, rows }) {
+// kinds: pasangan jenis dalam satu menu, mis. ['km','kk']. Saat transaksi baru, user memilih Masuk/
+// Keluar di form; saat edit, jenis terkunci (nomor bukti & cetakan bergantung jenis).
+function CashModal({ data, onClose, onSave, kind: kindProp, kinds, rowsByKind }) {
+  const [kind, setKind] = React.useState(kindProp);
+  const rows = rowsByKind[kind] || [];
   const labels = {
     km: { title:'Kas Masuk',     partner:'Diterima Dari',  partnerVal:'dari'  },
     kk: { title:'Kas Keluar',    partner:'Dibayar Kepada', partnerVal:'untuk' },
@@ -170,31 +224,46 @@ function CashModal({ data, onClose, onSave, kind, rows }) {
     bk: { title:'Bank Keluar',   partner:'Dibayar Kepada', partnerVal:'untuk' },
   }[kind];
   const isEdit = !!data;
-  const [tgl, setTgl] = React.useState(data?.tgl ? akToIso(data.tgl) : '2026-04-30');
-  const [partner, setPartner] = React.useState(data ? data[labels.partnerVal] : '');
+  const [tgl, setTgl] = React.useState(data?.tgl ? akToIso(data.tgl) : todayLocal());
+  const [partner, setPartner] = React.useState(data ? (data.dari || data.untuk || '') : '');
   const [akun, setAkun] = React.useState(data?.akun || '');
   const [nominal, setNominal] = React.useState(data?.nominal ?? '');
   const [deskripsi, setDeskripsi] = React.useState(data?.deskripsi || '');
   const [status, setStatus] = React.useState(data?.status || 'Draft');
 
   const handleSave = () => {
+    if (data && (data.Batal || data.status === 'Batal')) { window.__erpToast && window.__erpToast('Transaksi batal tidak bisa diubah.'); return; }
+    if (!tgl || !String(partner || '').trim() || !akun) { window.__erpToast && window.__erpToast('Tanggal, ' + labels.partner + ', dan akun wajib diisi.'); return; }
+    if (!(+nominal > 0)) { window.__erpToast && window.__erpToast('Nominal harus lebih dari 0.'); return; }
     onSave({
+      ...(data || {}),
       tgl: akFromIso(tgl) || data?.tgl || '',
       no: isEdit ? data.no : kuNextNo(rows, kind.toUpperCase()),
       [labels.partnerVal]: partner,
       deskripsi, akun, nominal: +nominal || 0, status,
-    });
+    }, kind);
   };
+  const grup = kind.startsWith('k') ? 'Kas' : 'Bank';
 
   return (
     <AkModalShell wide
-      title={isEdit?`Edit ${labels.title} — ${data.no}`:`${labels.title} Baru`}
-      sub={isEdit ? data.deskripsi : `Catat transaksi ${labels.title.toLowerCase()} baru`}
+      title={isEdit?`Edit ${labels.title} — ${data.no}`:`Transaksi ${grup} Baru`}
+      sub={isEdit ? data.deskripsi : `Pilih jenis Masuk (Debet) atau Keluar (Kredit)`}
       onClose={onClose} onSave={handleSave}
       saveLabel={isEdit?'Simpan Perubahan':'Simpan & Posting'}>
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:24}}>
         <div className="form-section">
           <h4>Header Transaksi</h4>
+          <div className="field"><label>Jenis *</label>
+            <div className="seg" style={{display:'flex', gap:6}}>
+              {(kinds || [kind]).map(k => (
+                <button key={k} type="button" disabled={isEdit}
+                  className={`btn btn-sm ${kind===k ? 'btn-primary' : ''}`} onClick={()=>{ setKind(k); setAkun(''); }}>
+                  {k.endsWith('m') ? 'Masuk (Debet)' : 'Keluar (Kredit)'}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="form-row">
             <div className="field"><label>Tanggal *</label><input className="input" type="date" value={tgl} onChange={e=>setTgl(e.target.value)}/></div>
             <div className="field"><label>No. Bukti</label><input className="input mono" value={isEdit?data.no:'Otomatis saat disimpan'} readOnly/></div>
@@ -203,7 +272,7 @@ function CashModal({ data, onClose, onSave, kind, rows }) {
           <div className="field"><label>Akun {kind.startsWith('k')?'Kas':'Bank'} *</label>
             <select className="select" value={akun} onChange={e=>setAkun(e.target.value)}>
               <option value="">— Pilih akun —</option>
-              {KAS_BANK_GIRO.filter(a => kind.startsWith('k') ? a.tipe==='KAS' : a.tipe==='BANK').map(a => (
+              {kuKbg().filter(a => kind.startsWith('k') ? a.tipe==='KAS' : a.tipe==='BANK').map(a => (
                 <option key={a.kode} value={a.nama}>{a.kode} — {a.nama} (saldo {fmtRp(a.saldo)})</option>
               ))}
             </select>
@@ -252,23 +321,32 @@ function CashModal({ data, onClose, onSave, kind, rows }) {
   );
 }
 
+// Transfer antar Kas/Bank selalu satu transaksi (keluar dari akun asal, masuk ke akun tujuan), jadi
+// tidak ada pilihan jenis. Transfer baru bernomor TRF-…; data lama TM-/TK- tetap ditampilkan.
 function TransferModal({ data, onClose, onSave, kind, rows }) {
   const isEdit = !!data;
-  const [tgl, setTgl] = React.useState(data?.tgl ? akToIso(data.tgl) : '2026-04-30');
+  const [tgl, setTgl] = React.useState(data?.tgl ? akToIso(data.tgl) : todayLocal());
   const [dari, setDari] = React.useState(data?.dari || '');
   const [ke, setKe] = React.useState(data?.ke || '');
   const [nominal, setNominal] = React.useState(data?.nominal ?? '');
   const [deskripsi, setDeskripsi] = React.useState(data?.deskripsi || '');
   const [status, setStatus] = React.useState(data?.status || 'Draft');
 
-  const handleSave = () => onSave({
-    tgl: akFromIso(tgl) || data?.tgl || '',
-    no: isEdit ? data.no : kuNextNo(rows, kind.toUpperCase()),
-    dari, ke, deskripsi, nominal: +nominal || 0, status,
-  });
+  const handleSave = () => {
+    if (data && (data.Batal || data.status === 'Batal')) { window.__erpToast && window.__erpToast('Transaksi batal tidak bisa diubah.'); return; }
+    if (!tgl || !dari || !ke) { window.__erpToast && window.__erpToast('Tanggal, akun asal, dan akun tujuan wajib diisi.'); return; }
+    if (dari === ke) { window.__erpToast && window.__erpToast('Akun asal tidak boleh sama dengan akun tujuan.'); return; }
+    if (!(+nominal > 0)) { window.__erpToast && window.__erpToast('Nominal harus lebih dari 0.'); return; }
+    onSave({
+      ...(data || {}),
+      tgl: akFromIso(tgl) || data?.tgl || '',
+      no: isEdit ? data.no : kuNextNo(rows, 'TRF'),
+      dari, ke, deskripsi, nominal: +nominal || 0, status,
+    }, isEdit ? (data._kind || kind) : kind);
+  };
 
   return (
-    <AkModalShell title={isEdit?`Edit Transfer — ${data.no}`:`Transfer ${kind==='tm'?'Masuk':'Keluar'} antar Kas/Bank`}
+    <AkModalShell title={isEdit?`Edit Transfer — ${data.no}`:'Transfer antar Kas/Bank Baru'}
       sub="Pemindahan saldo antar akun internal" onClose={onClose} onSave={handleSave}
       saveLabel={isEdit?'Simpan Perubahan':'Simpan & Posting'}>
       <div className="form-section">
@@ -280,13 +358,13 @@ function TransferModal({ data, onClose, onSave, kind, rows }) {
           <div className="field"><label>Dari Akun *</label>
             <select className="select" value={dari} onChange={e=>setDari(e.target.value)}>
               <option value="">— Pilih —</option>
-              {KAS_BANK_GIRO.filter(a=>a.tipe!=='GIRO').map(a => <option key={a.kode}>{a.nama}</option>)}
+              {kuKbg().filter(a=>a.tipe!=='GIRO').map(a => <option key={a.kode}>{a.nama}</option>)}
             </select>
           </div>
           <div className="field"><label>Ke Akun *</label>
             <select className="select" value={ke} onChange={e=>setKe(e.target.value)}>
               <option value="">— Pilih —</option>
-              {KAS_BANK_GIRO.filter(a=>a.tipe!=='GIRO').map(a => <option key={a.kode}>{a.nama}</option>)}
+              {kuKbg().filter(a=>a.tipe!=='GIRO').map(a => <option key={a.kode}>{a.nama}</option>)}
             </select>
           </div>
         </div>
@@ -302,10 +380,12 @@ function TransferModal({ data, onClose, onSave, kind, rows }) {
   );
 }
 
-function GiroModal({ data, onClose, onSave, kind, rows }) {
+function GiroModal({ data, onClose, onSave, kind: kindProp, kinds, rowsByKind }) {
   const isEdit = !!data;
+  const [kind, setKind] = React.useState(kindProp);
+  const rows = rowsByKind[kind] || [];
   const partnerKey = kind==='gm' ? 'dari' : 'untuk';
-  const [tgl, setTgl] = React.useState(data?.tgl ? akToIso(data.tgl) : '2026-04-30');
+  const [tgl, setTgl] = React.useState(data?.tgl ? akToIso(data.tgl) : todayLocal());
   const [partner, setPartner] = React.useState(data ? (data.dari||data.untuk) : '');
   const [noGiro, setNoGiro] = React.useState(data?.noGiro || '');
   const [bank, setBank] = React.useState(data?.bank || '');
@@ -313,20 +393,41 @@ function GiroModal({ data, onClose, onSave, kind, rows }) {
   const [nominal, setNominal] = React.useState(data?.nominal ?? '');
   const [status, setStatus] = React.useState(data?.status || 'Outstanding');
 
-  const handleSave = () => onSave({
-    tgl: akFromIso(tgl) || data?.tgl || '',
-    no: isEdit ? data.no : kuNextNo(rows, kind.toUpperCase()),
-    [partnerKey]: partner, noGiro, bank, jthTempo: akFromIso(jthTempo), nominal: +nominal || 0, status,
-  });
+  const [akunBukukan, setAkunBukukan] = React.useState(data?.akunBukukan || '');
+  const [akunLawan, setAkunLawan] = React.useState(data?.akunLawan || '');
+  const [bankCair, setBankCair] = React.useState(data?.bankCair || '');
+  const [catatan, setCatatan] = React.useState(data?.catatan || '');
+  const handleSave = () => {
+    if (data && (data.Batal || data.status === 'Batal')) { window.__erpToast && window.__erpToast('Transaksi batal tidak bisa diubah.'); return; }
+    if (!tgl || !String(partner || '').trim() || !noGiro || !jthTempo || !akunBukukan) { window.__erpToast && window.__erpToast('Tanggal, partner, No. Giro, jatuh tempo, dan akun bukukan wajib diisi.'); return; }
+    if (!(+nominal > 0)) { window.__erpToast && window.__erpToast('Nominal harus lebih dari 0.'); return; }
+    onSave({
+      ...(data || {}),
+      tgl: akFromIso(tgl) || data?.tgl || '',
+      no: isEdit ? data.no : kuNextNo(rows, kind.toUpperCase()),
+      [partnerKey]: partner, noGiro, bank, jthTempo: akFromIso(jthTempo), nominal: +nominal || 0, status,
+      akunBukukan, akunLawan, bankCair, catatan,
+    }, kind);
+  };
 
   return (
-    <AkModalShell wide title={isEdit?`Edit Giro — ${data.no}`:`Giro ${kind==='gm'?'Masuk':'Keluar'} Baru`}
+    <AkModalShell wide title={isEdit?`Edit Giro ${kind==='gm'?'Masuk':'Keluar'} — ${data.no}`:'Transaksi Giro Baru'}
       sub={isEdit?`${data.dari||data.untuk} · ${data.noGiro}`:`Catat giro ${kind==='gm'?'masuk dari pelanggan':'keluar ke supplier'}`}
       onClose={onClose} onSave={handleSave}
       saveLabel={isEdit?'Simpan Perubahan':'Simpan & Posting'}>
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:24}}>
         <div className="form-section">
           <h4>Detail Giro</h4>
+          <div className="field"><label>Jenis *</label>
+            <div style={{display:'flex', gap:6}}>
+              {(kinds || [kind]).map(k => (
+                <button key={k} type="button" disabled={isEdit}
+                  className={`btn btn-sm ${kind===k ? 'btn-primary' : ''}`} onClick={()=>{ setKind(k); setAkunBukukan(''); }}>
+                  {k === 'gm' ? 'Terima dari Pelanggan' : 'Bayar ke Supplier'}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="form-row">
             <div className="field"><label>Tanggal *</label><input className="input" type="date" value={tgl} onChange={e=>setTgl(e.target.value)}/></div>
             <div className="field"><label>No. Bukti</label><input className="input mono" value={isEdit?data.no:'Otomatis saat disimpan'} readOnly/></div>
@@ -357,15 +458,15 @@ function GiroModal({ data, onClose, onSave, kind, rows }) {
         <div className="form-section">
           <h4>Akun Bukukan</h4>
           <div className="field"><label>Akun {kind==='gm'?'Piutang Giro':'Hutang Giro'} *</label>
-            <select className="select"><option value="">— Pilih —</option>{AKUN_BB.filter(a=>a.kode.startsWith('1020')||a.kode.startsWith('2010')).map(a => <option key={a.kode}>{a.kode} — {a.name}</option>)}</select>
+            <select className="select" value={akunBukukan} onChange={e=>setAkunBukukan(e.target.value)}><option value="">— Pilih —</option>{AKUN_BB.filter(a=>a.kode.startsWith('1020')||a.kode.startsWith('2010')).map(a => <option key={a.kode} value={a.kode}>{a.kode} — {a.name}</option>)}</select>
           </div>
           <div className="field"><label>Akun Lawan</label>
-            <select className="select"><option value="">— Pilih —</option>{AKUN_BB.map(a => <option key={a.kode}>{a.kode} — {a.name}</option>)}</select>
+            <select className="select" value={akunLawan} onChange={e=>setAkunLawan(e.target.value)}><option value="">— Pilih —</option>{AKUN_BB.map(a => <option key={a.kode} value={a.kode}>{a.kode} — {a.name}</option>)}</select>
           </div>
           <div className="field"><label>Bank Pencairan (jika cair)</label>
-            <select className="select"><option value="">— Pilih —</option>{KAS_BANK_GIRO.filter(a=>a.tipe==='BANK').map(a => <option key={a.kode}>{a.nama}</option>)}</select>
+            <select className="select" value={bankCair} onChange={e=>setBankCair(e.target.value)}><option value="">— Pilih —</option>{kuKbg().filter(a=>a.tipe==='BANK').map(a => <option key={a.kode} value={a.nama}>{a.nama}</option>)}</select>
           </div>
-          <div className="field"><label>Catatan</label><textarea className="textarea" placeholder="Catatan tambahan…"/></div>
+          <div className="field"><label>Catatan</label><textarea className="textarea" placeholder="Catatan tambahan…" value={catatan} onChange={e=>setCatatan(e.target.value)}/></div>
         </div>
       </div>
     </AkModalShell>
@@ -444,7 +545,7 @@ function TambahUangMukaModal({ onConfirm, onCancel }) {
   const [kodeAkun, setKodeAkun] = React.useState('');
   const [noGiro, setNoGiro] = React.useState('');
   const [jthTempoGiro, setJthTempoGiro] = React.useState('');
-  const akun = KAS_BANK_GIRO.find(a => a.kode === kodeAkun);
+  const akun = kuKbg().find(a => a.kode === kodeAkun);
   const valid = (+nominal || 0) > 0 && !!kodeAkun && (metode !== 'Giro' || (noGiro && jthTempoGiro));
 
   const handleConfirm = () => onConfirm({ nominal:+nominal||0, metode, kodeAkun, namaAkun: akun?akun.nama:'', noGiro, jthTempoGiro });
@@ -466,7 +567,7 @@ function TambahUangMukaModal({ onConfirm, onCancel }) {
         <label>Akun {metode==='Tunai'?'Kas':metode==='Transfer'?'Bank':'Giro'} <span style={{color:'var(--danger)'}}>*</span></label>
         <select className="select" value={kodeAkun} onChange={e=>setKodeAkun(e.target.value)}>
           <option value="">— Pilih Akun —</option>
-          {KAS_BANK_GIRO.filter(a => metode==='Tunai' ? a.tipe==='KAS' : metode==='Transfer' ? a.tipe==='BANK' : a.tipe==='GIRO').map(a => (
+          {kuKbg().filter(a => metode==='Tunai' ? a.tipe==='KAS' : metode==='Transfer' ? a.tipe==='BANK' : a.tipe==='GIRO').map(a => (
             <option key={a.kode} value={a.kode}>{a.nama}</option>
           ))}
         </select>
@@ -494,6 +595,11 @@ function TambahUangMukaModal({ onConfirm, onCancel }) {
 function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partnerList }) {
   const isEdit = !!data;
   const isPiutang = kind === 'pp';
+  // Pelunasan Hutang = uang KELUAR ke supplier: label Pembayaran & giro memakai HUTANG GIRO (bukan PIUTANG GIRO).
+  const lblBayar = isPiutang ? 'Penerimaan' : 'Pembayaran';
+  const akunBayarOpts = (metode) => (metode === 'Giro' && !isPiutang)
+    ? [{ kode:'2010.000', nama:'HUTANG GIRO' }]
+    : kuKbg().filter(a => metode==='Tunai' ? a.tipe==='KAS' : metode==='Transfer' ? a.tipe==='BANK' : a.tipe==='GIRO');
   const [tgl, setTgl] = React.useState(data?.tgl ? akToIso(data.tgl) : '2026-07-25');
   const [noReferensi, setNoReferensi] = React.useState(data?.noReferensi || '');
   const [catatan, setCatatan] = React.useState(data?.catatan || '');
@@ -540,7 +646,8 @@ function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partner
   // supaya baris ini dipersist jadi record SALDO_*_ITEMS baru saat disimpan, bukan dianggap konsumsi
   // sisa yang sudah ada (beda dari item hasil SaldoPickerModal, yang noBukti-nya sudah ada di saldoItems).
   const handleTambahUangMuka = ({ nominal, metode, kodeAkun, namaAkun, noGiro, jthTempoGiro }) => {
-    const noBukti = kuNextUmNo(saldoItems, isPiutang);
+    // Ikutkan Uang Muka yang baru ditambahkan di form ini supaya 2 UM dalam satu pelunasan tidak bernomor sama.
+    const noBukti = kuNextUmNo([...saldoItems, ...items.filter(i => i.jenis === 'Uang Muka')], isPiutang);
     setItems(ls => [...ls, { id: Date.now()+Math.random(), jenis:'Uang Muka', noBukti, sisaSaatItu: nominal, debet:0, kredit:nominal, isNewUangMuka:true }]);
     setPenerimaan(ls => [...ls, { id: Date.now()+Math.random(), metode, kodeAkun, namaAkun, masuk:nominal, keluar:0, noGiro: metode==='Giro'?noGiro:'', jthTempoGiro: metode==='Giro'?jthTempoGiro:'' }]);
     setShowTambahUm(false);
@@ -554,10 +661,16 @@ function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partner
   const totalPenerimaan = penerimaan.reduce((s,p) => s + (+p.masuk||0) - (+p.keluar||0), 0);
   const selisih = totalPelunasan - totalPenerimaan;
   const balanced = totalPelunasan > 0 && selisih === 0;
-  const selisihTooltip = selisih > 0 ? `Penerimaan masih kurang ${fmtRp(selisih)}` : selisih < 0 ? `Penerimaan kelebihan ${fmtRp(-selisih)}` : '';
+  const selisihTooltip = selisih > 0 ? `${lblBayar} masih kurang ${fmtRp(selisih)}` : selisih < 0 ? `${lblBayar} kelebihan ${fmtRp(-selisih)}` : '';
 
   const handleSave = () => {
     if (isEdit) { onSave({ ...data, noReferensi, catatan }); return; }
+    const lebih = items.find(it => !it.isNewUangMuka && (+it.debet || 0) + (+it.kredit || 0) > (+it.sisaSaatItu || 0));
+    if (!tgl) { window.__erpToast && window.__erpToast('Tanggal wajib diisi.'); return; }
+    if (lebih) { window.__erpToast && window.__erpToast(`Nominal ${lebih.noBukti} melebihi sisanya (${fmtRp(lebih.sisaSaatItu)}).`); return; }
+    if (penerimaan.some(p => !p.kodeAkun)) { window.__erpToast && window.__erpToast('Akun setiap baris penerimaan wajib dipilih.'); return; }
+    if (penerimaan.some(p => p.metode === 'Giro' && (!p.noGiro || !p.jthTempoGiro))) { window.__erpToast && window.__erpToast('No. Giro dan jatuh tempo wajib diisi untuk metode Giro.'); return; }
+    if (!balanced) { window.__erpToast && window.__erpToast('Total pelunasan harus sama dengan total penerimaan.'); return; }
     onSave({
       no: kuNextNo(rows, kind.toUpperCase()),
       tgl: akFromIso(tgl) || '',
@@ -597,7 +710,7 @@ function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partner
           <div style={{display:'grid', gridTemplateColumns:'1fr 1.2fr', gap:20}}>
             <div>
               <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, marginBottom:6}}><span className="muted">Total Pelunasan</span><span className="mono" style={{fontWeight:600}}>{fmtRp(totalPelunasan)}</span></div>
-              <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, marginBottom:6}}><span className="muted">Total Penerimaan</span><span className="mono" style={{fontWeight:600}}>{fmtRp(totalPenerimaan)}</span></div>
+              <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, marginBottom:6}}><span className="muted">Total {lblBayar}</span><span className="mono" style={{fontWeight:600}}>{fmtRp(totalPenerimaan)}</span></div>
               <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, paddingTop:8, borderTop:'1px solid var(--border)'}}>
                 <span className="muted">Selisih</span>
                 <span className="mono" title={!isEdit && !balanced ? selisihTooltip : undefined}
@@ -658,7 +771,7 @@ function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partner
 
           <div>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
-              <h4 style={{margin:0}}>Tabel Penerimaan</h4>
+              <h4 style={{margin:0}}>Tabel {lblBayar}</h4>
               {!isEdit && <button className="btn btn-sm btn-primary" onClick={addPenerimaanRow}>{I.plus()} Tambah Metode</button>}
             </div>
             <div style={{border:'1px solid var(--border)', borderRadius:'var(--radius)', overflow:'auto', maxHeight:280}}>
@@ -666,12 +779,12 @@ function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partner
                 <thead>
                   <tr style={{background:'var(--bg-sub)'}}>
                     <th style={{...tdS, textAlign:'left'}}>Metode</th><th style={{...tdS, textAlign:'left'}}>Akun</th>
-                    <th style={{...tdS, textAlign:'right'}}>Masuk</th><th style={{...tdS, textAlign:'right'}}>Keluar</th>
+                    <th style={{...tdS, textAlign:'right'}}>{isPiutang ? 'Masuk' : 'Bayar'}</th><th style={{...tdS, textAlign:'right'}}>{isPiutang ? 'Keluar' : 'Kembali'}</th>
                     {!isEdit && <th style={tdS}></th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {penerimaan.length===0 && <tr><td colSpan={isEdit?4:5} style={{padding:'24px 8px', textAlign:'center', color:'var(--text-3)'}}>Belum ada metode penerimaan.</td></tr>}
+                  {penerimaan.length===0 && <tr><td colSpan={isEdit?4:5} style={{padding:'24px 8px', textAlign:'center', color:'var(--text-3)'}}>Belum ada metode {lblBayar.toLowerCase()}.</td></tr>}
                   {penerimaan.map(p => (
                     <tr key={p.id}>
                       <td style={tdS}>{isEdit ? p.metode : (
@@ -681,11 +794,11 @@ function PelunasanModal({ data, onClose, onSave, kind, rows, saldoItems, partner
                       )}</td>
                       <td style={tdS}>{isEdit ? p.namaAkun : (
                         <select className="select" value={p.kodeAkun} style={{padding:'3px 6px'}} onChange={e=>{
-                          const acc = KAS_BANK_GIRO.find(a=>a.kode===e.target.value);
+                          const acc = akunBayarOpts(p.metode).find(a=>a.kode===e.target.value);
                           updatePenerimaan(p.id, { kodeAkun:e.target.value, namaAkun: acc?acc.nama:'' });
                         }}>
                           <option value="">— Pilih —</option>
-                          {KAS_BANK_GIRO.filter(a => p.metode==='Tunai' ? a.tipe==='KAS' : p.metode==='Transfer' ? a.tipe==='BANK' : a.tipe==='GIRO').map(a => (
+                          {akunBayarOpts(p.metode).map(a => (
                             <option key={a.kode} value={a.kode}>{a.nama}</option>
                           ))}
                         </select>

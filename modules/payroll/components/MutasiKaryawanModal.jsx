@@ -11,7 +11,8 @@ function prDayBefore(iso) {
   if (!iso) return '';
   const d = new Date(iso + 'T00:00:00');
   d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
+  // Format lokal (toISOString memakai UTC → di WIB mundur 1 hari lagi).
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function prFmtTgl(iso) {
@@ -65,14 +66,15 @@ function MutasiKaryawanModal({ karyawan, mutasiRows, onClose, onSave }) {
   const latest = history[0] || null;
 
   const blankDraft = () => ({
-    tanggal: new Date().toISOString().slice(0,10),
+    tanggal: todayLocal(),
     unit: latest?.unit || '01', kodeDivisi: latest?.kodeDivisi || '', kodeStatus: latest?.kodeStatus || '',
     kodeDepartemen: latest?.kodeDepartemen || '', kodeBagian: latest?.kodeBagian || '',
     kodeJabatan: latest?.kodeJabatan || '', kodeKelompok: latest?.kodeKelompok || '',
     kodeWaktuKerja: latest?.kodeWaktuKerja || '', grade: latest?.grade || '', kodeGolongan: latest?.kodeGolongan || '',
     potBpjsTkPct: latest?.potBpjsTkPct || 0, potBpjsKesPct: latest?.potBpjsKesPct || 0,
     tidakLembur: latest?.tidakLembur || false, hitungJabatan: latest?.hitungJabatan || false, keterangan:'',
-    komponenBaru: prKomponen(),
+    // Komponen Baru mulai dari komponen terakhir (bukan 0) — user cukup mengubah yang naik/turun.
+    komponenBaru: latest ? { ...latest.komponenBaru, berlakuSd:'' } : prKomponen(),
     komponenLama: latest ? { ...latest.komponenBaru, berlakuSd:'' } : prKomponen(),
     gajiAstek: latest?.gajiAstek || 0, gajiBpjsK: latest?.gajiBpjsK || 0, tunjJabatan: latest?.tunjJabatan || 0,
     fixedCost: latest?.fixedCost || 0, tunjInsentif: latest?.tunjInsentif || 0, terimaLain: latest?.terimaLain || 0,
